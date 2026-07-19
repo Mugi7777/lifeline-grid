@@ -1,64 +1,62 @@
-# Lifeline Grid Regional Access OS — 2:55 Demo Script
+# Lifeline Grid — 2:55 Build Week Demo Script
 
-## 0:00–0:18 — The regional problem
+Record at desktop width with `OPENAI_API_KEY` configured. Use only the built-in synthetic report. Do not start recording unless the result badge reads **SOL LIVE**. Keep the browser zoom large enough for the 50.2%–81.0% world difference and human-authority gate to remain legible.
 
-Open on Regional Access mode.
+## 0:00–0:15 — One disaster, conflicting truths
 
-> “Global routing systems optimize distance. Rural Japan also has to answer a public question: when one aging road fails, who loses access to medicine, and what should a limited repair budget protect first?”
+Open on the **Nankai Trough 72H Response Lab** with the Sol report visible.
 
-Point to 100% household access, 100% vulnerable coverage, and the synthetic district map.
+> “After a major earthquake, a hospital says power is running out, one responder says a road is open, and a drone appears to show vehicles turning around. A chatbot can choose one story. Lifeline tests what happens if each story is wrong.”
 
-## 0:18–0:48 — Reason across conflicting reports
+## 0:15–0:40 — GPT-5.6 Sol creates falsifiable worlds
 
-Click **Run Sol Reasoning Council** on the prefilled conflicting heavy-rain report.
+Click **Run Sol Disaster Council**. Hold on **SOL LIVE** and the three world cards.
 
-> “Operations do not receive one clean fact. GPT-5.6 Sol turns conflicting, untrusted reports into three falsifiable worlds: closed, weight-limited, and still open. It preserves counterevidence and cannot invent a supported road, calculate the impact, diagnose safety, or authorize action.”
+> “GPT-5.6 Sol treats every report as untrusted data. With strict Structured Outputs, it creates exactly three materially different road-network worlds, preserving evidence, counterevidence and assumptions. It may use only supported roads. It cannot calculate an impact or authorize action.”
 
-## 0:48–1:18 — The model is challenged by the system
+## 0:40–1:12 — Deterministic software challenges the model
 
-Hold on the three hypothesis cards, then the amber **Authority gate**.
+Point to the three supply values and the amber highest-evidence card.
 
-> “Lifeline independently re-plans every world: 12,288 candidate assignments, 192 stress scenarios, and 36 N-1 road cases. It proves that the unresolved authority status swings access for 64 households and 32 vulnerable residents. So the model recommendation is withheld and one exact evidence request is ranked first.”
+> “Now Lifeline independently re-plans supplies, mobile power, hospital transfers, drone search and road clearance in every world. The outcomes range from 50.2 to 81 percent supply coverage, one to zero critical-power gaps, and zero to two ground-transfer plans. Sol produced none of those numbers.”
 
-Point to **HUMAN AUTHORITY REQUIRED**.
+Point to **30.8 pt supply swing**, the other four swing values, and **MODEL RECOMMENDATION WITHHELD**.
 
-> “Reasoning proposes what might be true. Deterministic software proves each consequence. An authorized human decides what is true.”
+> “Across 615 exact assignment candidates, the system proves that one question matters most: has the authority authenticated this entire coastal corridor? The answer changes all four missions. So the model recommendation is withheld.”
 
-## 1:18–1:40 — One shared daily plan
+## 1:12–1:38 — Inspect worlds without applying them
 
-Scroll to the three-operator route cards.
+Click **Inspect world on map** for H1, then H3. Let the road colors and metrics change.
 
-> “Behind each world, an exact inspectable search pools a postal EV, refrigerated co-op van, and municipal bus while enforcing capacity, cold chain, time windows, shifts, and road weight limits. Every modeled household is covered on time in the verified baseline.”
+> “A human can compare either world on a real basemap, but no world is applied automatically. Unknown and blocked roads fail closed. Selecting a card is inspection—not road permission, dispatch or triage.”
 
-## 1:40–2:02 — N-1 public impact
+## 1:38–2:02 — Find the one corridor with the largest consequence
 
-Select the highest-ranked road cases.
+Return to baseline, then click **Run top clearance simulation**.
 
-> “The system breaks every modeled road one at a time. Roads are ranked not only by condition or traffic, but by the people and essential services that disappear from the service threshold.”
+> “For every blocked or unknown road, Lifeline opens one modeled corridor and re-runs reachability. In this fictional first-six-hour state, the top intervention raises supply coverage from 50.2 to 69 percent and removes a critical-power gap. It is a counterfactual, not a road-opening order.”
 
-Point out that critical medicine and clinic delivery remain protected even when full service falls.
+## 2:02–2:25 — Four missions, one shared state
 
-## 2:02–2:22 — Repair budget optimizer
+Move across the four mission cards.
 
-Move the repair budget slider.
+> “The same verified state drives priority-aware min-cost supply flow, exact generator and V2L assignment, deadline-bounded hospital-transfer planning, and drone-search value matching. Unreachable patients become requests for human air coordination—never autonomous tasking.”
 
-> “For every budget, Lifeline evaluates every eligible repair portfolio and selects the combination with the greatest modeled annual access-risk reduction. The recommendation exposes cost, consequence, and the exact search count.”
+## 2:25–2:42 — Evidence and safety boundary
 
-## 2:22–2:42 — Durable decision governance
+Point to the computation proof strip, evidence export, and **FIELD OPERATION BLOCKED**.
 
-Enter a fictional reviewer email and click **Record plan**, then open the saved run and **Verify audit**.
+> “Every result is reproducible, exportable and tested. But software evidence is not certification. Road use, hospital acceptance, vehicle dispatch, electrical switching, drone launch and aircraft tasking remain with authorized people.”
 
-> “A calculation is not yet an organizational decision. The server recomputes and stores this synthetic plan, shows exactly what changed from its predecessor, and assigns review to a different identity. The creator cannot self-approve, and every lifecycle event is replay-verified. This is a hosted prototype—not legal non-repudiation.”
+## 2:42–2:52 — Why this is more than chat
 
-## 2:42–2:52 — Nankai 72H response lab
+Briefly show the Regional Access headline or stay on the Nankai lab.
 
-Scroll to **Nankai Trough 72H Response Lab** and click **Run top clearance simulation**.
+> “Codex helped build the product end to end. GPT-5.6 Sol reasons across ambiguity; deterministic engines prove consequences; the same regional twin supports daily delivery and aging-road investment before disaster strikes.”
 
-> “When disaster escalates, the same network allocates scarce supplies, stages mobile power, builds deadline-bounded hospital-transfer plans, prioritizes drone search, and asks which one blocked corridor restores the most life-support access. In this fictional 0–6 hour replay, one intervention raises supply coverage from 50.2% to 69.0% and closes a critical power gap.”
+## 2:52–2:55 — Close
 
-## 2:52–2:55 — Boundary
-
-> “All results are synthetic. Lifeline calculates; authorized people command.”
+> “Lifeline calculates across uncertain worlds. People remain in command.”
 
 ---
 

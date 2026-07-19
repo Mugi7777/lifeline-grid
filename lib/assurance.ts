@@ -44,6 +44,14 @@ export function buildAssuranceSnapshot(runtime: AssuranceRuntimeState) {
       frameworkRefs: ["ISO/IEC 42001:2023", "OWASP LLM Verification Standard 2.0"],
     },
     {
+      id: "AI-03",
+      title: "Three-world disaster reasoning with deterministic consequence adjudication",
+      status: "implemented" as AssuranceControlStatus,
+      runtime: "model_recommendation_withheld",
+      evidence: ["app/api/nankai-reasoning/route.ts", "lib/nankai-reasoning.ts", "tests/nankai-reasoning.test.ts"],
+      frameworkRefs: ["ISO/IEC 42001:2023", "ISO/IEC 23894:2023", "NIST AI RMF 1.0"],
+    },
+    {
       id: "GOV-01",
       title: "Identity-scoped decision ledger and independent review",
       status: "implemented" as AssuranceControlStatus,

@@ -36,6 +36,8 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 |---|---|---|---|
 | Prompt injection in reports | Attacker manipulates interpretation or instructions | report is explicitly untrusted data; strict schema and runtime allowlists; model cannot authorize or perform safety arithmetic; adversarial API fixture | content isolation, broader red-team corpus, provenance policy, monitoring |
 | Hypothesis collapse | Three differently worded hypotheses encode the same operational state and hide alternatives | exact IDs, unique hypotheses, bounded road states, and deterministic state-disagreement reporting | semantic-diversity evaluation, abstention policy, domain-owned rare-state corpus |
+| Nankai world injection or collapse | An untrusted report asks Sol to invent roads, issue commands, or produce three cosmetically different copies of one world | report treated as data; strict schema; supported-road/state allowlists; unique change IDs and world fingerprints; bounded text; transparent fallback; deterministic metrics | larger adversarial SITREP corpus, multilingual injection evals, signed source adapters, independent model-risk review |
+| Model world auto-application | A plausible Sol hypothesis silently changes the operational graph | recommendation status hard-coded withheld; API returns advisory worlds; UI applies none by default and labels manual selection as synthetic inspection | server-side authorized state transition, two-person review, signed authority evidence, immutable decision record |
 | Authority-source spoofing | Informal passage report is treated as an official restriction or proof of safety | versioned ECDSA P-256 envelope; pinned issuer/key/road scope; expiry and official-reference validation; verified events remain pending human review | production key ceremony, revocation, KMS/HSM custody, cross-source reconciliation, independent review |
 | Signed-event replay or reordering | An old authentic closure silently overwrites newer state | atomic D1 acceptance gate rejects duplicate event IDs and any lower/equal issuer sequence; unique digest and sequence indexes | concurrency/load test, restore test, issuer sequence-reset procedure, multi-region ordering design |
 | Adapter-attestation spoofing | A caller labels an unverified feed as signature-verified | public data-trust validation is explicitly untrusted and always blocks consequential review; production status must originate from a server-owned adapter | mTLS/OIDC workload identity, adapter signing, conformance tests, key rotation, independent assessment |
@@ -79,6 +81,7 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 - A local GeoJSON file can never become authoritative merely because it parses or produces a digest.
 - A graph bridge or articulation point can never be displayed as a structural diagnosis, closure instruction, or dispatch authority.
 - A Nankai optimization result can never become patient triage, hospital acceptance, road opening, vehicle dispatch, electrical switching, drone launch, or aircraft tasking authority.
+- A GPT-5.6 Sol world can never be applied automatically, and model-generated confidence or hidden reasoning can never become operational evidence.
 
 ## Security verification backlog
 

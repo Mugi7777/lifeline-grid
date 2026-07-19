@@ -23,12 +23,15 @@ This runbook applies only to supervised simulation and tabletop evaluation. It d
 ### Nankai Trough 72H tabletop
 
 1. Confirm the panel says `SYNTHETIC`, `AUTO PLAN · HUMAN AUTHORITY REQUIRED`, and `FIELD OPERATION BLOCKED` before discussing any result.
-2. Begin at `0–6 hours`. Review the blocked and unknown roads; both must remain unusable by ground routing.
-3. Inspect supply, critical-power, hospital-transfer, and drone-search gaps. Treat every facility, patient case, asset, deadline, inventory, and search area as fictional.
-4. Run the highest-ranked road-clearance counterfactual. State aloud that opening one graph edge is a comparison, not a structural assessment, work estimate, clearance order, or road-opening instruction.
-5. Compare the 24-hour and 72-hour phases. Record disagreements with the exercise reference plan and any unsupported inference by an operator.
-6. Export the replay JSON and retain its digest with the exercise record. A matching digest proves byte-level reproducibility only.
-7. Stop if anyone attempts to use the result for patient triage, hospital acceptance, vehicle or aircraft dispatch, road opening, drone launch, or a real incident.
+2. Begin at `0–6 hours` and run **Sol Disaster Council** using only the bundled synthetic report. Confirm the badge says `SOL LIVE` or explicitly acknowledge `VERIFIED FALLBACK`; never describe fallback as a live model call.
+3. Verify exactly three distinct world cards appear, the model recommendation remains withheld, and no world changes the map automatically.
+4. Review the highest-value evidence question and its deterministic mission swings. Treat the score as evidence-acquisition priority, not permission to act.
+5. Select H1 and H3 only to inspect their synthetic consequences. Confirm blocked and unknown roads remain unusable by ground routing and return to baseline afterward.
+6. Inspect supply, critical-power, hospital-transfer, and drone-search gaps. Treat every facility, patient case, asset, deadline, inventory, and search area as fictional.
+7. Run the highest-ranked road-clearance counterfactual. State aloud that opening one graph edge is a comparison, not a structural assessment, work estimate, clearance order, or road-opening instruction.
+8. Compare the 24-hour and 72-hour phases. Re-run Sol after changing phase; do not reuse a prior-phase proposal as current evidence.
+9. Export the replay JSON and retain its digest with the exercise record. A matching digest proves byte-level reproducibility only.
+10. Stop if anyone attempts to use the result for patient triage, hospital acceptance, vehicle or aircraft dispatch, road opening, drone launch, or a real incident.
 
 For a future supervised partner tabletop, the exercise owner must provide a separate authoritative reference plan, explicit medical and aviation reviewers, data approval, and documented authority roles. The current software cannot conduct a shadow or field exercise.
 
@@ -76,6 +79,7 @@ Stop the exercise and mark the result invalid if any of the following occurs:
 - a topology finding is interpreted as physical bridge condition, passability, or authority to act.
 - a Nankai response score is interpreted as triage, hospital acceptance, dispatch, flight tasking, drone-launch authority, structural clearance priority, or a forecast;
 - real patient, hospital, aircraft, inventory, restricted-infrastructure, or incident-command data is entered into the synthetic lab.
+- a Sol world appears applied without an explicit human inspection choice, the model supplies an impact metric, duplicate worlds pass validation, or `VERIFIED FALLBACK` is represented as live inference.
 
 ## Degraded-mode behavior
 

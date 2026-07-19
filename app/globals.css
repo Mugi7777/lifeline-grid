@@ -1207,6 +1207,103 @@ button:focus-visible {
 .nankai-lab-heading p:last-child { max-width: 900px; margin: 7px 0 0; color: #9aada6; font-size: 9px; line-height: 1.5; }
 .nankai-authority-badge { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid rgba(242,211,94,.28); border-radius: 7px; background: rgba(242,211,94,.08); color: #f2d35e; font-size: 7px; font-weight: 900; letter-spacing: .06em; white-space: nowrap; }
 .nankai-authority-badge i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(242,211,94,.08); }
+.nankai-sol-council { position: relative; margin-top: 14px; padding: 13px; overflow: hidden; border: 1px solid rgba(85,216,255,.3); border-radius: 12px; background: linear-gradient(135deg,rgba(4,23,27,.92),rgba(8,25,19,.88)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.nankai-sol-council::before { position: absolute; inset: 0 auto auto 0; width: 36%; height: 2px; background: linear-gradient(90deg,#55d8ff,transparent); content: ""; }
+.nankai-sol-council > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.nankai-sol-council > header span,
+.nankai-sol-council > header h3,
+.nankai-sol-council > header p { display: block; }
+.nankai-sol-council > header span { color: #55d8ff; font-size: 6px; font-weight: 900; letter-spacing: .09em; }
+.nankai-sol-council > header h3 { margin: 6px 0 0; font-size: 15px; letter-spacing: -.035em; }
+.nankai-sol-council > header p { max-width: 830px; margin: 6px 0 0; color: #91a69e; font-size: 7px; line-height: 1.5; }
+.nankai-sol-council > header > em { padding: 7px 9px; border: 1px solid #34534a; border-radius: 7px; background: rgba(255,255,255,.04); color: #8aa098; font-size: 6px; font-style: normal; font-weight: 900; letter-spacing: .07em; white-space: nowrap; }
+.nankai-sol-council > header > em.gpt-5\.6-sol { border-color: rgba(184,244,93,.35); background: rgba(184,244,93,.08); color: var(--lime); }
+.nankai-sol-council > header > em.demo-fallback { border-color: rgba(242,211,94,.3); background: rgba(242,211,94,.07); color: #f2d35e; }
+.nankai-sol-council > header > em.running { border-color: rgba(85,216,255,.4); color: #55d8ff; animation: nankai-sol-breathe 1.2s infinite alternate; }
+@keyframes nankai-sol-breathe { from { box-shadow: 0 0 0 rgba(85,216,255,0); } to { box-shadow: 0 0 17px rgba(85,216,255,.16); } }
+.nankai-sol-input { display: grid; grid-template-columns: minmax(0,1fr) 230px; gap: 8px; margin-top: 11px; }
+.nankai-sol-input label { display: block; min-width: 0; }
+.nankai-sol-input label > span { display: block; margin-bottom: 5px; color: #88a098; font-size: 6px; font-weight: 850; }
+.nankai-sol-input textarea { display: block; width: 100%; min-height: 76px; padding: 9px 10px; resize: vertical; border: 1px solid #35534a; border-radius: 8px; outline: none; background: rgba(1,12,12,.74); color: #dfe9e5; font: 7px/1.5 var(--font-geist-sans), Arial, sans-serif; }
+.nankai-sol-input textarea:focus { border-color: #55d8ff; box-shadow: 0 0 0 3px rgba(85,216,255,.08); }
+.nankai-sol-input > button { align-self: end; min-height: 76px; padding: 10px 12px; border: 0; border-radius: 8px; background: linear-gradient(135deg,#55d8ff,#8ce9d4); color: #06242a; cursor: pointer; text-align: left; }
+.nankai-sol-input > button:disabled { cursor: wait; opacity: .62; }
+.nankai-sol-input > button b,
+.nankai-sol-input > button small { display: block; }
+.nankai-sol-input > button b { font-size: 8px; }
+.nankai-sol-input > button small { margin-top: 4px; color: #28545b; font-size: 5px; line-height: 1.35; }
+.nankai-sol-message { margin: 6px 0 0; color: #7f9790; font-size: 6px; line-height: 1.45; }
+.nankai-sol-result { margin-top: 10px; }
+.nankai-sol-summary { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(260px,.65fr); gap: 7px; }
+.nankai-sol-summary > div,
+.nankai-sol-summary > aside { padding: 9px 10px; border: 1px solid #2d4d45; border-radius: 8px; background: rgba(1,12,10,.46); }
+.nankai-sol-summary span { display: block; color: #55d8ff; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-sol-summary p { margin: 5px 0 0; color: #a3b5ae; font-size: 7px; line-height: 1.45; }
+.nankai-sol-summary aside { border-color: rgba(250,147,139,.28); background: rgba(117,40,34,.12); }
+.nankai-sol-summary aside b,
+.nankai-sol-summary aside small { display: block; }
+.nankai-sol-summary aside b { color: #fa938b; font-size: 6px; letter-spacing: .06em; }
+.nankai-sol-summary aside small { margin-top: 5px; color: #b7a19d; font-size: 6px; line-height: 1.4; }
+.nankai-sol-question { margin-top: 7px; padding: 11px; border: 1px solid rgba(242,211,94,.34); border-radius: 9px; background: linear-gradient(100deg,rgba(242,211,94,.09),rgba(2,17,13,.6)); }
+.nankai-sol-question > header { display: flex; justify-content: space-between; gap: 10px; }
+.nankai-sol-question > header span,
+.nankai-sol-question > header em { color: #f2d35e; font-size: 5px; font-style: normal; font-weight: 900; letter-spacing: .07em; }
+.nankai-sol-question h4 { margin: 6px 0 0; font-size: 11px; line-height: 1.35; }
+.nankai-sol-question > p { margin: 5px 0 0; color: #a99f7e; font-size: 6px; line-height: 1.4; }
+.nankai-sol-question > div { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin-top: 8px; overflow: hidden; border: 1px solid #4b4b35; border-radius: 7px; background: rgba(0,0,0,.16); }
+.nankai-sol-question > div span { padding: 7px; border-right: 1px solid #4b4b35; }
+.nankai-sol-question > div span:last-child { border-right: 0; }
+.nankai-sol-question > div b,
+.nankai-sol-question > div small { display: block; }
+.nankai-sol-question > div b { color: #f2d35e; font-size: 9px; }
+.nankai-sol-question > div small { margin-top: 2px; color: #817c67; font-size: 5px; }
+.nankai-sol-worlds { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 7px; }
+.nankai-sol-worlds > article { display: flex; min-width: 0; padding: 10px; border: 1px solid #304b43; border-radius: 9px; background: rgba(1,13,10,.52); flex-direction: column; }
+.nankai-sol-worlds > article.severe_access_gap { border-top-color: #fa938b; }
+.nankai-sol-worlds > article.critical_gap { border-top-color: #f2d35e; }
+.nankai-sol-worlds > article.selected { border-color: #55d8ff; box-shadow: 0 0 0 2px rgba(85,216,255,.08); }
+.nankai-sol-worlds article > header { display: grid; grid-template-columns: 24px minmax(0,1fr); gap: 8px; align-items: center; }
+.nankai-sol-worlds article > header > i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: #21453e; color: #8ce9d4; font-size: 7px; font-style: normal; font-weight: 900; }
+.nankai-sol-worlds article > header b,
+.nankai-sol-worlds article > header small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nankai-sol-worlds article > header b { font-size: 7px; }
+.nankai-sol-worlds article > header small { margin-top: 2px; color: #6e857c; font-size: 5px; }
+.nankai-sol-worlds article > p { margin: 8px 0 0; color: #91a49c; font-size: 6px; line-height: 1.4; }
+.nankai-sol-road-changes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.nankai-sol-road-changes > span { min-width: 0; padding: 4px 5px; border: 1px solid #345149; border-radius: 5px; background: rgba(255,255,255,.025); }
+.nankai-sol-road-changes > span.blocked { border-color: rgba(250,147,139,.3); }
+.nankai-sol-road-changes > span.unknown { border-color: rgba(242,211,94,.3); }
+.nankai-sol-road-changes > span.open { border-color: rgba(184,244,93,.3); }
+.nankai-sol-road-changes b,
+.nankai-sol-road-changes small { display: block; }
+.nankai-sol-road-changes b { max-width: 112px; overflow: hidden; text-overflow: ellipsis; font-size: 5px; white-space: nowrap; }
+.nankai-sol-road-changes small { margin-top: 2px; color: #839890; font-size: 4px; text-transform: uppercase; }
+.nankai-sol-world-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); margin-top: 8px; overflow: hidden; border: 1px solid #2b453d; border-radius: 6px; }
+.nankai-sol-world-metrics span { padding: 6px; border-right: 1px solid #2b453d; }
+.nankai-sol-world-metrics span:last-child { border-right: 0; }
+.nankai-sol-world-metrics b,
+.nankai-sol-world-metrics small { display: block; }
+.nankai-sol-world-metrics b { color: #8ce9d4; font-size: 8px; }
+.nankai-sol-world-metrics small { margin-top: 2px; color: #6d827a; font-size: 4px; }
+.nankai-sol-counter { display: block; margin: 7px 0; color: #8f7f7c; font-size: 5px; line-height: 1.4; }
+.nankai-sol-worlds article > button { margin-top: auto; padding: 7px 8px; border: 1px solid #3a5a51; border-radius: 6px; background: transparent; color: #8ce9d4; cursor: pointer; font-size: 5px; font-weight: 900; }
+.nankai-sol-worlds article.selected > button { border-color: #55d8ff; background: rgba(85,216,255,.09); color: #55d8ff; }
+.nankai-sol-proof { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin-top: 7px; overflow: hidden; border: 1px solid #2d4b42; border-radius: 8px; background: rgba(1,12,9,.54); }
+.nankai-sol-proof span { padding: 8px; border-right: 1px solid #2d4b42; }
+.nankai-sol-proof span:last-child { border-right: 0; }
+.nankai-sol-proof b,
+.nankai-sol-proof small { display: block; }
+.nankai-sol-proof b { color: #55d8ff; font-size: 9px; }
+.nankai-sol-proof small { margin-top: 2px; color: #6c8179; font-size: 5px; }
+.nankai-sol-boundary { margin: 7px 0 0; color: #788c85; font-size: 5px; line-height: 1.45; }
+.nankai-sol-empty { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-top: 9px; }
+.nankai-sol-empty > span { padding: 8px; border: 1px solid #2e4b42; border-radius: 7px; background: rgba(255,255,255,.02); }
+.nankai-sol-empty i,
+.nankai-sol-empty b,
+.nankai-sol-empty small { display: block; }
+.nankai-sol-empty i { color: #55d8ff; font-size: 6px; font-style: normal; font-weight: 900; }
+.nankai-sol-empty b { margin-top: 4px; font-size: 7px; }
+.nankai-sol-empty small { margin-top: 2px; color: #71867e; font-size: 5px; }
 .nankai-phase-bar { position: relative; display: grid; grid-template-columns: minmax(330px,.8fr) minmax(400px,1.35fr); gap: 7px; margin-top: 14px; }
 .nankai-phase-bar > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; padding: 5px; border: 1px solid #2d4640; border-radius: 10px; background: rgba(2,13,10,.54); }
 .nankai-phase-bar > div button { min-width: 0; padding: 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #83968f; cursor: pointer; text-align: left; }
@@ -2475,6 +2572,12 @@ button:focus-visible {
 @media (max-width: 840px) {
   .nankai-lab-heading { flex-direction: column; }
   .nankai-authority-badge { align-self: stretch; justify-content: center; }
+  .nankai-sol-council > header { flex-direction: column; }
+  .nankai-sol-council > header > em { align-self: stretch; text-align: center; }
+  .nankai-sol-input { grid-template-columns: 1fr; }
+  .nankai-sol-input > button { min-height: 62px; }
+  .nankai-sol-summary { grid-template-columns: 1fr; }
+  .nankai-sol-worlds { grid-template-columns: 1fr; }
   .nankai-official-basis { align-items: stretch; flex-direction: column; }
   .nankai-official-basis > span { margin-right: 0; }
   .nankai-evidence-row { grid-template-columns: 1fr; }
@@ -2525,6 +2628,17 @@ button:focus-visible {
 @media (max-width: 620px) {
   .nankai-lab-panel { padding: 11px; border-radius: 13px; }
   .nankai-lab-heading h2 { font-size: 19px; }
+  .nankai-sol-council { padding: 9px; }
+  .nankai-sol-question > header { flex-direction: column; }
+  .nankai-sol-question > div { grid-template-columns: 1fr 1fr; }
+  .nankai-sol-question > div span { border-right: 1px solid #4b4b35; border-bottom: 1px solid #4b4b35; }
+  .nankai-sol-question > div span:nth-child(2n) { border-right: 0; }
+  .nankai-sol-question > div span:last-child { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
+  .nankai-sol-proof { grid-template-columns: 1fr 1fr; }
+  .nankai-sol-proof span { border-right: 1px solid #2d4b42; border-bottom: 1px solid #2d4b42; }
+  .nankai-sol-proof span:nth-child(2n) { border-right: 0; }
+  .nankai-sol-proof span:last-child { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
+  .nankai-sol-empty { grid-template-columns: 1fr 1fr; }
   .nankai-phase-bar > div { grid-template-columns: 1fr; }
   .nankai-phase-bar > article { grid-template-columns: 1fr; }
   .nankai-phase-bar article > button,

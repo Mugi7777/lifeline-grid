@@ -26,7 +26,7 @@ The **Production Trust Plane** adds a versioned signed road-authority envelope. 
 
 The same plane exposes `/api/assurance` and `/api/health`. It reports software evidence separately from independent gates and always declares this release **not certified / field blocked**. See [`ASSURANCE_CASE.md`](./ASSURANCE_CASE.md), [`CERTIFICATION_ROADMAP.md`](./CERTIFICATION_ROADMAP.md), and [`SECURITY.md`](./SECURITY.md).
 
-The new **Nankai Trough 72H Response Lab** joins scarce supply allocation, mobile-power staging, deadline-bounded hospital-transfer planning, drone-search prioritization, and road-clearance counterfactuals on one synthetic Kochi coastal state. It uses fail-closed road routing, min-cost flow, exhaustive lexicographic assignment, and reproducible SHA-256 evidence. In the fictional 0–6 hour baseline, the top single-corridor intervention raises weighted supply coverage from 50.2% to 69.0% and removes one critical power gap. It never triages, dispatches, launches, opens a road, or asserts hospital acceptance; every consequential action remains behind human authority. See [`NANKAI_RESPONSE_LAB.md`](./NANKAI_RESPONSE_LAB.md).
+The new **Nankai Trough 72H Response Lab** joins scarce supply allocation, mobile-power staging, deadline-bounded hospital-transfer planning, drone-search prioritization, and road-clearance counterfactuals on one synthetic Kochi coastal state. Its **Sol Disaster Reasoning Council** uses `gpt-5.6-sol` at high reasoning effort to turn conflicting situation reports into exactly three bounded road-network worlds with evidence, counterevidence and assumptions. Deterministic code then re-plans all four missions in every world and ranks the one human-verifiable fact with the largest consequence. In the fixture, the worlds span 50.2%–81.0% weighted supply coverage, one to zero critical-power gaps, and zero to two ground-transfer plans. The model recommendation is withheld and no world is applied automatically. See [`NANKAI_RESPONSE_LAB.md`](./NANKAI_RESPONSE_LAB.md).
 
 The baseline exact plan covers all 418 modeled households and 152 modeled vulnerable residents on time. Removing North Forest Road makes one community miss its service threshold—64 households and 32 vulnerable residents—while both critical deliveries remain protected. These values are deterministic fictional results.
 
@@ -66,6 +66,24 @@ Human road authority required; model recommendation withheld
 ```
 
 For the built-in synthetic conflict, the authority-status question separates a world with no access loss from one exposing 64 households and 32 vulnerable residents. That consequence is reproduced by the regional kernel; it is not a number supplied by the model.
+
+The Nankai mode closes the same loop across four coupled emergency missions:
+
+```text
+Conflicting hospital, road and drone reports
+      ↓
+GPT-5.6 Sol: exactly three bounded network worlds
+      ↓
+Strict schema, supported road IDs, counterevidence retained
+      ↓
+Supply flow + power + medical + drone re-plan in every world
+      ↓
+50.2% ↔ 81.0% supply · 1 ↔ 0 power gaps · 0 ↔ 2 ground plans
+      ↓
+Rank one authenticated fact by deterministic mission swing
+      ↓
+Human authority required; no world or action applied automatically
+```
 
 Lifeline Grid closes that loop:
 
@@ -182,6 +200,7 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 - `/api/event` converts a narrative disruption into structured mission state.
 - `/api/regional-event` converts a fictional inspection note into a supported road restriction.
 - `/api/regional-reasoning` asks `gpt-5.6-sol` for exactly three bounded, competing hypotheses and evidence questions, then rejects malformed or invented road states and deterministically adjudicates every valid hypothesis.
+- `/api/nankai-reasoning` asks `gpt-5.6-sol` for three materially distinct disaster-network worlds, counterevidence and evidence requests; strict validation rejects invented roads or duplicate worlds, then the Nankai kernel independently re-plans every mission and withholds the model recommendation.
 - `/api/regional-plan` accepts a versioned regional model, enforces bounded runtime validation, chooses the exact or scalable solver, and returns a deterministic SHA-256 request identity plus route-level constraint evidence.
 - `/api/regional-runs` persists authenticated, identity-scoped planning records and version differences.
 - `/api/regional-runs/:id/review` and `/audit` enforce assigned independent review and replay the stored hash chain.
@@ -255,6 +274,7 @@ Tests verify:
 - bounded local GeoJSON acceptance, per-feature isolation, duplicate and malformed topology rejection, exact bridge/articulation results for chains, cycles, and parallel roads, deterministic evidence binding, and a non-recursive 10,000-segment worst-case chain;
 - portable-twin round trips, closure and repair-budget restoration, stale-state disclosure, model mismatch, future timestamps, outer-digest tamper, and deterministic plan-evidence rejection;
 - deterministic Nankai 0–6 hour, 24 hour and 72 hour response states; min-cost supply flow; exact power, medical and drone assignments; fail-closed routes; road-clearance counterfactual benefit; invalid-state rejection; and replay digest stability;
+- strict Nankai Sol three-world contracts, unsupported-road and duplicate-world rejection, prompt-injection containment, deterministic multi-mission adjudication, highest-value authority evidence ranking, no automatic world application, and fail-closed routes in every hypothesis;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -269,6 +289,7 @@ Tests verify:
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
 - `app/api/regional-event/route.ts` — GPT-5.6 regional inspection-note interpretation
 - `app/api/regional-reasoning/route.ts` — GPT-5.6 Sol hypothesis generation and bounded reasoning contract
+- `app/api/nankai-reasoning/route.ts` — GPT-5.6 Sol disaster-world generation, strict Structured Outputs, transparent fallback, and performance evidence
 - `app/api/regional-plan/route.ts` — versioned external planning contract and deterministic audit response
 - `app/api/regional-runs/` — identity-scoped durable run history, review workflow, and audit verification
 - `app/api/authority-events/verify/route.ts` — signed source verification and atomic replay/stale-sequence rejection
@@ -288,6 +309,7 @@ Tests verify:
 - `lib/continuity-capsule.ts` — bounded portable state, SHA-256 evidence, deterministic restore verification, and stale-state disclosure
 - `lib/assurance.ts` — code evidence, runtime states, prohibited claims, and independent blocking gates
 - `lib/nankai-response.ts` — fail-closed routing, min-cost supply flow, exact power/medical/drone assignments, road-clearance replay, and evidence export
+- `lib/nankai-reasoning.ts` — strict three-world validation, deterministic multi-mission adjudication, consequence range, and evidence-value ranking
 - `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
@@ -310,6 +332,7 @@ Tests verify:
 - `PILOT_DATA_SANDBOX.md` — local GeoJSON contract, algorithm, privacy boundary, tabletop protocol, and unmet pilot gates
 - `RECOVERY.md` — GitHub/ZIP source backup, restore verification, portable twin state, and remaining recovery gaps
 - `NANKAI_RESPONSE_LAB.md` — public-source basis, algorithms, reproduced results, safety authority boundary, and shadow-pilot gaps
+- `BUILD_WEEK_FINAL_CHECKLIST.md` — submission-ready evidence and the remaining human-controlled tasks
 
 ## Honest prototype boundary
 

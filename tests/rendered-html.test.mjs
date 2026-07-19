@@ -45,4 +45,7 @@ test("renders development preview metadata", async () => {
   assert.match(html, /NANKAI TROUGH 72H RESPONSE LAB/);
   assert.match(html, /AUTO PLAN · HUMAN AUTHORITY REQUIRED/);
   assert.match(html, /Run top clearance simulation/);
+  assert.match(html, /GPT-5.6 SOL × THREE-WORLD DISASTER REASONING/);
+  assert.match(html, /Run Sol Disaster Council/);
+  assert.match(html, /615 exact assignments/);
 });

@@ -37,6 +37,7 @@ This distinction is enforced in the product. A mission can become `simulation-re
 - explicit separation of simulation authorization and field qualification;
 - bounded local GeoJSON processing for approved de-identified tabletop networks, including non-recursive bridge/articulation analysis, visible metadata and authority gates, real-basemap rendering, and digest-bound evidence export;
 - fail-closed synthetic Nankai routing; commodity min-cost flow; exact lexicographic power, medical and drone assignment; single-corridor counterfactual replay; and canonical evidence export with every consequential action blocked;
+- GPT-5.6 Sol three-world Nankai reasoning with strict supported-road validation, duplicate-world rejection, transparent fallback, deterministic consequence adjudication, model-recommendation withholding, and no automatic state application;
 - automated planner, operational-control, API, rendering, and production-build tests.
 
 ## Field-qualification gates

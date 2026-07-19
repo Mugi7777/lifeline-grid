@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is a Regional Access OS for low-density communities. In daily mode it pools fragmented fleets, measures which aging roads disconnect residents from medicine and food, and selects the repair portfolio that protects the most access within budget. Its GPT-5.6 Sol Reasoning Council turns conflicting reports into three falsifiable worlds; deterministic graph, routing, uncertainty, N-1, and capital-allocation engines prove every consequence while human authority remains required. In emergency mode the same verified regional state coordinates mobile power.
+Lifeline Grid is a Regional Access OS for low-density communities. Its Nankai Trough 72H Response Lab turns conflicting hospital, road and drone reports into three falsifiable network worlds with GPT-5.6 Sol, then independently re-plans supplies, mobile power, hospital transfers, drone search and road clearance in every world. The system ranks the one authenticated fact with the largest cross-mission consequence while withholding the model recommendation and keeping human authority required. The same regional twin also supports daily shared delivery and road-aging investment.
 
 ## Inspiration
 
@@ -48,12 +48,15 @@ An Incident Lead approves the simulated scope, but that is still insufficient. A
 
 When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
 
-The Nankai Trough 72H Response Lab then uses one synthetic Kochi coastal road state to coordinate four coupled missions: scarce supplies through min-cost flow, mobile power through exact lexicographic assignment, deadline-bounded hospital-transfer proposals, and drone-search prioritization. It replays every blocked or unknown corridor as a single clearance counterfactual. In the fictional first-six-hour scenario, its top intervention raises weighted supply coverage from 50.2% to 69.0% and removes one critical-power gap. Unknown roads fail closed, while patient triage, hospital acceptance, road opening, dispatch, switching, drone launch and aircraft tasking remain human-only.
+The Nankai Trough 72H Response Lab uses one synthetic Kochi coastal network to coordinate four coupled missions: scarce supplies through min-cost flow, mobile power through exact lexicographic assignment, deadline-bounded hospital-transfer proposals, and drone-search prioritization. GPT-5.6 Sol turns conflicting reports into exactly three distinct, schema-bound road worlds while preserving evidence, counterevidence and assumptions. Deterministic code then re-plans every mission in all three worlds. The fixture spans 50.2%–81.0% weighted supply coverage, one to zero critical-power gaps, and zero to two ground-transfer plans. It evaluates 615 exact assignment candidates and ranks authenticated end-to-end status of one coastal road as the highest-value evidence: a 30.8-point supply swing plus changes in power, transfer and isolation. Sol supplies none of those numbers.
+
+The operator may inspect a world on the map, but no model world is applied automatically. The lab also replays every blocked or unknown corridor as a single clearance counterfactual. Unknown roads fail closed, while patient triage, hospital acceptance, road opening, dispatch, switching, drone launch and aircraft tasking remain human-only.
 
 ## How we built it
 
 - GPT-5.6 Responses API with strict Structured Outputs for inspection notes, incidents, and disruptions
 - Explicit `gpt-5.6-sol` high-reasoning council for competing hypotheses, counterevidence, and decision-changing evidence acquisition
+- A second domain-specific `gpt-5.6-sol` council for exactly three Nankai disaster worlds, strict supported-road validation, and multi-mission deterministic adjudication
 - Runtime hypothesis validation and deterministic three-world adjudication
 - React and TypeScript command-center interface
 - Exact pooled heterogeneous VRPTW for the inspectable regional scenario
@@ -78,7 +81,7 @@ The Nankai Trough 72H Response Lab then uses one synthetic Kochi coastal road st
 
 ## How GPT-5.6 is meaningfully used
 
-GPT-5.6 handles three language-to-state transitions: a fictional inspection note becomes a supported regional road event, inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. GPT-5.6 Sol also handles a different problem: it constructs three competing interpretations of conflicting evidence, retains counterevidence, and proposes what an authorized operator should verify next. The deterministic regional kernel—not the model—re-plans each world and ranks the resulting access swing. The model never diagnoses a structure, performs safety arithmetic, supplies impact metrics, selects the optimal plan, or authorizes dispatch. Hidden chain-of-thought is not treated as evidence.
+GPT-5.6 handles three language-to-state transitions: a fictional inspection note becomes a supported regional road event, inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. GPT-5.6 Sol performs two meaningful uncertainty tasks. In Regional Access it constructs three competing interpretations of one road report. In the Nankai lab it constructs three materially distinct multi-road disaster worlds, retains counterevidence and assumptions, and proposes what an authorized operator should verify next. Strict schemas and allowlists reject invented roads and duplicate worlds. Deterministic kernels—not the model—re-plan each world and rank the resulting access swing. The model never diagnoses a structure, performs safety arithmetic, supplies impact metrics, selects the optimal plan, or authorizes dispatch. Hidden chain-of-thought is not treated as evidence.
 
 ## How Codex was used
 
@@ -128,6 +131,8 @@ Regional plans use a separate hosted decision ledger. The server never trusts a 
 - One actor cannot satisfy both authorization roles.
 - Any later evidence or plan change invalidates the exported package hash.
 - The interface keeps real field deployment blocked despite a fully authorized simulation.
+- Sol generates three bounded Nankai worlds while deterministic software reproduces a 30.8-point supply swing, one critical-power-gap swing, two ground-transfer-plan swing, and three air-request swing.
+- The highest-value evidence is ranked from 615 exact assignment candidates across all three worlds; no model world is applied automatically.
 
 ## What we learned
 
@@ -143,12 +148,11 @@ Every facility, vehicle, report, route, timestamp, and metric is fictional. Eval
 
 ## Suggested submission assets
 
-1. Opening command center
-2. Sol Reasoning Council with three hypothesis cards
-3. Authority gate with 64-household and 32-vulnerable-resident swing
-4. Exact shared-fleet plan and road N-1 ranking
-5. Repair-budget portfolio
-6. Durable regional plan history, predecessor diff, and assigned review
-7. Emergency-mode safety and N-1 proof
-8. GPT-5.6 event evidence and global re-plan
-9. Public video following `DEMO_SCRIPT.md`
+1. Nankai Sol Disaster Council input and `SOL LIVE` badge
+2. Three world cards showing the 50.2%–81.0% supply range
+3. Highest-evidence gate with the 30.8-point multi-mission swing
+4. Real basemap while inspecting H1 and H3 without applying either
+5. Road-clearance counterfactual and four mission cards
+6. Field-operation blocked gate and deterministic proof strip
+7. Regional Access daily-logistics and road-aging mode as the reusable-twin extension
+8. Public video following `DEMO_SCRIPT.md`

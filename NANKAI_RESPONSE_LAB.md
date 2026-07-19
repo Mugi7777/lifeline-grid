@@ -16,14 +16,17 @@ These sources do not validate Lifeline Grid's scenario values or algorithms.
 
 ## Implemented decision pipeline
 
-1. A phase-specific road graph marks each corridor `open`, `degraded`, `unknown`, or `blocked`. Unknown and blocked states fail closed.
-2. A cached binary-heap Dijkstra engine computes only routes that use modeled usable corridors.
-3. A commodity-specific successive-shortest-augmenting-path **min-cost flow** allocates scarce water, meals, and medicine from reachable depots. Priority penalties protect higher-priority reachable sites. This is an allocation envelope, not a vehicle schedule, and it does not yet share vehicle capacity across commodities.
-4. An exhaustive lexicographic **power assignment** places a bounded generator, V2L vehicles, and battery trailer. It minimizes critical-site gaps before weighted unmet energy, then maximizes fully met sites and minimizes travel.
-5. An exhaustive **deadline-constrained medical matching** assigns the bounded ambulance set only when pickup and receiving-hospital routes meet the modeled deadline. Unreachable cases become air-coordination requests; feasible cases left by the bounded fleet become a ground waitlist. The engine does not triage, confirm hospital acceptance, task an aircraft, or dispatch a vehicle.
-6. An exhaustive **drone information-value matching** assigns a bounded drone fleet by expected people, uncertainty, access difficulty, medical relevance, endurance, speed, and search coverage. It does not launch an aircraft or model weather, regulation, communications, terrain occlusion, or airspace clearance.
-7. A **single-corridor counterfactual replay** opens each blocked or unknown corridor individually, re-runs reachability, and ranks restored supply sites, feasible medical cases, and critical power sites against modeled clearance time. It does not estimate debris, structural work, crews, aftershocks, or legal priority.
-8. A versioned replay package exports decisions, unresolved needs, algorithm counters, hard gates, and a canonical SHA-256 digest.
+1. The **Sol Disaster Reasoning Council** sends the untrusted synthetic report and a bounded network context to `gpt-5.6-sol` with high reasoning effort, `store: false`, and strict Structured Outputs. It must return exactly three materially different road-network worlds, evidence for and against each, assumptions, and one to three evidence requests. It cannot invent road IDs or calculate impact metrics.
+2. Runtime validation rejects extra fields, unsupported roads or states, duplicate road changes, duplicate world fingerprints, invalid question links, and unbounded text. A transparent deterministic fixture is used when live model access is unavailable.
+3. A phase-specific road graph marks each corridor `open`, `degraded`, `unknown`, or `blocked`. Unknown and blocked states fail closed. No model world is applied automatically; a person may inspect one only as a synthetic comparison.
+4. A cached binary-heap Dijkstra engine computes only routes that use modeled usable corridors.
+5. A commodity-specific successive-shortest-augmenting-path **min-cost flow** allocates scarce water, meals, and medicine from reachable depots. Priority penalties protect higher-priority reachable sites. This is an allocation envelope, not a vehicle schedule, and it does not yet share vehicle capacity across commodities.
+6. An exhaustive lexicographic **power assignment** places a bounded generator, V2L vehicles, and battery trailer. It minimizes critical-site gaps before weighted unmet energy, then maximizes fully met sites and minimizes travel.
+7. An exhaustive **deadline-constrained medical matching** assigns the bounded ambulance set only when pickup and receiving-hospital routes meet the modeled deadline. Unreachable cases become air-coordination requests; feasible cases left by the bounded fleet become a ground waitlist. The engine does not triage, confirm hospital acceptance, task an aircraft, or dispatch a vehicle.
+8. An exhaustive **drone information-value matching** assigns a bounded drone fleet by expected people, uncertainty, access difficulty, medical relevance, endurance, speed, and search coverage. It does not launch an aircraft or model weather, regulation, communications, terrain occlusion, or airspace clearance.
+9. A **single-corridor counterfactual replay** opens each blocked or unknown corridor individually, re-runs reachability, and ranks restored supply sites, feasible medical cases, and critical power sites against modeled clearance time. It does not estimate debris, structural work, crews, aftershocks, or legal priority.
+10. The deterministic adjudicator compares the linked yes/no worlds for each Sol evidence question. It ranks supply-coverage swing, critical-power gaps, ground-transfer plans, air-coordination requests, isolation and drone coverage with an explicit scoring rule. The model does not choose the score.
+11. A versioned replay package exports decisions, unresolved needs, algorithm counters, hard gates, and a canonical SHA-256 digest.
 
 The objectives are deliberately lexicographic where life-safety constraints are involved. A shorter route cannot compensate for an additional critical power gap or the loss of a higher-priority feasible medical transfer.
 
@@ -38,6 +41,16 @@ The objectives are deliberately lexicographic where life-safety constraints are 
 For the 0–6 hour phase, the top modeled single intervention is the fictional `airbase-coastal` corridor. In this counterfactual, weighted supply coverage rises from 50.2% to 69.0%, critical power gaps fall from one to zero, and modeled inaccessible nodes fall from three to two. This is a deterministic comparison inside the fictional graph, not an operational claim.
 
 The 0–6 hour baseline records 9 route searches, 72 road relaxations, 9 road-clearance replays, 9 min-cost-flow augmentations, 16 power assignment candidates, 1 medical assignment candidate, and 81 drone assignment candidates. Tests also prove that no accepted route traverses a blocked or unknown corridor and that evidence hashes are reproducible.
+
+### Reproduced Sol three-world adjudication
+
+| Synthetic world | Weighted supply | Critical power gaps | Ground plans | Air requests | Inaccessible nodes |
+|---|---:|---:|---:|---:|---:|
+| H1 — coastal access severed | 50.2% | 1 | 0 / 5 | 5 | 3 |
+| H2 — restricted corridors | 69.3% | 1 | 2 / 5 | 2 | 2 |
+| H3 — verified east/coastal route | 81.0% | 0 | 2 / 5 | 2 | 1 |
+
+The adjudicator ranks the authenticated end-to-end status of the fictional `airbase-coastal` road first. Between its linked worlds, that evidence changes supply coverage by 30.8 points, critical-power gaps by one, ground-transfer plans by two, air-coordination requests by three, and inaccessible nodes by two. Across the three worlds the fixture evaluates 615 exact power/medical/drone assignment candidates, 27 cached route searches, 39 min-cost-flow augmentations, and 22 road-clearance counterfactuals. These are reproducible fixture results, not calibrated probabilities or field-performance claims.
 
 ## Authority and safety contract
 

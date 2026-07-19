@@ -118,6 +118,7 @@ export interface NankaiResponseAnalysis {
   scenarioLabel: string;
   phase: NankaiPhase;
   interventionRoadId: string | null;
+  roadStateOverrides: Partial<Record<string, NankaiRoadState>>;
   nodes: NankaiNode[];
   roads: Array<NankaiRoad & { activeState: NankaiRoadState }>;
   supply: NankaiSupplyResult;
@@ -287,11 +288,20 @@ class MinHeap {
   }
 }
 
-function activeRoads(phase: NankaiPhase, interventionRoadId: string | null): ActiveRoad[] {
+function activeRoads(
+  phase: NankaiPhase,
+  interventionRoadId: string | null,
+  roadStateOverrides: Partial<Record<string, NankaiRoadState>> = {},
+): ActiveRoad[] {
   if (interventionRoadId && !NANKAI_ROADS.some((road) => road.id === interventionRoadId)) throw new Error("Unknown road-clearance intervention");
+  const roadIds = new Set(NANKAI_ROADS.map((road) => road.id));
+  for (const [roadId, state] of Object.entries(roadStateOverrides)) {
+    if (!roadIds.has(roadId)) throw new Error("Unknown reasoning road override");
+    if (!state || !["open", "degraded", "unknown", "blocked"].includes(state)) throw new Error("Unsupported reasoning road state");
+  }
   return NANKAI_ROADS.map((road) => ({
     ...road,
-    activeState: road.id === interventionRoadId ? "open" : road.stateByPhase[phase],
+    activeState: road.id === interventionRoadId ? "open" : roadStateOverrides[road.id] ?? road.stateByPhase[phase],
   }));
 }
 
@@ -680,28 +690,36 @@ function planDrones(router: ReturnType<typeof makeRouter>): NankaiDroneResult {
   };
 }
 
-function networkIndicators(phase: NankaiPhase, interventionRoadId: string | null) {
-  const router = makeRouter(activeRoads(phase, interventionRoadId));
+function networkIndicators(
+  phase: NankaiPhase,
+  interventionRoadId: string | null,
+  roadStateOverrides: Partial<Record<string, NankaiRoadState>>,
+) {
+  const router = makeRouter(activeRoads(phase, interventionRoadId, roadStateOverrides));
   const reachableServiceSites = SUPPLY_DEMANDS.filter((demand) => SUPPLY_DEPOTS.some((depot) => router.route(depot.nodeId, demand.nodeId))).map((demand) => demand.nodeId);
   const reachableCriticalSites = POWER_SITES.filter((site) => site.priority >= 4 && POWER_ASSETS.some((asset) => router.route(asset.baseNodeId, site.nodeId))).map((site) => site.nodeId);
   const feasibleMedicalCases = MEDICAL_CASES.filter((_, caseIndex) => AMBULANCES.some((_, vehicleIndex) => feasibleMedicalMission(router, vehicleIndex, caseIndex))).map((medicalCase) => medicalCase.id);
   return { reachableServiceSites, reachableCriticalSites, feasibleMedicalCases };
 }
 
-function rankClearance(phase: NankaiPhase): NankaiClearancePriority[] {
-  const baseline = networkIndicators(phase, null);
+function rankClearance(
+  phase: NankaiPhase,
+  roadStateOverrides: Partial<Record<string, NankaiRoadState>>,
+): NankaiClearancePriority[] {
+  const active = activeRoads(phase, null, roadStateOverrides);
+  const baseline = networkIndicators(phase, null, roadStateOverrides);
   const baselineService = new Set(baseline.reachableServiceSites);
   const baselineCritical = new Set(baseline.reachableCriticalSites);
   const baselineMedical = new Set(baseline.feasibleMedicalCases);
-  return NANKAI_ROADS.filter((road) => road.stateByPhase[phase] === "blocked" || road.stateByPhase[phase] === "unknown").map((road) => {
-    const after = networkIndicators(phase, road.id);
+  return active.filter((road) => road.activeState === "blocked" || road.activeState === "unknown").map((road) => {
+    const after = networkIndicators(phase, road.id, roadStateOverrides);
     const restoredServiceSites = after.reachableServiceSites.filter((id) => !baselineService.has(id)).length;
     const restoredCriticalSites = after.reachableCriticalSites.filter((id) => !baselineCritical.has(id)).length;
     const restoredMedicalCases = after.feasibleMedicalCases.filter((id) => !baselineMedical.has(id)).length;
     return {
       rank: 0,
       road,
-      baseState: road.stateByPhase[phase] as "unknown" | "blocked",
+      baseState: road.activeState as "unknown" | "blocked",
       restoredServiceSites,
       restoredMedicalCases,
       restoredCriticalSites,
@@ -710,15 +728,19 @@ function rankClearance(phase: NankaiPhase): NankaiClearancePriority[] {
   }).sort((left, right) => right.score - left.score || left.road.id.localeCompare(right.road.id)).map((item, index) => ({ ...item, rank: index + 1, score: Number(item.score.toFixed(1)) }));
 }
 
-export function analyzeNankaiResponse(phase: NankaiPhase = "first_6_hours", interventionRoadId: string | null = null): NankaiResponseAnalysis {
+export function analyzeNankaiResponse(
+  phase: NankaiPhase = "first_6_hours",
+  interventionRoadId: string | null = null,
+  roadStateOverrides: Partial<Record<string, NankaiRoadState>> = {},
+): NankaiResponseAnalysis {
   if (!NANKAI_PHASES.some((item) => item.id === phase)) throw new Error("Unsupported response phase");
-  const roads = activeRoads(phase, interventionRoadId);
+  const roads = activeRoads(phase, interventionRoadId, roadStateOverrides);
   const router = makeRouter(roads);
   const supply = planSupplies(router);
   const power = planPower(router);
   const medical = planMedical(router);
   const drone = planDrones(router);
-  const clearancePriorities = rankClearance(phase);
+  const clearancePriorities = rankClearance(phase, roadStateOverrides);
   const isolatedNodeIds = NANKAI_NODES.filter((node) => node.id !== "inland-command" && !router.route("inland-command", node.id)).map((node) => node.id);
   const routingStats = router.stats();
   return {
@@ -726,6 +748,7 @@ export function analyzeNankaiResponse(phase: NankaiPhase = "first_6_hours", inte
     scenarioLabel: "Synthetic Kochi coastal Nankai Trough maximum-class tabletop",
     phase,
     interventionRoadId,
+    roadStateOverrides: Object.fromEntries(Object.entries(roadStateOverrides).sort(([left], [right]) => left.localeCompare(right))),
     nodes: NANKAI_NODES,
     roads,
     supply,
@@ -766,6 +789,7 @@ export async function buildNankaiEvidence(analysis: NankaiResponseAnalysis) {
     scenarioLabel: analysis.scenarioLabel,
     phase: analysis.phase,
     interventionRoadId: analysis.interventionRoadId,
+    roadStateOverrides: analysis.roadStateOverrides,
     roadState: analysis.roads.map((road) => ({ id: road.id, state: road.activeState })),
     metrics: analysis.metrics,
     supply: analysis.supply.commodities.map((commodity) => ({ commodity: commodity.commodity, requestedUnits: commodity.requestedUnits, deliveredUnits: commodity.deliveredUnits, unmetBySite: commodity.unmetBySite })),
