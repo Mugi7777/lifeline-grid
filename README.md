@@ -14,6 +14,7 @@ The synthetic Mizunoki District model connects eight locations with twelve roads
 - every modeled single-road failure;
 - households and vulnerable residents losing on-time access;
 - exact pooled fleet assignments for the inspectable six-stop scenario;
+- a deterministic three-start insertion and 2-opt solver for bounded requests up to 250 demand zones, with no false optimality claim;
 - a deterministic 64-scenario demand and travel stress suite; and
 - every eligible repair portfolio under an adjustable public budget.
 
@@ -142,6 +143,7 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 - `/api/analyze` converts narrative reports into strict, source-linked power contracts.
 - `/api/event` converts a narrative disruption into structured mission state.
 - `/api/regional-event` converts a fictional inspection note into a supported road restriction.
+- `/api/regional-plan` accepts a versioned regional model, enforces bounded runtime validation, chooses the exact or scalable solver, and returns a deterministic SHA-256 request identity plus route-level constraint evidence.
 - The model never performs energy arithmetic, chooses the winning allocation, or authorizes dispatch.
 - Both endpoints display whether GPT-5.6 ran live or a transparent synthetic fallback was used.
 
@@ -185,6 +187,7 @@ Tests verify:
 - a two-mission counterfactual reallocation after an adverse answer;
 - exact single-vehicle and single-route contingency coverage;
 - exact pooled heterogeneous regional delivery;
+- deterministic 30-stop scalable planning, hard-limit preservation, bounded-input rejection, and replay identity;
 - road weight, capacity, cold-chain, deadline, and shift invariants;
 - service-weighted N-1 road criticality;
 - exact budget-constrained repair portfolio selection;
@@ -202,9 +205,10 @@ Tests verify:
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
 - `app/api/regional-event/route.ts` — GPT-5.6 regional inspection-note interpretation
+- `app/api/regional-plan/route.ts` — versioned external planning contract and deterministic audit response
 - `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
-- `lib/regional.ts` — exact pooled VRPTW, road-graph N-1 analysis, stress suite, and exact repair portfolio
+- `lib/regional.ts` — exact pooled VRPTW, bounded deterministic multi-start solver, road-graph N-1 analysis, stress suite, and exact repair portfolio
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
@@ -216,10 +220,11 @@ Tests verify:
 - `REGIONAL_PRODUCT.md` — target users, data contracts, commercial model, rollout, and product metrics
 - `COMPETITIVE_STRATEGY.md` — honest Google/Cainiao comparison and defensibility plan
 - `SCALE_ARCHITECTURE.md` — scale architecture, solver tiers, SLO targets, security, and evaluation gates
+- `BENCHMARKS.md` — reproducible 100/250-stop synthetic performance fixture and result boundaries
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for these deliberately small, inspectable demos. The regional engine certifies the modeled six-stop optimum; it does not claim Google-scale routing throughput. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. The in-browser evidence chain is portable integrity evidence, not durable storage or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, append-only signed audit storage, authoritative road data, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
+Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. The API digest supports replay identity, not durable storage or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, append-only signed audit storage, authoritative road data, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

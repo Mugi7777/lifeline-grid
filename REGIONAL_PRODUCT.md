@@ -20,13 +20,15 @@ The current synthetic Mizunoki District demonstration includes:
 - road condition, modeled failure probability, repair cost, and weight-limit constraints;
 - parcel, cold-chain, deadline, priority, household, and vulnerable-resident demand attributes;
 - exact pooled vehicle routing for the inspectable six-stop scenario;
+- deterministic multi-start insertion plus 2-opt for bounded requests up to 250 demand zones, explicitly without an optimality claim;
 - exact N-1 removal of every modeled road segment;
 - a service-weighted road criticality ranking;
 - exact repair-portfolio selection under a user-controlled budget;
 - a deterministic 64-scenario demand and travel stress suite;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
 - a transparent fallback when live model access is unavailable; and
-- explicit synthetic-data and advisory-only boundaries.
+- explicit synthetic-data and advisory-only boundaries; and
+- a versioned `/api/regional-plan` contract with request-size limits, runtime model validation, deterministic request hashes, and route-level constraint evidence.
 
 In the baseline scenario, the exact planner covers all 418 modeled households and all 152 modeled vulnerable residents on time. Removing North Forest Road exposes on-time access for 64 households and 32 vulnerable residents while the optimizer continues protecting the two critical deliveries. These are reproducible synthetic scenario results, not field-performance claims.
 
@@ -100,4 +102,3 @@ The initial buyer should be a Japanese municipality-led delivery council with at
 - repair-budget risk reduction;
 - operator acceptance, override, and disagreement rate; and
 - unsafe or unsupported recommendation rate.
-

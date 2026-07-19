@@ -168,7 +168,10 @@ Regional tests additionally assert:
 - parcel, cold-chain, and shift constraints remain hard;
 - no late or unserved demand is hidden from the coverage metric;
 - N-1 closure results reproduce exactly; and
-- the complete regional analysis is deterministic for audit replay.
+- the complete regional analysis is deterministic for audit replay;
+- a 30-stop request selects the deterministic scalable solver, serves every synthetic demand, and never labels the result optimal;
+- the scalable solver reproduces identical planning data and preserves capacity, cold-chain, and shift limits; and
+- unversioned, oversized, non-finite, or structurally invalid external planning requests fail closed.
 
 ## Reproduce
 

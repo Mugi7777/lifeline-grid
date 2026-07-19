@@ -73,3 +73,76 @@ test("regional event endpoint converts an inspection note into a supported road 
   assert.equal(payload.event.roadSegmentId, "center-north");
   assert.equal(payload.event.restriction, "closed");
 });
+
+test("regional planning endpoint returns a versioned deterministic audit result", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `regional-plan-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const requestBody = {
+    schemaVersion: "2026-07-19",
+    model: {
+      district: "API contract test · synthetic",
+      nodes: [
+        { id: "hub", label: "Hub", kind: "hub", x: 0, y: 0 },
+        { id: "village", label: "Village", kind: "community", x: 1, y: 1 },
+      ],
+      roads: [{
+        id: "connector", label: "Connector", from: "hub", to: "village",
+        distanceKm: 4, travelMinutes: 8, conditionGrade: 2,
+        annualFailureProbability: 0.02, repairCostM: 12, weightLimitT: 8,
+      }],
+      demands: [{
+        id: "medicine", nodeId: "village", label: "Medicine", households: 20,
+        vulnerableResidents: 8, parcels: 4, coldParcels: 2,
+        deadlineMinutes: 60, priority: "critical",
+      }],
+      vehicles: [{
+        id: "van", label: "Cold van", operator: "Test operator", depotNodeId: "hub",
+        capacityParcels: 10, coldCapacity: 5, shiftMinutes: 120, weightT: 3,
+        emissionsKgPerKm: 0.1, color: "#176b55",
+      }],
+    },
+    closedRoadIds: [],
+  };
+  const invoke = () => worker.fetch(
+    new Request("http://localhost/api/regional-plan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(requestBody),
+    }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+
+  const firstResponse = await invoke();
+  const secondResponse = await invoke();
+  assert.equal(firstResponse.status, 200);
+  assert.equal(secondResponse.status, 200);
+  const first = await firstResponse.json();
+  const second = await secondResponse.json();
+  assert.equal(first.schemaVersion, "2026-07-19");
+  assert.match(first.inputDigest, /^sha256:[0-9a-f]{64}$/);
+  assert.equal(first.requestId, second.requestId);
+  assert.equal(first.plan.optimalityCertified, true);
+  assert.equal(first.plan.metrics.criticalFailures, 0);
+  assert.equal(first.constraintEvidence[0].coldChain.pass, true);
+  assert.equal(first.advisoryOnly, true);
+});
+
+test("regional planning endpoint rejects an unversioned payload", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `regional-plan-invalid-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/regional-plan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: {} }),
+    }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 422);
+  const payload = await response.json();
+  assert.equal(payload.error, "invalid_request_schema");
+});

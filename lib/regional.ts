@@ -89,12 +89,20 @@ export interface RegionalPlanMetrics {
 }
 
 export interface RegionalDeliveryPlan {
-  algorithm: "Exact pooled heterogeneous VRPTW";
+  algorithm: "Exact pooled heterogeneous VRPTW" | "Deterministic multi-start insertion VRPTW";
   routes: RegionalVehicleRoute[];
   metrics: RegionalPlanMetrics;
   candidateAssignments: number;
   feasibleAssignments: number;
   optimalityCertified: boolean;
+  search: {
+    mode: "exact" | "scalable-heuristic";
+    deterministic: true;
+    starts: number;
+    candidatesEvaluated: number;
+    feasibleCandidates: number;
+    optimalityGap: number | null;
+  };
 }
 
 export interface RoadCriticality {
@@ -165,46 +173,116 @@ interface CandidateRoute extends RegionalVehicleRoute {
 
 const round = (value: number, digits = 1) => Number(value.toFixed(digits));
 const defaultPlanCache = new Map<string, RegionalDeliveryPlan>();
+const EXACT_ASSIGNMENT_LIMIT = 1_000_000;
+const EXACT_ROUTE_ORDER_LIMIT = 2_000_000;
 
-export function validateRegionalModel(model: RegionalModel): RegionalModelValidation {
+export function estimateRegionalExactSearch(model: Pick<RegionalModel, "demands" | "vehicles">) {
+  const demandCount = model.demands.length;
+  const assignmentCandidates = (model.vehicles.length + 1) ** demandCount;
+  let routeOrdersPerVehicle = 1;
+  let partialPermutation = 1;
+  for (let size = 1; size <= demandCount; size += 1) {
+    partialPermutation *= demandCount - size + 1;
+    routeOrdersPerVehicle += partialPermutation;
+  }
+  const routeOrderCandidates = routeOrdersPerVehicle * model.vehicles.length;
+  return {
+    assignmentCandidates,
+    routeOrderCandidates,
+    withinBudget: assignmentCandidates <= EXACT_ASSIGNMENT_LIMIT && routeOrderCandidates <= EXACT_ROUTE_ORDER_LIMIT,
+    limits: {
+      assignmentCandidates: EXACT_ASSIGNMENT_LIMIT,
+      routeOrderCandidates: EXACT_ROUTE_ORDER_LIMIT,
+    },
+  };
+}
+
+export function validateRegionalModel(
+  model: RegionalModel,
+  options: { maxDemands?: number; solverLabel?: string; enforceExactSearchBudget?: boolean } = {},
+): RegionalModelValidation {
   const errors: string[] = [];
+  const maxDemands = options.maxDemands ?? 10;
+  const solverLabel = options.solverLabel ?? "the inspectable exact solver";
   const duplicateIds = (values: string[]) => values.filter((value, index) => values.indexOf(value) !== index);
+  const finite = (values: number[]) => values.every(Number.isFinite);
+  const validId = (value: string) => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(value);
   const nodeIds = new Set(model.nodes.map((node) => node.id));
   const roadIds = model.roads.map((road) => road.id);
   const demandIds = model.demands.map((demand) => demand.id);
   const vehicleIds = model.vehicles.map((vehicle) => vehicle.id);
 
-  if (!model.district.trim()) errors.push("district is required");
+  if (!model.district.trim() || model.district.length > 160) errors.push("district is required and must be at most 160 characters");
   if (model.nodes.length < 2) errors.push("at least two nodes are required");
+  if (model.nodes.length > 500) errors.push("at most 500 nodes are accepted per planning request");
   if (model.roads.length < 1) errors.push("at least one road is required");
+  if (model.roads.length > 2_000) errors.push("at most 2,000 roads are accepted per planning request");
   if (model.demands.length < 1) errors.push("at least one demand is required");
-  if (model.demands.length > 10) errors.push("the inspectable exact solver accepts at most 10 demands");
+  if (model.demands.length > maxDemands) errors.push(`${solverLabel} accepts at most ${maxDemands} demands`);
   if (model.vehicles.length < 1) errors.push("at least one vehicle is required");
+  if (model.vehicles.length > 100) errors.push("at most 100 vehicles are accepted per planning request");
+  if ((options.enforceExactSearchBudget ?? true) && model.demands.length <= maxDemands) {
+    const estimate = estimateRegionalExactSearch(model);
+    if (!estimate.withinBudget) {
+      errors.push(`${solverLabel} search budget exceeded; use the bounded scalable solver`);
+    }
+  }
   for (const id of duplicateIds(model.nodes.map((node) => node.id))) errors.push(`duplicate node id: ${id}`);
   for (const id of duplicateIds(roadIds)) errors.push(`duplicate road id: ${id}`);
   for (const id of duplicateIds(demandIds)) errors.push(`duplicate demand id: ${id}`);
   for (const id of duplicateIds(vehicleIds)) errors.push(`duplicate vehicle id: ${id}`);
 
+  for (const node of model.nodes) {
+    if (!validId(node.id)) errors.push(`node id is invalid: ${node.id}`);
+    if (!node.label.trim() || node.label.length > 160) errors.push(`node ${node.id} has an invalid label`);
+    if (!["hub", "community", "clinic"].includes(node.kind)) errors.push(`node ${node.id} has an invalid kind`);
+    if (!finite([node.x, node.y])) errors.push(`node ${node.id} contains a non-finite coordinate`);
+  }
+
   for (const road of model.roads) {
+    if (!validId(road.id)) errors.push(`road id is invalid: ${road.id}`);
+    if (!road.label.trim() || road.label.length > 160) errors.push(`road ${road.id} has an invalid label`);
     if (!nodeIds.has(road.from) || !nodeIds.has(road.to)) errors.push(`road ${road.id} references an unknown node`);
     if (road.from === road.to) errors.push(`road ${road.id} must connect two different nodes`);
+    if (!finite([road.distanceKm, road.travelMinutes, road.annualFailureProbability, road.repairCostM, road.weightLimitT])) errors.push(`road ${road.id} contains a non-finite number`);
+    if (!Number.isInteger(road.conditionGrade) || road.conditionGrade < 1 || road.conditionGrade > 5) errors.push(`road ${road.id} has an invalid condition grade`);
     if (road.distanceKm <= 0 || road.travelMinutes <= 0) errors.push(`road ${road.id} requires positive distance and travel time`);
+    if (road.distanceKm > 1_000_000 || road.travelMinutes > 1_000_000 || road.repairCostM > 1_000_000_000_000 || road.weightLimitT > 10_000) errors.push(`road ${road.id} exceeds a bounded numeric limit`);
     if (road.annualFailureProbability < 0 || road.annualFailureProbability > 1) errors.push(`road ${road.id} failure probability must be between 0 and 1`);
     if (road.repairCostM < 0 || road.weightLimitT <= 0) errors.push(`road ${road.id} has invalid repair cost or weight limit`);
   }
   for (const demand of model.demands) {
+    if (!validId(demand.id)) errors.push(`demand id is invalid: ${demand.id}`);
+    if (!demand.label.trim() || demand.label.length > 160) errors.push(`demand ${demand.id} has an invalid label`);
     if (!nodeIds.has(demand.nodeId)) errors.push(`demand ${demand.id} references an unknown node`);
+    if (!finite([demand.households, demand.vulnerableResidents, demand.parcels, demand.coldParcels, demand.deadlineMinutes])) errors.push(`demand ${demand.id} contains a non-finite number`);
+    if (!["critical", "essential", "standard"].includes(demand.priority)) errors.push(`demand ${demand.id} has an invalid priority`);
+    if (![demand.households, demand.vulnerableResidents, demand.parcels, demand.coldParcels].every(Number.isInteger)) errors.push(`demand ${demand.id} quantities must be integers`);
     if (demand.households < 0 || demand.vulnerableResidents < 0 || demand.parcels < 0 || demand.coldParcels < 0) errors.push(`demand ${demand.id} contains a negative quantity`);
+    if (demand.households > 1_000_000_000 || demand.vulnerableResidents > 1_000_000_000 || demand.parcels > 1_000_000_000 || demand.deadlineMinutes > 10_000_000) errors.push(`demand ${demand.id} exceeds a bounded numeric limit`);
     if (demand.coldParcels > demand.parcels) errors.push(`demand ${demand.id} cold parcels exceed total parcels`);
     if (demand.deadlineMinutes <= 0) errors.push(`demand ${demand.id} requires a positive deadline`);
   }
   for (const vehicle of model.vehicles) {
+    if (!validId(vehicle.id)) errors.push(`vehicle id is invalid: ${vehicle.id}`);
+    if (!vehicle.label.trim() || vehicle.label.length > 160 || !vehicle.operator.trim() || vehicle.operator.length > 160) errors.push(`vehicle ${vehicle.id} has an invalid label or operator`);
     if (!nodeIds.has(vehicle.depotNodeId)) errors.push(`vehicle ${vehicle.id} references an unknown depot`);
+    if (!finite([vehicle.capacityParcels, vehicle.coldCapacity, vehicle.shiftMinutes, vehicle.weightT, vehicle.emissionsKgPerKm])) errors.push(`vehicle ${vehicle.id} contains a non-finite number`);
+    if (!Number.isInteger(vehicle.capacityParcels) || !Number.isInteger(vehicle.coldCapacity)) errors.push(`vehicle ${vehicle.id} capacities must be integers`);
     if (vehicle.capacityParcels <= 0 || vehicle.coldCapacity < 0 || vehicle.shiftMinutes <= 0 || vehicle.weightT <= 0) errors.push(`vehicle ${vehicle.id} contains an invalid hard limit`);
+    if (vehicle.capacityParcels > 1_000_000_000 || vehicle.shiftMinutes > 10_000_000 || vehicle.weightT > 10_000 || vehicle.emissionsKgPerKm > 1_000_000) errors.push(`vehicle ${vehicle.id} exceeds a bounded numeric limit`);
     if (vehicle.coldCapacity > vehicle.capacityParcels) errors.push(`vehicle ${vehicle.id} cold capacity exceeds total capacity`);
     if (vehicle.emissionsKgPerKm < 0) errors.push(`vehicle ${vehicle.id} emissions cannot be negative`);
   }
   return { valid: errors.length === 0, errors };
+}
+
+export function validateScalableRegionalModel(model: RegionalModel): RegionalModelValidation {
+  return validateRegionalModel(model, {
+    maxDemands: 250,
+    solverLabel: "the bounded scalable solver",
+    enforceExactSearchBudget: false,
+  });
 }
 
 export const REGIONAL_MODEL: RegionalModel = {
@@ -272,28 +350,58 @@ function shortestLeg(
   const best = new Map<string, number>([[from, 0]]);
   const distance = new Map<string, number>([[from, 0]]);
   const previous = new Map<string, { node: string; roadId: string }>();
-  const unvisited = new Set(model.nodes.map((node) => node.id));
-
-  while (unvisited.size > 0) {
-    let current: string | null = null;
-    let currentCost = Number.POSITIVE_INFINITY;
-    for (const node of unvisited) {
-      const cost = best.get(node) ?? Number.POSITIVE_INFINITY;
-      if (cost < currentCost) {
-        current = node;
-        currentCost = cost;
+  type HeapItem = { node: string; cost: number; distanceKm: number };
+  const heap: HeapItem[] = [{ node: from, cost: 0, distanceKm: 0 }];
+  const less = (left: HeapItem, right: HeapItem) => left.cost < right.cost
+    || (left.cost === right.cost && left.distanceKm < right.distanceKm)
+    || (left.cost === right.cost && left.distanceKm === right.distanceKm && left.node < right.node);
+  const push = (item: HeapItem) => {
+    heap.push(item);
+    let index = heap.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (!less(heap[index], heap[parent])) break;
+      [heap[index], heap[parent]] = [heap[parent], heap[index]];
+      index = parent;
+    }
+  };
+  const pop = () => {
+    const first = heap[0];
+    const last = heap.pop();
+    if (heap.length > 0 && last) {
+      heap[0] = last;
+      let index = 0;
+      while (true) {
+        const left = index * 2 + 1;
+        const right = left + 1;
+        let smallest = index;
+        if (left < heap.length && less(heap[left], heap[smallest])) smallest = left;
+        if (right < heap.length && less(heap[right], heap[smallest])) smallest = right;
+        if (smallest === index) break;
+        [heap[index], heap[smallest]] = [heap[smallest], heap[index]];
+        index = smallest;
       }
     }
-    if (!current || currentCost === Number.POSITIVE_INFINITY) break;
-    unvisited.delete(current);
-    if (current === to) break;
-    for (const edge of adjacency.get(current) ?? []) {
-      if (!unvisited.has(edge.to)) continue;
-      const nextCost = currentCost + edge.road.travelMinutes;
-      if (nextCost < (best.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
+    return first;
+  };
+
+  while (heap.length > 0) {
+    const current = pop();
+    if (!current) break;
+    const knownCost = best.get(current.node) ?? Number.POSITIVE_INFINITY;
+    const knownDistance = distance.get(current.node) ?? Number.POSITIVE_INFINITY;
+    if (current.cost !== knownCost || current.distanceKm !== knownDistance) continue;
+    if (current.node === to) break;
+    for (const edge of adjacency.get(current.node) ?? []) {
+      const nextCost = current.cost + edge.road.travelMinutes;
+      const nextDistance = current.distanceKm + edge.road.distanceKm;
+      const priorCost = best.get(edge.to) ?? Number.POSITIVE_INFINITY;
+      const priorDistance = distance.get(edge.to) ?? Number.POSITIVE_INFINITY;
+      if (nextCost < priorCost || (nextCost === priorCost && nextDistance < priorDistance)) {
         best.set(edge.to, nextCost);
-        distance.set(edge.to, (distance.get(current) ?? 0) + edge.road.distanceKm);
-        previous.set(edge.to, { node: current, roadId: edge.road.id });
+        distance.set(edge.to, nextDistance);
+        previous.set(edge.to, { node: current.node, roadId: edge.road.id });
+        push({ node: edge.to, cost: nextCost, distanceKm: nextDistance });
       }
     }
   }
@@ -333,80 +441,91 @@ function compareRoute(a: CandidateRoute, b: CandidateRoute) {
   return 0;
 }
 
+function emptyRoute(vehicle: RegionalVehicle): CandidateRoute {
+  return {
+    vehicle,
+    stops: [],
+    demandIds: [],
+    distanceKm: 0,
+    totalMinutes: 0,
+    parcels: 0,
+    coldParcels: 0,
+    emissionsKg: 0,
+    usedRoadSegmentIds: [],
+    lateCritical: 0,
+    lateStops: 0,
+  };
+}
+
+type LegLookup = (from: string, to: string, vehicle: RegionalVehicle) => GraphLeg | null;
+
+function routeForOrder(
+  model: RegionalModel,
+  vehicle: RegionalVehicle,
+  order: number[],
+  legLookup: LegLookup,
+): CandidateRoute | null {
+  if (order.length === 0) return emptyRoute(vehicle);
+  const subset = order.map((index) => model.demands[index]);
+  const parcels = subset.reduce((sum, demand) => sum + demand.parcels, 0);
+  const coldParcels = subset.reduce((sum, demand) => sum + demand.coldParcels, 0);
+  if (parcels > vehicle.capacityParcels || coldParcels > vehicle.coldCapacity) return null;
+
+  let currentNode = vehicle.depotNodeId;
+  let totalMinutes = 0;
+  let distanceKm = 0;
+  const stops: RouteStop[] = [];
+  const usedRoadSegmentIds: string[] = [];
+  for (const demandIndex of order) {
+    const demand = model.demands[demandIndex];
+    const leg = legLookup(currentNode, demand.nodeId, vehicle);
+    if (!leg) return null;
+    totalMinutes += leg.travelMinutes;
+    distanceKm += leg.distanceKm;
+    usedRoadSegmentIds.push(...leg.roadIds);
+    stops.push({
+      demandId: demand.id,
+      label: demand.label,
+      arrivalMinutes: totalMinutes,
+      deadlineMinutes: demand.deadlineMinutes,
+      onTime: totalMinutes <= demand.deadlineMinutes,
+    });
+    totalMinutes += 7;
+    currentNode = demand.nodeId;
+  }
+  const returnLeg = legLookup(currentNode, vehicle.depotNodeId, vehicle);
+  if (!returnLeg) return null;
+  totalMinutes += returnLeg.travelMinutes;
+  distanceKm += returnLeg.distanceKm;
+  usedRoadSegmentIds.push(...returnLeg.roadIds);
+  if (totalMinutes > vehicle.shiftMinutes) return null;
+  const lateDemandIds = new Set(stops.filter((stop) => !stop.onTime).map((stop) => stop.demandId));
+  return {
+    vehicle,
+    stops,
+    demandIds: order.map((index) => model.demands[index].id),
+    distanceKm: round(distanceKm),
+    totalMinutes: round(totalMinutes),
+    parcels,
+    coldParcels,
+    emissionsKg: round(distanceKm * vehicle.emissionsKgPerKm, 2),
+    usedRoadSegmentIds: [...new Set(usedRoadSegmentIds)],
+    lateCritical: subset.filter((demand) => demand.priority === "critical" && lateDemandIds.has(demand.id)).length,
+    lateStops: lateDemandIds.size,
+  };
+}
+
 function bestRouteForSubset(
   model: RegionalModel,
   vehicle: RegionalVehicle,
   demandIndices: number[],
   closedRoadIds: Set<string>,
 ): CandidateRoute | null {
-  if (demandIndices.length === 0) {
-    return {
-      vehicle,
-      stops: [],
-      demandIds: [],
-      distanceKm: 0,
-      totalMinutes: 0,
-      parcels: 0,
-      coldParcels: 0,
-      emissionsKg: 0,
-      usedRoadSegmentIds: [],
-      lateCritical: 0,
-      lateStops: 0,
-    };
-  }
-  const subset = demandIndices.map((index) => model.demands[index]);
-  const parcels = subset.reduce((sum, demand) => sum + demand.parcels, 0);
-  const coldParcels = subset.reduce((sum, demand) => sum + demand.coldParcels, 0);
-  if (parcels > vehicle.capacityParcels || coldParcels > vehicle.coldCapacity) return null;
-
+  const legLookup: LegLookup = (from, to, candidateVehicle) => shortestLeg(model, from, to, closedRoadIds, candidateVehicle);
   let bestRoute: CandidateRoute | null = null;
   for (const order of permutations(demandIndices)) {
-    let currentNode = vehicle.depotNodeId;
-    let totalMinutes = 0;
-    let distanceKm = 0;
-    let possible = true;
-    const stops: RouteStop[] = [];
-    const usedRoadSegmentIds: string[] = [];
-    for (const demandIndex of order) {
-      const demand = model.demands[demandIndex];
-      const leg = shortestLeg(model, currentNode, demand.nodeId, closedRoadIds, vehicle);
-      if (!leg) {
-        possible = false;
-        break;
-      }
-      totalMinutes += leg.travelMinutes;
-      distanceKm += leg.distanceKm;
-      usedRoadSegmentIds.push(...leg.roadIds);
-      stops.push({
-        demandId: demand.id,
-        label: demand.label,
-        arrivalMinutes: totalMinutes,
-        deadlineMinutes: demand.deadlineMinutes,
-        onTime: totalMinutes <= demand.deadlineMinutes,
-      });
-      totalMinutes += 7;
-      currentNode = demand.nodeId;
-    }
-    const returnLeg = possible ? shortestLeg(model, currentNode, vehicle.depotNodeId, closedRoadIds, vehicle) : null;
-    if (!possible || !returnLeg) continue;
-    totalMinutes += returnLeg.travelMinutes;
-    distanceKm += returnLeg.distanceKm;
-    usedRoadSegmentIds.push(...returnLeg.roadIds);
-    if (totalMinutes > vehicle.shiftMinutes) continue;
-    const lateDemandIds = new Set(stops.filter((stop) => !stop.onTime).map((stop) => stop.demandId));
-    const candidate: CandidateRoute = {
-      vehicle,
-      stops,
-      demandIds: order.map((index) => model.demands[index].id),
-      distanceKm: round(distanceKm),
-      totalMinutes: round(totalMinutes),
-      parcels,
-      coldParcels,
-      emissionsKg: round(distanceKm * vehicle.emissionsKgPerKm, 2),
-      usedRoadSegmentIds: [...new Set(usedRoadSegmentIds)],
-      lateCritical: subset.filter((demand) => demand.priority === "critical" && lateDemandIds.has(demand.id)).length,
-      lateStops: lateDemandIds.size,
-    };
+    const candidate = routeForOrder(model, vehicle, order, legLookup);
+    if (!candidate) continue;
     if (!bestRoute || compareRoute(candidate, bestRoute) < 0) bestRoute = candidate;
   }
   return bestRoute;
@@ -431,8 +550,8 @@ function buildMetrics(model: RegionalModel, routes: RegionalVehicleRoute[]): Reg
   const householdsCovered = covered.reduce((sum, demand) => sum + demand.households, 0);
   const vulnerableResidentsCovered = covered.reduce((sum, demand) => sum + demand.vulnerableResidents, 0);
   return {
-    serviceCoveragePercent: round((householdsCovered / totalHouseholds) * 100),
-    vulnerableCoveragePercent: round((vulnerableResidentsCovered / totalVulnerable) * 100),
+    serviceCoveragePercent: totalHouseholds > 0 ? round((householdsCovered / totalHouseholds) * 100) : 100,
+    vulnerableCoveragePercent: totalVulnerable > 0 ? round((vulnerableResidentsCovered / totalVulnerable) * 100) : 100,
     householdsCovered,
     vulnerableResidentsCovered,
     parcelsDeliveredOnTime: covered.reduce((sum, demand) => sum + demand.parcels, 0),
@@ -524,15 +643,218 @@ export function solveRegionalDelivery(
       candidateAssignments,
       feasibleAssignments: 0,
       optimalityCertified: true,
+      search: {
+        mode: "exact",
+        deterministic: true,
+        starts: 1,
+        candidatesEvaluated: candidateAssignments,
+        feasibleCandidates: 0,
+        optimalityGap: 0,
+      },
     };
     if (!bestPlan || comparePlans(model, plan, bestPlan) < 0) bestPlan = plan;
   }
 
   visit(0);
   if (!bestPlan) throw new Error("No feasible regional delivery plan exists");
-  const result = { ...bestPlan, feasibleAssignments };
+  const result = {
+    ...bestPlan,
+    feasibleAssignments,
+    search: { ...bestPlan.search, feasibleCandidates: feasibleAssignments },
+  };
   if (cacheKey) defaultPlanCache.set(cacheKey, result);
   return result;
+}
+
+function compareNumberTuples(left: number[], right: number[]) {
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return left[index] - right[index];
+  }
+  return 0;
+}
+
+function lateVulnerableResidents(model: RegionalModel, route: CandidateRoute) {
+  const late = new Set(route.stops.filter((stop) => !stop.onTime).map((stop) => stop.demandId));
+  return model.demands
+    .filter((demand) => late.has(demand.id))
+    .reduce((sum, demand) => sum + demand.vulnerableResidents, 0);
+}
+
+function deterministicDemandOrders(model: RegionalModel) {
+  const indices = model.demands.map((_, index) => index);
+  const priorityRank: Record<RegionalPriority, number> = { critical: 0, essential: 1, standard: 2 };
+  const stable = (left: number, right: number) => model.demands[left].id.localeCompare(model.demands[right].id);
+  return [
+    [...indices].sort((left, right) => {
+      const a = model.demands[left];
+      const b = model.demands[right];
+      return priorityRank[a.priority] - priorityRank[b.priority]
+        || a.deadlineMinutes - b.deadlineMinutes
+        || b.vulnerableResidents - a.vulnerableResidents
+        || b.coldParcels - a.coldParcels
+        || stable(left, right);
+    }),
+    [...indices].sort((left, right) => {
+      const a = model.demands[left];
+      const b = model.demands[right];
+      return a.deadlineMinutes - b.deadlineMinutes
+        || priorityRank[a.priority] - priorityRank[b.priority]
+        || b.vulnerableResidents - a.vulnerableResidents
+        || stable(left, right);
+    }),
+    [...indices].sort((left, right) => {
+      const a = model.demands[left];
+      const b = model.demands[right];
+      const aDifficulty = a.coldParcels * 10_000 + a.parcels * 100 + a.vulnerableResidents;
+      const bDifficulty = b.coldParcels * 10_000 + b.parcels * 100 + b.vulnerableResidents;
+      return priorityRank[a.priority] - priorityRank[b.priority]
+        || bDifficulty - aDifficulty
+        || a.deadlineMinutes - b.deadlineMinutes
+        || stable(left, right);
+    }),
+  ];
+}
+
+/**
+ * Deterministic bounded solver for pilot-scale request payloads.
+ *
+ * This solver produces constraint-feasible routes but does not claim optimality.
+ * It runs three priority-aware insertion starts and a deterministic 2-opt pass,
+ * then returns the best complete plan under the same lexicographic public-service
+ * objective as the inspectable exact solver.
+ */
+export function solveRegionalDeliveryScalable(
+  model: RegionalModel,
+  closedRoadIds: string[] = [],
+): RegionalDeliveryPlan {
+  const validation = validateScalableRegionalModel(model);
+  if (!validation.valid) throw new Error(`Invalid scalable regional model: ${validation.errors.join("; ")}`);
+  const knownRoadIds = new Set(model.roads.map((road) => road.id));
+  const unknownClosures = closedRoadIds.filter((id) => !knownRoadIds.has(id));
+  if (unknownClosures.length > 0) throw new Error(`Unknown closed road: ${unknownClosures.join(", ")}`);
+
+  const closed = new Set(closedRoadIds);
+  const legCache = new Map<string, GraphLeg | null>();
+  const legLookup: LegLookup = (from, to, vehicle) => {
+    // Graph reachability depends on the weight threshold, not vehicle identity.
+    // Sharing legs across equal-weight vehicles avoids duplicate routing work.
+    const key = `${vehicle.weightT}|${from}|${to}`;
+    if (!legCache.has(key)) legCache.set(key, shortestLeg(model, from, to, closed, vehicle));
+    return legCache.get(key) ?? null;
+  };
+  let candidatesEvaluated = 0;
+  let feasibleCandidates = 0;
+
+  const buildStart = (demandOrder: number[]): RegionalDeliveryPlan => {
+    const routeOrders = model.vehicles.map(() => [] as number[]);
+    let routes = model.vehicles.map((vehicle) => emptyRoute(vehicle));
+
+    for (const demandIndex of demandOrder) {
+      let best: { vehicleIndex: number; order: number[]; route: CandidateRoute; tuple: number[] } | null = null;
+      for (let vehicleIndex = 0; vehicleIndex < model.vehicles.length; vehicleIndex += 1) {
+        const vehicle = model.vehicles[vehicleIndex];
+        const current = routes[vehicleIndex];
+        for (let position = 0; position <= routeOrders[vehicleIndex].length; position += 1) {
+          candidatesEvaluated += 1;
+          const order = [
+            ...routeOrders[vehicleIndex].slice(0, position),
+            demandIndex,
+            ...routeOrders[vehicleIndex].slice(position),
+          ];
+          const candidate = routeForOrder(model, vehicle, order, legLookup);
+          if (!candidate) continue;
+          feasibleCandidates += 1;
+          const tuple = [
+            candidate.lateCritical - current.lateCritical,
+            lateVulnerableResidents(model, candidate) - lateVulnerableResidents(model, current),
+            candidate.lateStops - current.lateStops,
+            candidate.totalMinutes - current.totalMinutes,
+            candidate.distanceKm - current.distanceKm,
+            candidate.emissionsKg - current.emissionsKg,
+            vehicleIndex,
+            position,
+          ];
+          if (!best || compareNumberTuples(tuple, best.tuple) < 0) {
+            best = { vehicleIndex, order, route: candidate, tuple };
+          }
+        }
+      }
+      if (best) {
+        routeOrders[best.vehicleIndex] = best.order;
+        routes[best.vehicleIndex] = best.route;
+      }
+    }
+
+    // A bounded deterministic 2-opt pass reduces avoidable travel without
+    // changing vehicle ownership or silently relaxing any hard constraint.
+    routes = routes.map((route, vehicleIndex) => {
+      let bestRoute = route;
+      let bestOrder = routeOrders[vehicleIndex];
+      for (let left = 0; left < bestOrder.length - 1; left += 1) {
+        for (let right = left + 1; right < bestOrder.length; right += 1) {
+          candidatesEvaluated += 1;
+          const candidateOrder = [
+            ...bestOrder.slice(0, left),
+            ...bestOrder.slice(left, right + 1).reverse(),
+            ...bestOrder.slice(right + 1),
+          ];
+          const candidate = routeForOrder(model, route.vehicle, candidateOrder, legLookup);
+          if (!candidate) continue;
+          feasibleCandidates += 1;
+          if (compareRoute(candidate, bestRoute) < 0) {
+            bestRoute = candidate;
+            bestOrder = candidateOrder;
+          }
+        }
+      }
+      routeOrders[vehicleIndex] = bestOrder;
+      return bestRoute;
+    });
+
+    const activeRoutes = routes.filter((route) => route.demandIds.length > 0);
+    return {
+      algorithm: "Deterministic multi-start insertion VRPTW",
+      routes: activeRoutes,
+      metrics: buildMetrics(model, activeRoutes),
+      candidateAssignments: 0,
+      feasibleAssignments: 0,
+      optimalityCertified: false,
+      search: {
+        mode: "scalable-heuristic",
+        deterministic: true,
+        starts: 3,
+        candidatesEvaluated: 0,
+        feasibleCandidates: 0,
+        optimalityGap: null,
+      },
+    };
+  };
+
+  let bestPlan: RegionalDeliveryPlan | null = null;
+  for (const demandOrder of deterministicDemandOrders(model)) {
+    const candidate = buildStart(demandOrder);
+    if (!bestPlan || comparePlans(model, candidate, bestPlan) < 0) bestPlan = candidate;
+  }
+  if (!bestPlan) throw new Error("No scalable regional delivery plan could be constructed");
+  return {
+    ...bestPlan,
+    candidateAssignments: candidatesEvaluated,
+    feasibleAssignments: feasibleCandidates,
+    search: {
+      ...bestPlan.search,
+      candidatesEvaluated,
+      feasibleCandidates,
+    },
+  };
+}
+
+export function planRegionalDelivery(
+  model: RegionalModel,
+  closedRoadIds: string[] = [],
+): RegionalDeliveryPlan {
+  return model.demands.length <= 10 && estimateRegionalExactSearch(model).withinBudget
+    ? solveRegionalDelivery(model, closedRoadIds)
+    : solveRegionalDeliveryScalable(model, closedRoadIds);
 }
 
 function buildRoadCriticality(model: RegionalModel, baseline: RegionalDeliveryPlan): RoadCriticality[] {

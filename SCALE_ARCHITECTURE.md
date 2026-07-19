@@ -38,13 +38,16 @@ The optimization service never receives credentials for road control, vehicle ac
 
 | Problem size | Method | Required evidence |
 |---|---|---|
-| Up to 10 demands | Complete enumeration, as implemented | Certified optimum for stated model |
-| Tens to hundreds | Validated CP-SAT/MILP with bounded solve gap | incumbent, bound, gap, time, constraint report |
+| Up to 10 demands within declared search budgets | Complete enumeration, as implemented | Certified optimum for stated model |
+| 11–250 demands | Deterministic three-start insertion + 2-opt, as implemented | feasible constraints, replay identity, candidates evaluated, unknown gap |
+| Tens to hundreds in production | Validated CP-SAT/MILP with bounded solve gap | incumbent, bound, gap, time, constraint report |
 | Hundreds to thousands | decomposition plus adaptive large-neighborhood search | reproducible seed, lower bound, benchmark gap |
 | Live rolling horizon | warm-started optimization with frozen commitments | previous-plan diff, stability cost, latency, fallback |
 | Capital portfolio | integer optimization with scenario reduction | budget feasibility, risk coverage, sensitivity |
 
 Large-scale results must never be labeled “optimal” without a solver bound. When time expires, the system reports the best feasible result and the remaining gap.
+
+The current `/api/regional-plan` boundary is the first external decision-plane contract. It accepts at most 1 MB, 500 nodes, 2,000 roads, 250 demands, and 100 vehicles; validates finite quantities and graph references; selects exact enumeration only at ten demands or fewer and within explicit assignment/route-order budgets; and returns a canonical SHA-256 input identity. It remains unauthenticated, stateless, and advisory, so it is a pilot integration surface rather than a production control plane.
 
 ## Performance targets for a limited pilot
 
@@ -91,4 +94,3 @@ These are engineering targets, not achieved claims.
 7. measure prediction error and operator overrides after deployment.
 
 Google- or Cainiao-class credibility comes from repeated real-world evidence and service operations, not an algorithm name. This architecture defines the path without claiming that the current prototype has already completed it.
-
