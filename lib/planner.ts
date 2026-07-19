@@ -55,8 +55,39 @@ export interface Assignment {
   usableKwh: number;
   coverageHours: number;
   postMissionSoc: number;
+  reserveMargin: number;
+  effectiveOneWayMinutes: number;
   checks: SafetyCheck[];
   safe: boolean;
+}
+
+export interface StressResult {
+  scenarioCount: number;
+  successfulScenarios: number;
+  successRate: number;
+  violationScenarios: number;
+  worstUnservedKwh: number;
+  meanUnservedKwh: number;
+  worstUnservedCriticalKwh: number;
+  meanUnservedCriticalKwh: number;
+  worstReserveMargin: number;
+}
+
+export interface OptimizationEvidence {
+  algorithm: "Exact lexicographic search + Halton stress test";
+  objective: string[];
+  candidatePlans: number;
+  robustFeasiblePlans: number;
+  scenarioEvaluations: number;
+  scenarioCount: number;
+  optimalityCertified: boolean;
+  adversarialBounds: {
+    demand: string;
+    soc: string;
+    travel: string;
+  };
+  baseline: StressResult;
+  optimized: StressResult;
 }
 
 export interface DispatchPlan {
@@ -66,6 +97,13 @@ export interface DispatchPlan {
   unservedCriticalKwh: number;
   criticalSiteHours: number;
   allNeedsServed: boolean;
+  optimization?: OptimizationEvidence;
+}
+
+interface ScenarioVariation {
+  demandScale: number;
+  socDelta: number;
+  travelScale: number;
 }
 
 export const DEFAULT_NEEDS: PowerNeed[] = [
@@ -200,6 +238,10 @@ const ROUTES: RouteOption[] = [
   { vehicleId: "E-44", needId: "water", routeId: "ridge-bypass", routeLabel: "Ridge Bypass", roundTripKm: 24, oneWayMinutes: 36 },
 ];
 
+const NOMINAL: ScenarioVariation = { demandScale: 1, socDelta: 0, travelScale: 1 };
+const ADVERSARIAL_CORNER: ScenarioVariation = { demandScale: 1.1, socDelta: -5, travelScale: 1.2 };
+const STRESS_SCENARIO_COUNT = 256;
+
 const round = (value: number, digits = 1) => {
   const scale = 10 ** digits;
   return Math.round(value * scale) / scale;
@@ -211,20 +253,47 @@ function getRoute(vehicleId: string, needId: PowerNeed["id"]): RouteOption {
   return route;
 }
 
+function halton(index: number, base: number) {
+  let result = 0;
+  let fraction = 1 / base;
+  let value = index;
+  while (value > 0) {
+    result += fraction * (value % base);
+    value = Math.floor(value / base);
+    fraction /= base;
+  }
+  return result;
+}
+
+export function buildStressScenarios(count = STRESS_SCENARIO_COUNT): ScenarioVariation[] {
+  return Array.from({ length: count }, (_, offset) => {
+    const index = offset + 1;
+    return {
+      demandScale: 0.9 + halton(index, 2) * 0.2,
+      socDelta: -5 + halton(index, 3) * 10,
+      travelScale: 0.8 + halton(index, 5) * 0.4,
+    };
+  });
+}
+
 export function evaluateAssignment(
   vehicle: Vehicle,
   need: PowerNeed,
   blockedRoutes: string[] = [],
+  variation: ScenarioVariation = NOMINAL,
 ): Assignment {
   const route = getRoute(vehicle.id, need.id);
-  const demandKwh = need.powerKw * need.durationHours;
-  const travelEnergy = route.roundTripKm * vehicle.travelKwhPerKm;
+  const startingSoc = Math.max(0, Math.min(100, vehicle.soc + variation.socDelta));
+  const requiredPowerKw = need.powerKw * variation.demandScale;
+  const demandKwh = requiredPowerKw * need.durationHours;
+  const travelEnergy = route.roundTripKm * variation.travelScale * vehicle.travelKwhPerKm;
+  const effectiveOneWayMinutes = route.oneWayMinutes * variation.travelScale;
   const usableKwh = Math.max(
     0,
-    vehicle.capacityKwh * ((vehicle.soc - vehicle.reserveSoc) / 100) * vehicle.efficiency - travelEnergy,
+    vehicle.capacityKwh * ((startingSoc - vehicle.reserveSoc) / 100) * vehicle.efficiency - travelEnergy,
   );
-  const coverageHours = Math.min(need.durationHours, usableKwh / need.powerKw);
-  const postMissionSoc = vehicle.soc - (
+  const coverageHours = Math.min(need.durationHours, usableKwh / requiredPowerKw);
+  const postMissionSoc = startingSoc - (
     (demandKwh / vehicle.efficiency + travelEnergy) / vehicle.capacityKwh
   ) * 100;
   const routeOpen = !blockedRoutes.includes(route.routeId);
@@ -247,14 +316,14 @@ export function evaluateAssignment(
     {
       code: "power",
       label: "Power envelope",
-      detail: `${vehicle.maxPowerKw.toFixed(1)} kW available / ${need.powerKw.toFixed(1)} kW required`,
-      pass: vehicle.maxPowerKw >= need.powerKw,
+      detail: `${vehicle.maxPowerKw.toFixed(1)} kW available / ${round(requiredPowerKw)} kW required`,
+      pass: vehicle.maxPowerKw + 0.001 >= requiredPowerKw,
     },
     {
       code: "deadline",
       label: "Arrival deadline",
-      detail: `${route.oneWayMinutes} min travel / ${need.deadlineMinutes} min limit`,
-      pass: route.oneWayMinutes <= need.deadlineMinutes,
+      detail: `${round(effectiveOneWayMinutes)} min travel / ${need.deadlineMinutes} min limit`,
+      pass: effectiveOneWayMinutes <= need.deadlineMinutes + 0.001,
     },
     {
       code: "duration",
@@ -278,6 +347,8 @@ export function evaluateAssignment(
     usableKwh: round(usableKwh),
     coverageHours: round(coverageHours),
     postMissionSoc: round(postMissionSoc),
+    reserveMargin: round(postMissionSoc - vehicle.reserveSoc),
+    effectiveOneWayMinutes: round(effectiveOneWayMinutes),
     checks,
     safe: checks.every((check) => check.pass),
   };
@@ -286,13 +357,12 @@ export function evaluateAssignment(
 function summarize(assignments: Assignment[], blockedRoutes: string[], needs: PowerNeed[]): DispatchPlan {
   const criticalNeeds = needs.filter((need) => need.priority === "critical");
   const criticalSiteHours = criticalNeeds.reduce((total, need) => {
-    const assignment = assignments.find((item) => item.need.id === need.id);
+    const assignment = assignments.find((item) => item.need.id === need.id && item.safe);
     return total + (assignment?.coverageHours ?? 0);
   }, 0);
   const unservedCriticalKwh = criticalNeeds.reduce((total, need) => {
-    const assignment = assignments.find((item) => item.need.id === need.id);
-    const delivered = assignment ? Math.min(assignment.usableKwh, assignment.demandKwh) : 0;
-    return total + Math.max(0, need.powerKw * need.durationHours - delivered);
+    const assignment = assignments.find((item) => item.need.id === need.id && item.safe);
+    return total + (assignment ? 0 : need.powerKw * need.durationHours);
   }, 0);
 
   return {
@@ -302,6 +372,54 @@ function summarize(assignments: Assignment[], blockedRoutes: string[], needs: Po
     unservedCriticalKwh: round(unservedCriticalKwh),
     criticalSiteHours: round(criticalSiteHours),
     allNeedsServed: assignments.length === needs.length && assignments.every((assignment) => assignment.safe),
+  };
+}
+
+function assessFixedAssignments(
+  assignments: Assignment[],
+  needs: PowerNeed[],
+  blockedRoutes: string[],
+  scenarios: ScenarioVariation[],
+): StressResult {
+  let successfulScenarios = 0;
+  let totalUnserved = 0;
+  let worstUnserved = 0;
+  let totalCriticalUnserved = 0;
+  let worstCriticalUnserved = 0;
+  let worstReserveMargin = Number.POSITIVE_INFINITY;
+
+  for (const scenario of scenarios) {
+    const evaluated = assignments.map((assignment) => (
+      evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, scenario)
+    ));
+    const byNeed = new Map(evaluated.map((assignment) => [assignment.need.id, assignment]));
+    const success = needs.every((need) => byNeed.get(need.id)?.safe === true);
+    if (success) successfulScenarios += 1;
+
+    const unserved = needs
+      .reduce((total, need) => total + (byNeed.get(need.id)?.safe ? 0 : need.powerKw * need.durationHours * scenario.demandScale), 0);
+    const criticalUnserved = needs
+      .filter((need) => need.priority === "critical")
+      .reduce((total, need) => total + (byNeed.get(need.id)?.safe ? 0 : need.powerKw * need.durationHours * scenario.demandScale), 0);
+    totalUnserved += unserved;
+    worstUnserved = Math.max(worstUnserved, unserved);
+    totalCriticalUnserved += criticalUnserved;
+    worstCriticalUnserved = Math.max(worstCriticalUnserved, criticalUnserved);
+    for (const assignment of evaluated) {
+      worstReserveMargin = Math.min(worstReserveMargin, assignment.reserveMargin);
+    }
+  }
+
+  return {
+    scenarioCount: scenarios.length,
+    successfulScenarios,
+    successRate: round((successfulScenarios / scenarios.length) * 100, 1),
+    violationScenarios: scenarios.length - successfulScenarios,
+    worstUnservedKwh: round(worstUnserved),
+    meanUnservedKwh: round(totalUnserved / scenarios.length, 2),
+    worstUnservedCriticalKwh: round(worstCriticalUnserved),
+    meanUnservedCriticalKwh: round(totalCriticalUnserved / scenarios.length, 2),
+    worstReserveMargin: round(worstReserveMargin),
   };
 }
 
@@ -316,7 +434,7 @@ export function buildUnsafeCandidate(needs: PowerNeed[] = DEFAULT_NEEDS): Dispat
   return summarize(assignments, [], needs);
 }
 
-export function buildVerifiedPlan(
+export function buildGreedyBaseline(
   blockedRoutes: string[] = [],
   needs: PowerNeed[] = DEFAULT_NEEDS,
 ): DispatchPlan {
@@ -329,7 +447,7 @@ export function buildVerifiedPlan(
   const assignments: Assignment[] = [];
 
   for (const need of orderedNeeds) {
-    const candidates = VEHICLES
+    const selected = VEHICLES
       .filter((vehicle) => !usedVehicles.has(vehicle.id))
       .map((vehicle) => evaluateAssignment(vehicle, need, blockedRoutes))
       .filter((assignment) => assignment.safe)
@@ -337,16 +455,125 @@ export function buildVerifiedPlan(
         a.route.oneWayMinutes - b.route.oneWayMinutes
         || b.postMissionSoc - a.postMissionSoc
         || a.vehicle.id.localeCompare(b.vehicle.id)
-      ));
-    const selected = candidates[0];
+      ))[0];
     if (selected) {
       assignments.push(selected);
       usedVehicles.add(selected.vehicle.id);
     }
   }
 
-  assignments.sort((a, b) => DEFAULT_NEEDS.findIndex((need) => need.id === a.need.id) - DEFAULT_NEEDS.findIndex((need) => need.id === b.need.id));
+  assignments.sort((a, b) => needs.findIndex((need) => need.id === a.need.id) - needs.findIndex((need) => need.id === b.need.id));
   return summarize(assignments, blockedRoutes, needs);
+}
+
+interface CandidateScore {
+  robustPriority: number;
+  stressSuccesses: number;
+  priorityWeightedArrival: number;
+  worstReserveMargin: number;
+  travelKm: number;
+}
+
+function priorityWeight(priority: Priority) {
+  return priority === "critical" ? 5 : priority === "high" ? 2 : 1;
+}
+
+function betterCandidate(next: CandidateScore, current: CandidateScore | null) {
+  if (!current) return true;
+  if (next.robustPriority !== current.robustPriority) return next.robustPriority > current.robustPriority;
+  if (next.stressSuccesses !== current.stressSuccesses) return next.stressSuccesses > current.stressSuccesses;
+  if (next.priorityWeightedArrival !== current.priorityWeightedArrival) return next.priorityWeightedArrival < current.priorityWeightedArrival;
+  if (next.worstReserveMargin !== current.worstReserveMargin) return next.worstReserveMargin > current.worstReserveMargin;
+  return next.travelKm < current.travelKm;
+}
+
+export function buildVerifiedPlan(
+  blockedRoutes: string[] = [],
+  needs: PowerNeed[] = DEFAULT_NEEDS,
+): DispatchPlan {
+  const scenarios = buildStressScenarios();
+  let candidatePlans = 0;
+  let robustFeasiblePlans = 0;
+  let winningAssignments: Assignment[] | null = null;
+  let winningStress: StressResult | null = null;
+  let winningScore: CandidateScore | null = null;
+
+  const search = (needIndex: number, usedVehicleIds: Set<string>, assignments: Assignment[]) => {
+    if (needIndex === needs.length) {
+      candidatePlans += 1;
+      const adversarial = assignments.map((assignment) => (
+        evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, ADVERSARIAL_CORNER)
+      ));
+      const robustPriority = adversarial.reduce((total, assignment) => (
+        total + (assignment.safe ? priorityWeight(assignment.need.priority) : 0)
+      ), 0);
+      const fullyRobust = adversarial.every((assignment) => assignment.safe);
+      if (fullyRobust) robustFeasiblePlans += 1;
+
+      const stress = assessFixedAssignments(assignments, needs, blockedRoutes, scenarios);
+      const score: CandidateScore = {
+        robustPriority,
+        stressSuccesses: stress.successfulScenarios,
+        priorityWeightedArrival: assignments.reduce((total, assignment) => (
+          total + assignment.route.oneWayMinutes * priorityWeight(assignment.need.priority)
+        ), 0),
+        worstReserveMargin: Math.min(...adversarial.map((assignment) => assignment.reserveMargin)),
+        travelKm: assignments.reduce((total, assignment) => total + assignment.route.roundTripKm, 0),
+      };
+
+      if (betterCandidate(score, winningScore)) {
+        winningScore = score;
+        winningAssignments = assignments;
+        winningStress = stress;
+      }
+      return;
+    }
+
+    const need = needs[needIndex];
+    for (const vehicle of VEHICLES) {
+      if (usedVehicleIds.has(vehicle.id)) continue;
+      usedVehicleIds.add(vehicle.id);
+      search(
+        needIndex + 1,
+        usedVehicleIds,
+        [...assignments, evaluateAssignment(vehicle, need, blockedRoutes)],
+      );
+      usedVehicleIds.delete(vehicle.id);
+    }
+  };
+
+  search(0, new Set(), []);
+  if (!winningAssignments || !winningStress) throw new Error("No synthetic allocation candidates were generated");
+
+  const selectedAssignments = winningAssignments as Assignment[];
+  const selectedStress = winningStress as StressResult;
+  selectedAssignments.sort((a, b) => needs.findIndex((need) => need.id === a.need.id) - needs.findIndex((need) => need.id === b.need.id));
+  const plan = summarize(selectedAssignments, blockedRoutes, needs);
+  const baseline = buildGreedyBaseline(blockedRoutes, needs);
+
+  plan.optimization = {
+    algorithm: "Exact lexicographic search + Halton stress test",
+    objective: [
+      "Protect priority-weighted service",
+      "Maximize scenario success",
+      "Minimize priority-weighted arrival",
+      "Maximize worst reserve margin",
+    ],
+    candidatePlans,
+    robustFeasiblePlans,
+    scenarioEvaluations: candidatePlans * scenarios.length,
+    scenarioCount: scenarios.length,
+    optimalityCertified: true,
+    adversarialBounds: {
+      demand: "±10%",
+      soc: "±5 points",
+      travel: "±20%",
+    },
+    baseline: assessFixedAssignments(baseline.assignments, needs, blockedRoutes, scenarios),
+    optimized: selectedStress,
+  };
+
+  return plan;
 }
 
 export function getIdleVehicles(plan: DispatchPlan): Vehicle[] {
