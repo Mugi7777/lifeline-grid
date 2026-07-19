@@ -16,8 +16,15 @@ import {
   type PowerNeed,
   type ResilienceAnalysis,
 } from "@/lib/planner";
+import {
+  buildEvidencePackage,
+  evaluateOperationalReadiness,
+  verifyEvidencePackage,
+  type AuditEvent,
+  type EvidenceCore,
+} from "@/lib/operations";
 
-type Stage = "intake" | "candidate" | "clarify" | "verified" | "hardened" | "approved" | "rerouted";
+type Stage = "intake" | "candidate" | "clarify" | "verified" | "hardened" | "approved" | "authorized" | "rerouted";
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
 const stageIndex: Record<Stage, number> = {
@@ -27,7 +34,8 @@ const stageIndex: Record<Stage, number> = {
   verified: 3,
   hardened: 4,
   approved: 5,
-  rerouted: 6,
+  authorized: 6,
+  rerouted: 7,
 };
 
 const actionLabels: Record<Stage, string> = {
@@ -36,7 +44,8 @@ const actionLabels: Record<Stage, string> = {
   clarify: "Confirm answer + optimize",
   verified: "Eliminate single points of failure",
   hardened: "Approve simulated dispatch",
-  approved: "Interpret bridge closure + re-plan",
+  approved: "Safety Officer co-sign",
+  authorized: "Interpret bridge closure + re-plan",
   rerouted: "Reset training scenario",
 };
 
@@ -46,11 +55,127 @@ const actionSubtitles: Record<Stage, string> = {
   clarify: "Human fact check → robust optimum",
   verified: "Exact N-1 search → minimum intervention",
   hardened: "Human decision required",
-  approved: "Free text event → new optimum",
+  approved: "Independent dual control required",
+  authorized: "Free text event → new optimum",
   rerouted: "Replay the full mission loop",
 };
 
 const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
+
+const LEAD_APPROVAL = {
+  actorId: "incident-lead-04",
+  role: "incident-lead" as const,
+  approvedAt: "2026-07-19T02:19:00Z",
+  scope: "synthetic-dispatch-v1",
+};
+
+const SAFETY_APPROVAL = {
+  actorId: "safety-officer-02",
+  role: "safety-officer" as const,
+  approvedAt: "2026-07-19T02:20:00Z",
+  scope: "synthetic-dispatch-v1",
+};
+
+function buildOperationalAuditEvents(
+  stage: Stage,
+  aiMode: AiMode,
+  decision: DecisionAnalysis,
+  decisionAnswer: DecisionAnswerId,
+  plan: DispatchPlan,
+  resilience: ResilienceAnalysis | null,
+  eventMode: AiMode,
+): AuditEvent[] {
+  const completed = stageIndex[stage];
+  const events: AuditEvent[] = [
+    {
+      type: "incident.received",
+      actorId: "operator-17",
+      actorRole: "field-operator",
+      occurredAt: "2026-07-19T02:14:00Z",
+      summary: "Three synthetic facility reports received",
+      evidence: { reportCount: 3, simulationOnly: true },
+    },
+  ];
+
+  if (completed >= stageIndex.candidate) events.push({
+    type: "reports.structured",
+    actorId: aiMode === "gpt-5.6" ? "gpt-5.6" : "synthetic-fallback",
+    actorRole: "language-interpreter",
+    occurredAt: "2026-07-19T02:15:00Z",
+    summary: "Narrative reports converted to source-linked power contracts",
+    evidence: { mode: aiMode, contractCount: 3 },
+  });
+  if (completed >= stageIndex.clarify) events.push({
+    type: "decision.question-ranked",
+    actorId: "decision-critical-planner",
+    actorRole: "deterministic-service",
+    occurredAt: "2026-07-19T02:16:00Z",
+    summary: "Highest-value operator question identified",
+    evidence: {
+      questionId: decision.topQuestion.id,
+      avoidableFailures: decision.topQuestion.avoidableViolationScenarios,
+      evaluations: decision.counterfactualPlanScenarioEvaluations,
+    },
+  });
+  if (completed >= stageIndex.verified) {
+    events.push({
+      type: "decision.fact-verified",
+      actorId: "operator-17",
+      actorRole: "field-operator",
+      occurredAt: "2026-07-19T02:17:00Z",
+      summary: "Decision-critical fact verified by a human operator",
+      evidence: { questionId: decision.topQuestion.id, answerId: decisionAnswer },
+    });
+    events.push({
+      type: "plan.robust-optimized",
+      actorId: "robust-optimizer",
+      actorRole: "deterministic-service",
+      occurredAt: "2026-07-19T02:18:00Z",
+      summary: "Exact allocation passed physical and uncertainty checks",
+      evidence: {
+        candidatePlans: plan.optimization?.candidatePlans ?? 0,
+        stressSuccessRate: plan.optimization?.optimized.successRate ?? 0,
+      },
+    });
+  }
+  if (completed >= stageIndex.hardened && resilience) events.push({
+    type: "plan.n-minus-one-hardened",
+    actorId: "resilience-planner",
+    actorRole: "deterministic-service",
+    occurredAt: "2026-07-19T02:18:30Z",
+    summary: "Minimum-intervention N-1 action selected",
+    evidence: {
+      actionId: resilience.selectedAction.id,
+      protected: resilience.selectedAction.protectedContingencies,
+      total: resilience.contingencyCount,
+    },
+  });
+  if (completed >= stageIndex.approved) events.push({
+    type: "dispatch.lead-approved",
+    actorId: LEAD_APPROVAL.actorId,
+    actorRole: LEAD_APPROVAL.role,
+    occurredAt: LEAD_APPROVAL.approvedAt,
+    summary: "Incident Lead approved the synthetic dispatch scope",
+    evidence: { scope: LEAD_APPROVAL.scope },
+  });
+  if (completed >= stageIndex.authorized) events.push({
+    type: "dispatch.countersigned",
+    actorId: SAFETY_APPROVAL.actorId,
+    actorRole: SAFETY_APPROVAL.role,
+    occurredAt: SAFETY_APPROVAL.approvedAt,
+    summary: "Independent Safety Officer co-signed the synthetic dispatch",
+    evidence: { scope: SAFETY_APPROVAL.scope, separateActor: true },
+  });
+  if (stage === "rerouted") events.push({
+    type: "route.blocked-and-replanned",
+    actorId: eventMode === "gpt-5.6" ? "gpt-5.6" : "synthetic-fallback",
+    actorRole: "event-interpreter",
+    occurredAt: "2026-07-19T02:23:00Z",
+    summary: "East Bridge closure became machine state and triggered a global re-plan",
+    evidence: { blockedRouteId: "east-bridge", mode: eventMode },
+  });
+  return events;
+}
 
 function routePath(assignment: Assignment) {
   const { vehicle, need } = assignment;
@@ -112,7 +237,7 @@ function proofRows(
       { state: "pass", label: "Global re-optimization", detail: missionChanges > 0 ? `${missionChanges} missions rebuilt · ${water.vehicle.id} → Water` : "Recomputed globally · no mission change required" },
       { state: "pass", label: "Uncertainty stress test", detail: `${stress?.successRate ?? 0}% success across ${stress?.scenarioCount ?? 0} scenarios` },
       { state: resilience?.selectedAction.nMinusOneCertified ? "pass" : "pending", label: "N-1 recovery library", detail: `${resilience?.selectedAction.protectedContingencies ?? 0}/${resilience?.contingencyCount ?? 0} single failures protected` },
-      { state: "pass", label: "Human authority", detail: "Prior approval scope retained for simulation" },
+      { state: "pass", label: "Dual human authority", detail: "Lead approval and independent co-sign remain in scope" },
     ];
   }
 
@@ -133,9 +258,12 @@ function proofRows(
     { state: "pass", label: "Exact allocation search", detail: `${evidence?.candidatePlans ?? 0} of ${evidence?.candidatePlans ?? 0} allocations evaluated` },
     { state: nMinusOneCertified ? "pass" : "fail", label: "N-1 resilience", detail: `${resilience?.selectedAction.protectedContingencies ?? 0}/${resilience?.contingencyCount ?? 0} single failures protect critical service` },
     { state: "pass", label: "Minimum intervention", detail: `${resilience?.selectedAction.label ?? "None"} · ${resilience?.selectedAction.actionCostLabel ?? "not scored"}` },
-    stage === "approved"
-      ? { state: "pass", label: "Human approval", detail: "Incident Lead · simulated at 02:19" }
-      : { state: "pending", label: "Human approval", detail: "Required before simulated dispatch" },
+    stageIndex[stage] >= stageIndex.approved
+      ? { state: "pass", label: "Lead approval", detail: `${LEAD_APPROVAL.actorId} · synthetic scope` }
+      : { state: "pending", label: "Lead approval", detail: "Required before simulated dispatch" },
+    stageIndex[stage] >= stageIndex.authorized
+      ? { state: "pass", label: "Independent co-sign", detail: `${SAFETY_APPROVAL.actorId} · distinct role verified` }
+      : { state: "pending", label: "Independent co-sign", detail: "Safety Officer must be a different actor" },
   ];
 }
 
@@ -149,7 +277,7 @@ function statusForVehicle(
   if (!assignment && stageIndex[stage] >= stageIndex.hardened && vehicleId === reserveVehicleId) return "standby";
   if (!assignment || stage === "intake") return "idle";
   if (!assignment.safe) return "risk";
-  if (stage === "approved" || stage === "rerouted") return "dispatched";
+  if (stage === "authorized" || stage === "rerouted") return "dispatched";
   return "assigned";
 }
 
@@ -162,6 +290,8 @@ export default function Home() {
   const [eventMode, setEventMode] = useState<AiMode>("ready");
   const [eventSummary, setEventSummary] = useState("East Bridge closure awaiting interpretation");
   const [working, setWorking] = useState(false);
+  const [evidenceHash, setEvidenceHash] = useState("");
+  const [evidenceStatus, setEvidenceStatus] = useState<"idle" | "building" | "verified" | "error">("idle");
   const decision = useMemo(() => buildDecisionAnalysis(needs), [needs]);
   const selectedDecisionOption = decision.topQuestion.options.find((option) => option.id === decisionAnswer)!;
   const activeNeeds = resolvedNeeds ?? needs;
@@ -171,6 +301,7 @@ export default function Home() {
   const isVerified = completed >= stageIndex.verified;
   const isHardened = completed >= stageIndex.hardened;
   const isApproved = completed >= stageIndex.approved;
+  const isAuthorized = completed >= stageIndex.authorized;
   const isRerouted = stage === "rerouted";
   const shouldAnalyzeResilience = completed >= stageIndex.verified;
 
@@ -186,6 +317,31 @@ export default function Home() {
     () => shouldAnalyzeResilience ? buildResilienceAnalysis(activeNeeds) : null,
     [activeNeeds, shouldAnalyzeResilience],
   );
+  const readiness = useMemo(() => evaluateOperationalReadiness({
+    dataMode: aiMode,
+    decisionVerified: isVerified,
+    planSafe: isVerified && plan.allNeedsServed,
+    stressSuccessRate: isVerified ? plan.optimization?.optimized.successRate ?? 0 : 0,
+    nMinusOneProtected: isHardened ? resilience?.selectedAction.protectedContingencies ?? 0 : 0,
+    contingencyCount: resilience?.contingencyCount ?? 0,
+    leadApproval: isApproved ? LEAD_APPROVAL : undefined,
+    safetyApproval: isAuthorized ? SAFETY_APPROVAL : undefined,
+    telemetryMode: "synthetic",
+    hardwareCertified: false,
+    securityReviewComplete: false,
+    fieldAuthorityGranted: false,
+    fieldValidationComplete: false,
+    simulationOnly: true,
+  }), [aiMode, isApproved, isAuthorized, isHardened, isVerified, plan, resilience]);
+  const auditEvents = useMemo(() => buildOperationalAuditEvents(
+    stage,
+    aiMode,
+    decision,
+    decisionAnswer,
+    plan,
+    resilience,
+    eventMode,
+  ), [aiMode, decision, decisionAnswer, eventMode, plan, resilience, stage]);
   const rerouteMissionChanges = preClosurePlan?.assignments.filter((before) => (
     plan.assignments.find((after) => after.need.id === before.need.id)?.vehicle.id !== before.vehicle.id
   )).length ?? 0;
@@ -213,6 +369,66 @@ export default function Home() {
     setNeeds(DEFAULT_NEEDS);
     setResolvedNeeds(null);
     setDecisionAnswer("confirmed");
+    setEvidenceHash("");
+    setEvidenceStatus("idle");
+  }
+
+  async function downloadEvidencePackage() {
+    if (!readiness.simulationReady || !resilience) return;
+    setEvidenceStatus("building");
+    try {
+      const core: EvidenceCore = {
+        incident: {
+          id: "LG-SIM-2026-0719-001",
+          title: "Regional outage training scenario",
+          scenario: "Synthetic OpenAI Build Week demonstration",
+          simulationOnly: true,
+        },
+        source: {
+          dataMode: aiMode,
+          model: aiMode === "gpt-5.6" ? "gpt-5.6" : "synthetic-fallback",
+          sourceLinked: true,
+        },
+        decision: {
+          questionId: decision.topQuestion.id,
+          answer: selectedDecisionOption.label,
+          verifiedBy: "operator-17",
+        },
+        plan: {
+          assignments: plan.assignments.map((assignment) => ({
+            vehicleId: assignment.vehicle.id,
+            needId: assignment.need.id,
+            routeId: assignment.route.routeId,
+            postMissionSoc: assignment.postMissionSoc,
+            safe: assignment.safe,
+          })),
+          stressSuccessRate: plan.optimization?.optimized.successRate ?? 0,
+          scenarioCount: plan.optimization?.scenarioCount ?? 0,
+          candidatePlans: plan.optimization?.candidatePlans ?? 0,
+        },
+        resilience: {
+          selectedActionId: resilience.selectedAction.id,
+          selectedAction: resilience.selectedAction.label,
+          protectedContingencies: resilience.selectedAction.protectedContingencies,
+          contingencyCount: resilience.contingencyCount,
+          nMinusOneCertified: resilience.selectedAction.nMinusOneCertified,
+        },
+        readiness,
+      };
+      const evidencePackage = await buildEvidencePackage(core, auditEvents, new Date().toISOString());
+      if (!(await verifyEvidencePackage(evidencePackage))) throw new Error("Evidence verification failed");
+      const blob = new Blob([JSON.stringify(evidencePackage, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "lifeline-grid-LG-SIM-2026-0719-001-evidence.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      setEvidenceHash(evidencePackage.packageHash);
+      setEvidenceStatus("verified");
+    } catch {
+      setEvidenceStatus("error");
+    }
   }
 
   async function analyzeReports() {
@@ -254,7 +470,8 @@ export default function Home() {
     }
     if (stage === "verified") setStage("hardened");
     if (stage === "hardened") setStage("approved");
-    if (stage === "approved") {
+    if (stage === "approved") setStage("authorized");
+    if (stage === "authorized") {
       try {
         const response = await fetch("/api/event", {
           method: "POST",
@@ -283,7 +500,7 @@ export default function Home() {
   }
 
   const proofTone = stage === "candidate" ? "blocked" : stage === "clarify" ? "question" : stage === "intake" ? "waiting" : stage === "verified" ? "exposed" : "verified";
-  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "clarify" ? "FACT CHECK" : stage === "intake" ? "WAITING" : stage === "verified" ? `${resilience?.weakestBaselineCases.length ?? 0} GAPS` : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "APPROVED" : resilience?.selectedAction.nMinusOneCertified ? "N-1 READY" : "MAXIMIZED";
+  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "clarify" ? "FACT CHECK" : stage === "intake" ? "WAITING" : stage === "verified" ? `${resilience?.weakestBaselineCases.length ?? 0} GAPS` : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "LEAD APPROVED" : stage === "authorized" ? "CO-SIGNED" : resilience?.selectedAction.nMinusOneCertified ? "N-1 READY" : "MAXIMIZED";
   const modeLabel = aiMode === "gpt-5.6" ? "GPT-5.6 LIVE" : aiMode === "demo-fallback" ? "DEMO FALLBACK" : "UNSTRUCTURED";
   const actionSubtitle = stage === "clarify" ? selectedDecisionOption.label : actionSubtitles[stage];
 
@@ -415,9 +632,10 @@ export default function Home() {
                 <b>{stage === "clarify" && "One unresolved fact can change two missions"}</b>
                 <b>{stage === "verified" && "Robust plan has two hidden single points"}</b>
                 <b>{stage === "hardened" && "Minimum-intervention N-1 plan certified"}</b>
-                <b>{stage === "approved" && "Simulated dispatch approved by a human"}</b>
+                <b>{stage === "approved" && "Incident Lead approved; independent co-sign required"}</b>
+                <b>{stage === "authorized" && "Two-person simulation authorization complete"}</b>
                 <b>{stage === "rerouted" && "Closure absorbed by a whole-plan re-optimization"}</b>
-                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "clarify" ? `${decision.counterfactualPlanScenarioEvaluations.toLocaleString()} counterfactual evaluations · guessing blocked` : stage === "verified" ? `${resilience?.totalPlanScenarioEvaluations.toLocaleString() ?? 0} contingency evaluations found ${resilience?.weakestBaselineCases.length ?? 0} gaps` : stage === "hardened" ? `${resilience?.selectedAction.label} · ${resilience?.selectedAction.protectedContingencies}/${resilience?.contingencyCount} protected` : stage === "rerouted" ? rerouteMissionChanges > 0 ? `${rerouteMissionChanges} missions changed; every hard constraint rechecked` : "No active route affected; whole plan still recomputed" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
+                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "clarify" ? `${decision.counterfactualPlanScenarioEvaluations.toLocaleString()} counterfactual evaluations · guessing blocked` : stage === "verified" ? `${resilience?.totalPlanScenarioEvaluations.toLocaleString() ?? 0} contingency evaluations found ${resilience?.weakestBaselineCases.length ?? 0} gaps` : stage === "hardened" ? `${resilience?.selectedAction.label} · ${resilience?.selectedAction.protectedContingencies}/${resilience?.contingencyCount} protected` : stage === "approved" ? "Lead approval recorded · Safety Officer remains pending" : stage === "authorized" ? `${readiness.missionPassed}/${readiness.missionTotal} mission gates pass · field deployment remains blocked` : stage === "rerouted" ? rerouteMissionChanges > 0 ? `${rerouteMissionChanges} missions changed; every hard constraint rechecked` : "No active route affected; whole plan still recomputed" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
               </div>
             </div>
           </div>
@@ -642,10 +860,96 @@ export default function Home() {
         </section>
       )}
 
+      {isVerified && (
+        <section className="panel operations-panel" aria-label="Operational trust and deployment readiness">
+          <div className="operations-heading">
+            <div>
+              <p className="panel-kicker">OPERATIONAL TRUST LAYER</p>
+              <h2>Fail closed. Separate authority. Export the evidence.</h2>
+              <p>A safe calculation is not permission to operate. Mission authorization and field qualification are evaluated independently.</p>
+            </div>
+            <div className="readiness-badges">
+              <span className={readiness.simulationReady ? "simulation-ready" : "authorization-blocked"}>
+                {readiness.simulationReady ? "SIMULATION READY" : "AUTHORIZATION BLOCKED"}
+              </span>
+              <span className="field-blocked">FIELD DEPLOYMENT BLOCKED</span>
+            </div>
+          </div>
+
+          <div className="trust-metrics">
+            <article>
+              <small>Mission authorization</small>
+              <b>{readiness.missionPassed}/{readiness.missionTotal}</b>
+              <span>machine + human gates</span>
+            </article>
+            <article>
+              <small>Audit integrity</small>
+              <b>{auditEvents.length}</b>
+              <span>events chained on export</span>
+            </article>
+            <article className="field-gap">
+              <small>Field qualification</small>
+              <b>{readiness.fieldPassed}/{readiness.fieldTotal}</b>
+              <span>external evidence attached</span>
+            </article>
+          </div>
+
+          <div className="operations-grid">
+            <article className="gate-card">
+              <div className="gate-card-heading"><h3>Mission authorization gates</h3><span>{readiness.missionPassed}/{readiness.missionTotal}</span></div>
+              <ul>
+                {readiness.missionGates.map((gate) => (
+                  <li className={gate.state} key={gate.id}>
+                    <i>{gate.state === "pass" ? "✓" : gate.state === "blocked" ? "×" : "•"}</i>
+                    <div><b>{gate.label}</b><small>{gate.detail}</small></div>
+                    <em>{gate.owner}</em>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="gate-card field-gates">
+              <div className="gate-card-heading"><h3>Field deployment qualification</h3><span>FAIL CLOSED</span></div>
+              <ul>
+                {readiness.fieldGates.map((gate) => (
+                  <li className={gate.state} key={gate.id}>
+                    <i>{gate.state === "pass" ? "✓" : "×"}</i>
+                    <div><b>{gate.label}</b><small>{gate.detail}</small></div>
+                    <em>{gate.owner}</em>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="evidence-card">
+              <p className="panel-kicker">PORTABLE SAFETY CASE</p>
+              <h3>Tamper-evident evidence package</h3>
+              <p>Exports source mode, verified fact, assignments, uncertainty result, N-1 action, approvals, readiness gates, and a SHA-256 audit chain.</p>
+              <div className="approval-chain">
+                <span className={isApproved ? "done" : "pending"}><i>1</i><b>Incident Lead</b><small>{isApproved ? LEAD_APPROVAL.actorId : "approval pending"}</small></span>
+                <em>→</em>
+                <span className={isAuthorized ? "done" : "pending"}><i>2</i><b>Safety Officer</b><small>{isAuthorized ? SAFETY_APPROVAL.actorId : "independent co-sign pending"}</small></span>
+              </div>
+              <button type="button" onClick={() => void downloadEvidencePackage()} disabled={!readiness.simulationReady || evidenceStatus === "building"}>
+                {evidenceStatus === "building" ? "Building + verifying package…" : "Export verified simulation evidence (.json)"}
+              </button>
+              <div className={`integrity-result ${evidenceStatus}`}>
+                <span>{evidenceStatus === "verified" ? "✓" : evidenceStatus === "error" ? "×" : "#"}</span>
+                <div>
+                  <b>{evidenceStatus === "verified" ? "Package verified before download" : evidenceStatus === "error" ? "Package verification failed" : "SHA-256 generated only after dual control"}</b>
+                  <small title={evidenceHash}>{evidenceHash ? `${evidenceHash.slice(0, 24)}…` : "No evidence hash issued yet"}</small>
+                </div>
+              </div>
+              <small className="evidence-boundary">Integrity hash detects changes; it is not a KMS-backed digital signature. Production signing and append-only retention remain required.</small>
+            </article>
+          </div>
+        </section>
+      )}
+
       <section className="panel mission-log" aria-label="Mission event log">
         <div className="log-heading">
           <div><p className="panel-kicker">AUDITABLE MISSION LOOP</p><h2>From report to resilient response</h2></div>
-          <span>{isApproved ? "SIMULATED DISPATCH ONLY" : "NO DISPATCH YET"}</span>
+          <span>{isAuthorized ? "DUAL-CONTROL SIMULATION ONLY" : "NO DISPATCH YET"}</span>
         </div>
         <ol>
           <li className="done"><i>01</i><div><b>Reports received</b><small>3 fictional facilities · 02:14</small></div></li>
@@ -653,8 +957,9 @@ export default function Home() {
           <li className={completed >= stageIndex.verified ? "done" : completed === stageIndex.clarify ? "current" : ""}><i>03</i><div><b>Critical fact resolved</b><small>{completed >= stageIndex.verified ? selectedDecisionOption.label : completed === stageIndex.clarify ? `${decision.questionCount} questions ranked` : "Not started"}</small></div></li>
           <li className={completed >= stageIndex.verified ? "done" : ""}><i>04</i><div><b>Robust optimum certified</b><small>{completed >= stageIndex.verified ? `${evidence?.scenarioEvaluations.toLocaleString()} plan-scenarios checked` : "Waiting for verified fact"}</small></div></li>
           <li className={completed >= stageIndex.hardened ? "done" : completed === stageIndex.verified ? "current risk" : ""}><i>05</i><div><b>Single points eliminated</b><small>{completed >= stageIndex.hardened ? `${resilience?.selectedAction.protectedContingencies}/${resilience?.contingencyCount} N-1 cases protected` : completed === stageIndex.verified ? `${resilience?.weakestBaselineCases.length ?? 0} gaps found` : "Not started"}</small></div></li>
-          <li className={completed >= stageIndex.approved ? "done" : completed === stageIndex.hardened ? "current" : ""}><i>06</i><div><b>Human approval</b><small>{completed >= stageIndex.approved ? "Recorded for simulation" : "Required"}</small></div></li>
-          <li className={completed >= stageIndex.rerouted ? "done" : completed === stageIndex.approved ? "current" : ""}><i>07</i><div><b>Disruption re-optimized</b><small>{completed >= stageIndex.rerouted ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
+          <li className={completed >= stageIndex.approved ? "done" : completed === stageIndex.hardened ? "current" : ""}><i>06</i><div><b>Lead approval</b><small>{completed >= stageIndex.approved ? LEAD_APPROVAL.actorId : "Required"}</small></div></li>
+          <li className={completed >= stageIndex.authorized ? "done" : completed === stageIndex.approved ? "current" : ""}><i>07</i><div><b>Independent co-sign</b><small>{completed >= stageIndex.authorized ? SAFETY_APPROVAL.actorId : "Distinct Safety Officer required"}</small></div></li>
+          <li className={completed >= stageIndex.rerouted ? "done" : completed === stageIndex.authorized ? "current" : ""}><i>08</i><div><b>Disruption re-optimized</b><small>{completed >= stageIndex.rerouted ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
         </ol>
       </section>
 

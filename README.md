@@ -31,12 +31,14 @@ Exact N-1 contingency search
       ↓
 Minimum-intervention reserve action
       ↓
-Machine-checkable plan → Human approval
-      ↑                              ↓
-      └── GPT-5.6 event → global re-plan ┘
+Incident Lead approval → independent Safety Officer co-sign
+      ↓
+Hash-chained evidence package → simulation authorization
+      ↑                                      ↓
+      └──────── GPT-5.6 event → global re-plan ┘
 ```
 
-GPT-5.6 interprets language. Deterministic code performs safety arithmetic and optimization. A human is the only authority that can approve the simulated dispatch.
+GPT-5.6 interprets language. Deterministic code performs safety arithmetic and optimization. Two distinct human roles are required to authorize the simulation. Field deployment remains fail-closed until external qualification evidence exists.
 
 ## The three-minute mission loop
 
@@ -53,8 +55,10 @@ GPT-5.6 interprets language. Deterministic code performs safety arithmetic and o
 11. The selected plan succeeds in all 256 demo scenarios. The nearest-feasible baseline succeeds in 207/256.
 12. The N-1 engine evaluates three preparedness actions against five vehicle losses and seven corridor closures—**414,720 additional plan-scenario evaluations**.
 13. The unhardened plan protects critical service in 10/12 single-failure cases. Exact minimum-intervention selection stages idle E-32 at West Relay and raises that result to 12/12.
-14. A human approves the simulated dispatch.
-15. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
+14. The Incident Lead approves the simulated scope.
+15. A distinct Safety Officer independently co-signs; the same actor cannot satisfy both roles.
+16. Lifeline can export a canonical JSON safety-case package with a SHA-256 package hash and hash-chained audit events.
+17. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
 
 ## Optimization and safety kernel
 
@@ -105,6 +109,14 @@ Without preparation, E-07 loss and River Road closure expose clinic service, so 
 
 The certificate is conditional, not cosmetic. If the operator instead confirms a 6.5 kW pump peak, only E-44 can meet that peak in the fictional fleet and the UI reports 10/12 rather than claiming N-1 safety.
 
+### Operational Trust Layer
+
+Algorithmic success is separated from authority to operate. Seven mission-authorization gates cover source provenance, a verified consequential fact, physical feasibility, bounded uncertainty, N-1 resilience, Incident Lead approval, and an independent Safety Officer co-sign. The simulation cannot issue its evidence package until all seven pass.
+
+The exported package includes the source mode, verified question and answer, assignments, stress results, N-1 action, approval identities, readiness gates, and audit history. Objects are serialized canonically; each audit event includes the previous event hash; and the complete package receives a SHA-256 integrity hash. The package is verified immediately before browser download.
+
+Five separate field-qualification gates remain blocked in this prototype: validated live telemetry, certified electrical interfaces, independent cybersecurity assurance, emergency authority, and supervised field validation. The application therefore displays **FIELD DEPLOYMENT BLOCKED** even after a synthetic simulation is authorized. An integrity hash detects later modification but is not a KMS-backed identity signature.
+
 ## OpenAI usage
 
 ### GPT-5.6
@@ -154,7 +166,10 @@ Tests verify:
 - a two-mission counterfactual reallocation after an adverse answer;
 - exact single-vehicle and single-route contingency coverage;
 - minimum-intervention reserve selection;
-- honest certificate failure when no equivalent high-power backup exists; and
+- honest certificate failure when no equivalent high-power backup exists;
+- independent dual-control authorization;
+- deterministic evidence-package hashing and tamper detection;
+- fail-closed separation of simulation and field readiness; and
 - transparent report and event fallbacks.
 
 ## Repository map
@@ -163,14 +178,18 @@ Tests verify:
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
+- `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
+- `PILOT_READINESS.md` — responsible rollout stages and unmet field gates
+- `THREAT_MODEL.md` — assets, trust boundaries, threats, controls, and verification backlog
+- `RUNBOOK.md` — supervised simulation procedure, stop conditions, and recovery
 - `DEMO_SCRIPT.md` — sub-three-minute video plan
 - `SUBMISSION.md` — English submission copy
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for this deliberately small, inspectable demo. The 12 contingencies and three preparedness actions are operator-defined synthetic cases, not a complete hazard analysis. A larger deployment would replace enumeration with a validated MILP or min-cost-flow implementation and require certified telemetry, geographic routing, cybersecurity controls, operator access control, emergency-governance review, field trials, and independent safety validation.
+Exact enumeration is appropriate for this deliberately small, inspectable demo. The 12 contingencies and three preparedness actions are operator-defined synthetic cases, not a complete hazard analysis. The in-browser evidence chain is portable integrity evidence, not durable storage or non-repudiation. A larger deployment would replace enumeration with a validated MILP or min-cost-flow implementation and require enterprise identity, append-only signed audit storage, certified telemetry, geographic routing, cybersecurity controls, emergency-governance review, field trials, and independent safety validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

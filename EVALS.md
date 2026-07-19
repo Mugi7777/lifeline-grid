@@ -119,13 +119,28 @@ The certificate remains conditional on verified machine state. If the pump answe
 
 Burden points are an explicit fictional ranking input, not cost, emissions, or operational evidence.
 
+## Operational trust verification
+
+The product evaluates mission authorization separately from field qualification.
+
+| Property | Automated assertion |
+|---|---|
+| Dual control | The same actor cannot satisfy Incident Lead and Safety Officer roles |
+| Simulation boundary | Synthetic telemetry and `simulationOnly=true` can never produce `field-ready` |
+| Canonical evidence | Object key order produces the same canonical representation and SHA-256 digest |
+| Audit integrity | Changing an earlier event invalidates its hash and the remainder of the chain |
+| Package integrity | Changing an assignment after export invalidates the package hash |
+| Known cryptographic vector | SHA-256 of `abc` matches the published standard test value |
+
+Passing these tests establishes only software behavior in the synthetic environment. It does not establish identity assurance, secure key custody, trusted timestamps, durable audit retention, safety certification, or regulatory approval.
+
 ## Reproduce
 
 ```bash
 npm run test:planner
 ```
 
-The planner tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, and safe global re-optimization.
+The automated tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, dual-control separation, fail-closed field readiness, evidence tamper detection, and safe global re-optimization.
 
 ## Limitations
 
@@ -137,6 +152,7 @@ The planner tests assert deterministic scenario generation, exact-search evidenc
 - The 12 N-1 cases are a small operator-defined register, not a complete failure-mode or hazard analysis.
 - Preparedness burden points are fictional and are used only as a transparent tie-breaker after protection performance.
 - Simultaneous failures, cascading faults, repair time, staging congestion, and recovery execution time are not modeled.
+- Browser-generated integrity hashes are not identity signatures and are not stored in an append-only external system.
 - No grid power flow, battery degradation, traffic network, electrical certification, cyber-physical integration, or human-factors validation is modeled.
 - Passing this test suite is not a safety certification.
 

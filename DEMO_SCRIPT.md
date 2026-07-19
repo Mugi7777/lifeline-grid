@@ -36,19 +36,19 @@ Hold briefly on **GPT-5.6 LIVE**.
 
 > With the fact confirmed, deterministic code evaluates all 60 allocations across 256 reproducible demand, battery, and travel scenarios. The nearest-feasible baseline fails 49. Lifeline’s exact optimum succeeds in all 256 and survives the joint adversarial bound. These are synthetic results, not a field claim.
 
-## 1:34–1:57 — Eliminate hidden single points
+## 1:34–1:53 — Eliminate hidden single points
 
 **Screen:** Hold on **10/12 without preparation**, the two red failure chips, and the recommended E-32 action. Click **Eliminate single points of failure**.
 
 > But continuous uncertainty is not enough. One vehicle can fail, or one road can close. Lifeline tests three preparedness actions against 12 single failures—414,720 more plan-scenario evaluations. It finds two hidden gaps, then selects the least-burden fix: hold idle E-32 at West Relay. Critical recovery rises from 10 of 12 to 12 of 12 modeled failures.
 
-## 1:57–2:07 — Human authority
+## 1:53–2:13 — Fail-closed operational trust
 
-**Action:** Click **Approve simulated dispatch**.
+**Action:** Click **Approve simulated dispatch**, then **Safety Officer co-sign**. Scroll to the Operational Trust Layer and click the evidence export.
 
-> A machine-checkable plan still does not authorize action. A human incident lead approves the simulation, and the decision enters the audit timeline.
+> A safe calculation is still not authority. The Incident Lead approves, then a different Safety Officer co-signs. Seven mission gates pass, but five real-world qualification gates stay blocked. Lifeline verifies and exports a SHA-256 hash-chained safety case—without pretending this simulation is field-ready.
 
-## 2:07–2:30 — GPT-5.6 changes machine state; the optimizer recovers
+## 2:13–2:33 — GPT-5.6 changes machine state; the optimizer recovers
 
 **Action:** Click **Interpret bridge closure + re-plan**.
 
@@ -56,19 +56,19 @@ Hold briefly on **GPT-5.6 LIVE**.
 
 Hold on the event-evidence strip and re-routed map.
 
-## 2:30–2:47 — How it was built
+## 2:33–2:48 — How it was built
 
-> GPT-5.6 handles incident and disruption language. Deterministic software owns value-of-information, physical feasibility, robust allocation, and N-1 recovery. A human owns facts and authorization. Codex was my primary development collaborator across architecture, interface, algorithms, tests, evaluation, and this demo.
+> GPT-5.6 handles incident and disruption language. Deterministic software owns value-of-information, physics, robust allocation, N-1 recovery, readiness gates, and evidence integrity. Distinct humans own facts and authorization. Codex was my primary development collaborator across architecture, interface, algorithms, tests, and evaluation.
 
-## 2:47–2:55 — Close
+## 2:48–2:55 — Close
 
-> Chat can describe a crisis. Lifeline proves what works, asks what matters, survives one failure, and adapts when reality changes.
+> Chat can describe a crisis. Lifeline proves what works, asks what matters, survives one failure, and refuses unsafe authority.
 
 ## Recording checklist
 
 - Keep the video at or below three minutes and make it public on YouTube.
 - Confirm both model interactions show **GPT-5.6 LIVE**.
 - Clearly say the benchmark is synthetic and reproducible, not a field-performance claim.
-- Show the red rejection, ranked operator question, 226 avoidable failures, 10/12 → 12/12 N-1 certificate, human approval, and global re-plan.
+- Show the red rejection, ranked question, 10/12 → 12/12 N-1 result, dual control, blocked field gates, verified evidence hash, and global re-plan.
 - Mention both Codex and GPT-5.6 in the voiceover.
 - Do not imply real deployment or autonomous control.

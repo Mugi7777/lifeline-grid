@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. Deterministic planners then identify the one fact worth checking, prove the allocation under bounded uncertainty, eliminate modeled single points of failure with the minimum preventive action, require human approval, and globally re-optimize when reality changes.
+Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. Deterministic planners identify the one fact worth checking, prove the allocation under bounded uncertainty, eliminate modeled single points of failure, require independent dual control, export a tamper-evident safety case, and globally re-optimize when reality changes.
 
 ## Inspiration
 
@@ -32,7 +32,9 @@ After the operator confirms the fact, the optimizer evaluates every one of the 6
 
 That robust plan still hides two discrete single points: losing E-07 or closing River Road can expose clinic service. Lifeline tests three preparedness actions against five vehicle losses and seven corridor closures, re-running the exact allocation and 256-scenario suite each time—414,720 additional plan-scenario evaluations. Without preparation, 10/12 cases protect critical service. Minimum-intervention selection stages idle E-32 at West Relay and raises the result to 12/12. If the verified 6.5 kW adverse pump peak has no equivalent backup, the interface refuses to claim the certificate.
 
-A human approves the simulated dispatch. When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
+An Incident Lead approves the simulated scope, but that is still insufficient. A distinct Safety Officer must independently co-sign. Lifeline then unlocks a portable canonical-JSON evidence package containing the machine proofs, approvals, readiness gates, and a SHA-256 hash-chained audit history. Five field-qualification gates remain visibly blocked, so simulation authorization is never misrepresented as real deployment approval.
+
+When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
 
 ## How we built it
 
@@ -45,7 +47,9 @@ A human approves the simulated dispatch. When a fictional free-text update repor
 - Deterministic low-discrepancy uncertainty testing
 - Exact N-1 vehicle/corridor contingency search
 - Minimum-intervention reserve-action selection
-- Human approval boundary and auditable mission state
+- Independent Incident Lead and Safety Officer authorization
+- Canonical evidence package, SHA-256 integrity, and hash-chained audit events
+- Fail-closed simulation-versus-field readiness gates
 - Automated unit, API, rendering, and production-build tests
 - Codex as the primary development collaborator
 
@@ -69,6 +73,8 @@ For this inspectable five-vehicle/three-facility demo, the optimizer enumerates 
 
 The N-1 layer enumerates three preparedness actions and 12 single failures. Every vehicle-loss recovery considers all 24 remaining allocations; every route-loss recovery considers all 60. Critical service must pass all 256 uncertainty scenarios. Actions are ranked by contingency coverage, worst critical success, then a transparent fictional intervention-burden score.
 
+The Operational Trust Layer evaluates seven mission-authorization gates and five separate field-qualification gates. It rejects same-actor dual approval. Evidence objects are canonicalized before hashing; every audit entry commits to the prior hash; the full package is re-verified before download. Because the current site has only synthetic telemetry, no certified electrical interface, no independent security acceptance, no public authority, and no field trial, it remains field-blocked by design.
+
 ## Accomplishments
 
 - A persuasive unsafe plan is visibly rejected.
@@ -82,11 +88,13 @@ The N-1 layer enumerates three preparedness actions and 12 single failures. Ever
 - Exact N-1 search detects two single points hidden inside an otherwise 100%-robust plan.
 - A minimum-burden reserve action improves modeled critical recovery from 10/12 to 12/12 cases.
 - The certificate is withheld when an adverse peak leaves no equivalent backup.
-- Human approval remains mandatory.
+- One actor cannot satisfy both authorization roles.
+- Any later evidence or plan change invalidates the exported package hash.
+- The interface keeps real field deployment blocked despite a fully authorized simulation.
 
 ## What we learned
 
-AI is most trustworthy when roles are explicit. Language models are excellent at translating human reports into structured state. Deterministic optimization is better for hard physical constraints. Value-of-information analysis prevents teams from asking every possible question—or guessing the one fact that matters. N-1 analysis catches failure modes that continuous uncertainty testing alone can miss. Humans must retain authority over facts and consequential action.
+AI is most trustworthy when roles are explicit. Language models translate human reports into structured state. Deterministic optimization handles hard physical constraints. Value-of-information finds the fact that matters. N-1 analysis catches discrete failure modes. Dual control and verifiable evidence prevent a mathematically safe-looking answer from silently becoming operational authority.
 
 ## What is next
 
@@ -102,6 +110,7 @@ Every facility, vehicle, report, route, timestamp, and metric is fictional. Eval
 2. E-12 blocked by duration and reserve checks
 3. Exact-search proof and 80.9% vs 100% benchmark
 4. 10/12 → 12/12 N-1 certificate and E-32 reserve action
-5. Human-approved mission state
-6. GPT-5.6 event evidence and global re-plan
-7. Public video following `DEMO_SCRIPT.md`
+5. Seven mission gates, five blocked field qualifications, and dual approval
+6. Verified SHA-256 evidence-package export
+7. GPT-5.6 event evidence and global re-plan
+8. Public video following `DEMO_SCRIPT.md`
