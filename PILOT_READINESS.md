@@ -27,6 +27,7 @@ This distinction is enforced in the product. A mission can become `simulation-re
 - exact N-1 vehicle/corridor contingency evaluation;
 - independent Incident Lead and Safety Officer roles;
 - portable evidence package with canonical JSON, SHA-256 package integrity, and a hash-chained event log;
+- authenticated D1-backed regional plan history, predecessor diff, assigned reviewer, self-approval prevention, and server-side audit replay;
 - explicit separation of simulation authorization and field qualification;
 - automated planner, operational-control, API, rendering, and production-build tests.
 
@@ -77,8 +78,8 @@ Exit criteria: independent electrical, cybersecurity, and safety acceptance.
 
 ## Product architecture still required
 
-- tenant-scoped authentication and role-based authorization;
-- append-only server-side audit storage with retention and legal hold;
+- organization/tenant-scoped authorization beyond the implemented creator/reviewer email boundary;
+- KMS-signed append-only audit retention and legal hold beyond the implemented D1 hash chain;
 - KMS-backed digital signatures rather than an in-browser integrity hash;
 - authenticated telemetry and routing adapters with replay protection;
 - configurable fleet/facility schemas and validated large-fleet optimization;

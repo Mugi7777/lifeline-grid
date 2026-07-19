@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is a Regional Access OS for low-density communities. In daily mode it pools fragmented fleets, measures which aging roads disconnect residents from medicine and food, and selects the repair portfolio that protects the most access within budget. In emergency mode the same verified regional state coordinates mobile power. GPT-5.6 converts narrative reports into source-linked machine state; deterministic graph, routing, uncertainty, N-1, and capital-allocation engines calculate the decision.
+Lifeline Grid is a Regional Access OS for low-density communities. In daily mode it pools fragmented fleets, measures which aging roads disconnect residents from medicine and food, and selects the repair portfolio that protects the most access within budget. Its GPT-5.6 Sol Reasoning Council turns conflicting reports into three falsifiable worlds; deterministic graph, routing, uncertainty, N-1, and capital-allocation engines prove every consequence while human authority remains required. In emergency mode the same verified regional state coordinates mobile power.
 
 ## Inspiration
 
@@ -24,9 +24,13 @@ Rural communities face one connected problem in three time scales: daily deliver
 
 The default Regional Access mode opens on a fictional Japanese district. An exact pooled heterogeneous vehicle-routing solver coordinates a postal EV, refrigerated co-op van, and municipal mixed-use bus across capacity, cold-chain, time-window, shift, and road-weight constraints. All 418 modeled households and 152 modeled vulnerable residents are covered on time in the baseline.
 
+Real operations rarely receive one clean fact. The Sol Reasoning Council treats a conflicting field report as untrusted data and asks `gpt-5.6-sol` for exactly three competing road states, evidence for and against each, and the smallest decision-changing question. A strict runtime boundary rejects invented road IDs and malformed restrictions. Lifeline then independently re-plans all three worlds, evaluates 12,288 candidate assignments, 192 stress scenarios, and 36 N-1 road cases, and ranks authenticated authority status first. In the built-in synthetic conflict, that fact separates a world with no access loss from one exposing 64 households and 32 vulnerable residents. The model recommendation stays withheld behind a human-authority gate.
+
 GPT-5.6 then converts a fictional road inspection note into a supported segment restriction. Deterministic code removes that segment and solves the whole regional plan again. The system shows that the modeled North Forest Road loss makes 64 households and 32 vulnerable residents miss the service threshold while both critical deliveries remain protected.
 
 Lifeline breaks all twelve modeled roads one at a time and ranks them by expected access loss—not only traffic or physical condition. A budget slider drives an exact repair-portfolio search across every eligible combination and shows the maximum modeled access-risk reduction within budget. Every figure is a reproducible synthetic result.
+
+The operator can record a synthetic plan in a durable decision ledger. The server recomputes the result, compares it with its predecessor, binds it to the signed-in creator, and optionally assigns a different reviewer. The creator cannot approve their own plan. Every lifecycle change extends a linked audit history that the server replays before reporting verification.
 
 The operator can then switch to Emergency Grid mode, where the same product coordinates mobile batteries through the original verified mission loop.
 
@@ -47,11 +51,15 @@ When a fictional free-text update reports that East Bridge has closed, GPT-5.6 c
 ## How we built it
 
 - GPT-5.6 Responses API with strict Structured Outputs for inspection notes, incidents, and disruptions
+- Explicit `gpt-5.6-sol` high-reasoning council for competing hypotheses, counterevidence, and decision-changing evidence acquisition
+- Runtime hypothesis validation and deterministic three-world adjudication
 - React and TypeScript command-center interface
 - Exact pooled heterogeneous VRPTW for the inspectable regional scenario
 - Service-weighted road-graph N-1 analysis
 - Exact budget-constrained repair portfolio selection
 - Deterministic regional demand and travel stress testing
+- Authenticated D1 decision ledger with predecessor diffs and assigned review
+- Server-side audit-chain replay and self-approval prevention
 - Deterministic physical safety kernel
 - Exact counterfactual value-of-information question ranking
 - Separate continuous-energy and momentary peak-power constraints
@@ -67,7 +75,7 @@ When a fictional free-text update reports that East Bridge has closed, GPT-5.6 c
 
 ## How GPT-5.6 is meaningfully used
 
-GPT-5.6 handles three language-to-state transitions: a fictional inspection note becomes a supported regional road event, inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. The model never diagnoses a structure, performs safety arithmetic, selects the optimal plan, or authorizes dispatch. This separation makes every consequential number reproducible and inspectable.
+GPT-5.6 handles three language-to-state transitions: a fictional inspection note becomes a supported regional road event, inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. GPT-5.6 Sol also handles a different problem: it constructs three competing interpretations of conflicting evidence, retains counterevidence, and proposes what an authorized operator should verify next. The deterministic regional kernel—not the model—re-plans each world and ranks the resulting access swing. The model never diagnoses a structure, performs safety arithmetic, supplies impact metrics, selects the optimal plan, or authorizes dispatch. Hidden chain-of-thought is not treated as evidence.
 
 ## How Codex was used
 
@@ -87,14 +95,21 @@ The N-1 layer enumerates three preparedness actions and 12 single failures. Ever
 
 The Operational Trust Layer evaluates seven mission-authorization gates and five separate field-qualification gates. It rejects same-actor dual approval. Evidence objects are canonicalized before hashing; every audit entry commits to the prior hash; the full package is re-verified before download. Because the current site has only synthetic telemetry, no certified electrical interface, no independent security acceptance, no public authority, and no field trial, it remains field-blocked by design.
 
+Regional plans use a separate hosted decision ledger. The server never trusts a client-supplied result: it validates the bounded request, runs the planner again, stores the canonical request and result, calculates the predecessor diff, and records creator/reviewer events in one D1 batch. Access is limited to the creator and exact assigned reviewer. The linked SHA-256 history detects accidental or unsophisticated tampering; it is not a digital signature or legal non-repudiation mechanism.
+
 ## Accomplishments
 
 - One product connects daily logistics, road-aging investment, and emergency continuity.
+- Conflicting reports become three bounded, falsifiable worlds rather than one persuasive answer.
+- All three worlds are independently re-planned across 12,288 candidate assignments, 192 stress scenarios, and 36 N-1 road cases.
+- The model recommendation remains withheld while one authenticated evidence request is ranked by a 64-household and 32-vulnerable-resident decision swing.
 - An inspectable exact search covers all 418 modeled households and 152 vulnerable residents in the baseline.
 - Every modeled road is removed and the complete regional delivery problem is solved again.
 - The highest-impact modeled closure exposes 64 households and 32 vulnerable residents without hiding the gap.
 - Every eligible repair portfolio is evaluated under the selected public budget.
 - Critical service remains a lexicographic objective ahead of distance or modeled emissions.
+- A saved plan is recomputed on the server, compared with its predecessor, and bound to the signed-in creator.
+- The assigned reviewer must be a different identity, and the audit history is verified by server-side replay.
 
 - A persuasive unsafe plan is visibly rejected.
 - The optimization result is compared with a real baseline inside the product.
@@ -117,7 +132,7 @@ AI is most trustworthy when roles are explicit. Language models translate human 
 
 ## What is next
 
-This is a small synthetic demonstration, not an emergency product. A responsible next phase would validate the workflow with emergency planners and energy specialists, replace enumeration with a validated MILP or min-cost-flow implementation at fleet scale, and develop certified adapters for telemetry, routing, access control, incident systems, and cybersecurity. No real-world control would be enabled without governance, independent validation, field testing, and local authorization.
+This is a synthetic demonstration, not a production logistics, infrastructure, or emergency product. A responsible next phase would validate the workflow with municipal road managers, logistics operators, emergency planners, and energy specialists; replace bounded heuristics with a validated solver portfolio at fleet scale; and develop certified adapters for authoritative roads, telemetry, routing, organization access control, incident systems, and cybersecurity. The current identity-scoped ledger would need tenant isolation, KMS-backed signatures, retention policy, recovery evidence, and independent security review. No real-world control would be enabled without governance, field testing, and local authorization.
 
 ## Safety and data statement
 
@@ -126,10 +141,11 @@ Every facility, vehicle, report, route, timestamp, and metric is fictional. Eval
 ## Suggested submission assets
 
 1. Opening command center
-2. E-12 blocked by duration and reserve checks
-3. Exact-search proof and 80.9% vs 100% benchmark
-4. 10/12 → 12/12 N-1 certificate and E-32 reserve action
-5. Seven mission gates, five blocked field qualifications, and dual approval
-6. Verified SHA-256 evidence-package export
-7. GPT-5.6 event evidence and global re-plan
-8. Public video following `DEMO_SCRIPT.md`
+2. Sol Reasoning Council with three hypothesis cards
+3. Authority gate with 64-household and 32-vulnerable-resident swing
+4. Exact shared-fleet plan and road N-1 ranking
+5. Repair-budget portfolio
+6. Durable regional plan history, predecessor diff, and assigned review
+7. Emergency-mode safety and N-1 proof
+8. GPT-5.6 event evidence and global re-plan
+9. Public video following `DEMO_SCRIPT.md`

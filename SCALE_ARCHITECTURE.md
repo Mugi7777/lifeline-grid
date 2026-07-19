@@ -25,6 +25,7 @@ The current browser demonstration is deliberately exact and small. A production 
 ### Decision plane
 
 - language-to-state service with strict schemas and source links;
+- bounded multi-hypothesis reasoning service with model/version registry, counterevidence retention, abstention, and deterministic adjudication;
 - graph reachability and service-area engine;
 - fleet solver service;
 - infrastructure portfolio solver;
@@ -47,7 +48,9 @@ The optimization service never receives credentials for road control, vehicle ac
 
 Large-scale results must never be labeled “optimal” without a solver bound. When time expires, the system reports the best feasible result and the remaining gap.
 
-The current `/api/regional-plan` boundary is the first external decision-plane contract. It accepts at most 1 MB, 500 nodes, 2,000 roads, 250 demands, and 100 vehicles; validates finite quantities and graph references; selects exact enumeration only at ten demands or fewer and within explicit assignment/route-order budgets; and returns a canonical SHA-256 input identity. It remains unauthenticated, stateless, and advisory, so it is a pilot integration surface rather than a production control plane.
+The current `/api/regional-plan` boundary is the first external decision-plane contract. It accepts at most 1 MB, 500 nodes, 2,000 roads, 250 demands, and 100 vehicles; validates finite quantities and graph references; selects exact enumeration only at ten demands or fewer and within explicit assignment/route-order budgets; and returns a canonical SHA-256 input identity. This planning endpoint remains unauthenticated, stateless, and advisory, so it is a pilot integration surface rather than a production control plane.
+
+The authenticated `/api/regional-runs` family implements the first control-plane slice. It stores server-recomputed requests and results in D1, applies creator-or-assigned-reviewer row authorization, blocks self-approval, records predecessor diffs, commits related writes through D1 batches, and replays a SHA-256-linked event chain before reporting audit verification. This provides durable decision history for the hosted prototype. It does not yet provide organization tenancy, KMS-backed signatures, non-repudiation, configurable retention or deletion, legal hold, replicated-backup evidence, or production quotas.
 
 ## Performance targets for a limited pilot
 
@@ -78,6 +81,7 @@ These are engineering targets, not achieved claims.
 - reject stale or contradictory authority data rather than silently choosing one;
 - preserve the last trusted graph snapshot and label its age;
 - continue read-only analysis when language-model access is unavailable;
+- preserve a transparent deterministic hypothesis fixture when Sol access is unavailable, never silently present fallback as live reasoning;
 - use deterministic parsers or manual structured entry for critical events;
 - retain the existing accepted plan when re-optimization fails;
 - surface every dropped demand, relaxed soft preference, and solver gap; and
@@ -92,5 +96,7 @@ These are engineering targets, not achieved claims.
 5. pre-register acceptance thresholds and failure categories;
 6. have an independent evaluator reproduce results; and
 7. measure prediction error and operator overrides after deployment.
+
+The reasoning layer must additionally be evaluated for hypothesis diversity, calibration, abstention, source attribution, prompt-injection resistance, and the rate at which experts reject or materially revise its evidence questions. No model-proposed state may bypass the authoritative source adapter or policy engine.
 
 Google- or Cainiao-class credibility comes from repeated real-world evidence and service operations, not an algorithm name. This architecture defines the path without claiming that the current prototype has already completed it.

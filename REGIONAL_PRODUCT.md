@@ -26,9 +26,12 @@ The current synthetic Mizunoki District demonstration includes:
 - exact repair-portfolio selection under a user-controlled budget;
 - a deterministic 64-scenario demand and travel stress suite;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
-- a transparent fallback when live model access is unavailable; and
-- explicit synthetic-data and advisory-only boundaries; and
-- a versioned `/api/regional-plan` contract with request-size limits, runtime model validation, deterministic request hashes, and route-level constraint evidence.
+- a GPT-5.6 Sol Reasoning Council that generates exactly three competing interpretations of conflicting reports, preserves counterevidence, and asks for decision-changing authority evidence;
+- deterministic re-planning of every valid hypothesis with a hard human-authority gate;
+- a transparent fallback when live model access is unavailable;
+- explicit synthetic-data and advisory-only boundaries;
+- a versioned `/api/regional-plan` contract with request-size limits, runtime model validation, deterministic request hashes, and route-level constraint evidence; and
+- an authenticated D1 decision ledger with predecessor diffs, assigned review, self-approval prevention, and server-side audit-chain replay.
 
 In the baseline scenario, the exact planner covers all 418 modeled households and all 152 modeled vulnerable residents on time. Removing North Forest Road exposes on-time access for 64 households and 32 vulnerable residents while the optimizer continues protecting the two critical deliveries. These are reproducible synthetic scenario results, not field-performance claims.
 
@@ -82,6 +85,8 @@ Road criticality is computed by removing one segment, solving the complete poole
 
 No phase grants Lifeline Grid authority to diagnose a structure, close a road, direct a driver, prioritize a person, or control a vehicle.
 
+The Reasoning Council does not weaken this boundary. It is intended to reduce premature narrative closure: the model proposes falsifiable worlds, deterministic software measures each consequence, and the responsible organization authenticates the source and chooses the operating state.
+
 ## Commercial model
 
 - annual regional platform subscription priced by covered population, road network, and operator count;
@@ -91,6 +96,8 @@ No phase grants Lifeline Grid authority to diagnose a structure, close a road, d
 - public-interest licensing for small municipalities, funded through regional councils or national programs where applicable.
 
 The initial buyer should be a Japanese municipality-led delivery council with at least one logistics operator and one essential-service partner. Daily logistics creates recurring use and measurable operating value; infrastructure and emergency modes expand the same data asset instead of becoming separate products.
+
+The current hosted ledger is an identity-scoped prototype, not an enterprise collaboration product. A real pilot still requires organization tenancy, formal roles, retention and deletion policy, customer-managed or KMS-backed signatures, backup and recovery evidence, and a contractual operating model.
 
 ## Product metrics
 
