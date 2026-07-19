@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. An exact multi-objective optimizer then proves which mobile batteries can serve each facility, stress-tests every allocation under bounded uncertainty, requires human approval, and globally re-optimizes when a bridge closure invalidates the mission plan.
+Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. An exact Decision-Critical Planner then determines which unresolved fact is worth asking a human, proves which mobile batteries can serve each facility, stress-tests every allocation under bounded uncertainty, requires human approval, and globally re-optimizes when reality changes.
 
 ## Inspiration
 
@@ -26,7 +26,9 @@ The demo begins with three fictional reports from a clinic, shelter, and water s
 
 A plausible nearby candidate sends E-12 to the clinic. Lifeline Grid blocks it because required duration and the protected 35% post-mission mobility reserve fail.
 
-The optimizer then evaluates every one of the 60 distinct assignments of five vehicles to three facilities. Each plan is tested across a reproducible 256-point Halton suite covering demand ±10%, SoC ±5 points, and travel ±20%—15,360 plan-scenario evaluations. The nearest-feasible baseline succeeds in 207/256 synthetic scenarios. The selected Lifeline plan succeeds in 256/256 and survives the joint adversarial bound.
+Before choosing a plan, the Decision-Critical Planner asks a different question: which missing fact could actually change the dispatch? It evaluates three operator-defined uncertainties, both answers to each, the provisional allocation, all 60 answer-specific allocations, and all 256 stress scenarios—93,696 counterfactual plan-scenario evaluations. It ranks the water-station pump surge first. If a 6.5 kW start-up peak reaches the vehicle, guessing wrong produces 226/256 violation scenarios. Asking first changes two missions and restores 256/256.
+
+After the operator confirms the fact, the optimizer evaluates every one of the 60 distinct assignments of five vehicles to three facilities. Each plan is tested across a reproducible 256-point Halton suite covering demand ±10%, SoC ±5 points, and travel ±20%—15,360 plan-scenario evaluations. The nearest-feasible baseline succeeds in 207/256 synthetic scenarios. The selected Lifeline plan succeeds in 256/256 and survives the joint adversarial bound.
 
 A human approves the simulated dispatch. When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
 
@@ -35,6 +37,8 @@ A human approves the simulated dispatch. When a fictional free-text update repor
 - GPT-5.6 Responses API with strict Structured Outputs for incident and disruption interpretation
 - React and TypeScript command-center interface
 - Deterministic physical safety kernel
+- Exact counterfactual value-of-information question ranking
+- Separate continuous-energy and momentary peak-power constraints
 - Exact lexicographic allocation search
 - Deterministic low-discrepancy uncertainty testing
 - Human approval boundary and auditable mission state
@@ -55,6 +59,8 @@ Codex helped turn the initial social-problem thesis into a working end-to-end pr
 
 For each vehicle–facility pair, the kernel verifies route, connector, output, arrival deadline, required duration, and post-mission mobility reserve. It computes usable energy above the reserve after round-trip travel.
 
+Before dispatch, the value-of-information engine tests every fictional question answer by stress-testing the provisional allocation, globally re-optimizing all assignments, and measuring avoidable failure scenarios. A guessed assumption can never authorize dispatch. Continuous average load and momentary start-up peak are evaluated independently, so peak-power risk is not incorrectly converted into hours of energy use.
+
 For this inspectable five-vehicle/three-facility demo, the optimizer enumerates all 60 injective assignments, scores them lexicographically, tests each against 256 deterministic Halton scenarios, and checks the selected plan at the joint worst-case corner. Because every complete allocation is considered, the optimum is certified for the stated synthetic model.
 
 ## Accomplishments
@@ -64,11 +70,14 @@ For this inspectable five-vehicle/three-facility demo, the optimizer enumerates 
 - The selected plan improves synthetic scenario success from 80.9% to 100%.
 - A narrative road closure becomes machine state through GPT-5.6.
 - The whole remaining plan is re-optimized instead of patching one route.
+- Three uncertainty probes are ranked through 93,696 exact counterfactual evaluations.
+- One operator answer prevents 226 bounded-scenario failures if the adverse pump peak is real.
+- The adverse answer changes two missions while preserving 100% bounded-scenario success.
 - Human approval remains mandatory.
 
 ## What we learned
 
-AI is most trustworthy when roles are explicit. Language models are excellent at translating human reports into structured state. Deterministic optimization is better for hard physical constraints. Evaluation is necessary to distinguish a robust plan from one that merely works at nominal values. Humans must retain authority over consequential action.
+AI is most trustworthy when roles are explicit. Language models are excellent at translating human reports into structured state. Deterministic optimization is better for hard physical constraints. Value-of-information analysis prevents teams from asking every possible question—or guessing the one fact that matters. Humans must retain authority over facts and consequential action.
 
 ## What is next
 

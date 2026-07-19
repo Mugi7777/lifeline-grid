@@ -273,6 +273,8 @@ button:focus-visible {
 
 .metric-card.positive { border-color: rgba(23, 107, 85, 0.3); }
 .metric-card.positive::after { background: rgba(184, 244, 93, 0.1); }
+.metric-card.provisional { border-color: rgba(184, 115, 20, 0.35); background: #fffcf5; }
+.metric-card.provisional::after { background: rgba(255, 210, 126, 0.1); }
 .metric-card.danger { border-color: rgba(201, 62, 56, 0.38); background: #fffaf8; }
 .metric-card > p { color: var(--muted); font-size: 10px; font-weight: 720; }
 
@@ -453,6 +455,7 @@ button:focus-visible {
 }
 
 .map-note.risk-note { border-color: rgba(201, 62, 56, 0.38); }
+.map-note.question-note { border-color: rgba(184, 115, 20, 0.45); background: rgba(255, 251, 241, 0.97); }
 .map-note.safe-note { border-color: rgba(23, 107, 85, 0.38); }
 
 .map-note > span {
@@ -468,6 +471,7 @@ button:focus-visible {
 }
 
 .map-note.risk-note > span { background: var(--red); }
+.map-note.question-note > span { background: var(--amber); }
 .map-note.safe-note > span { background: var(--green); }
 .map-note b,
 .map-note small { display: block; }
@@ -526,7 +530,85 @@ button:focus-visible {
 .mode-badge.demo-fallback { color: var(--amber); background: var(--amber-soft); }
 .proof-status.waiting { color: #63716c; background: #edf1ee; }
 .proof-status.blocked { color: var(--red); background: var(--red-soft); }
+.proof-status.question { color: #8c550c; background: var(--amber-soft); }
 .proof-status.verified { color: var(--green-deep); background: var(--lime-soft); }
+
+.question-rank {
+  padding: 7px 9px;
+  border-radius: 999px;
+  color: #8c550c;
+  background: var(--amber-soft);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.decision-body { padding: 14px; }
+.decision-hold {
+  display: inline-flex;
+  padding: 5px 7px;
+  border-radius: 5px;
+  color: var(--red);
+  background: var(--red-soft);
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.decision-body h3 {
+  margin: 11px 0 0;
+  max-width: 330px;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+.decision-assumption {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.question-impact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 12px;
+  border: 1px solid #eadfcb;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #fffaf0;
+}
+.question-impact span { padding: 8px 5px; border-right: 1px solid #eadfcb; text-align: center; }
+.question-impact span:last-child { border-right: 0; }
+.question-impact b,
+.question-impact small { display: block; }
+.question-impact b { color: #8c550c; font-size: 12px; letter-spacing: -0.03em; }
+.question-impact small { margin-top: 2px; color: var(--muted); font-size: 5px; line-height: 1.2; }
+.question-options { display: grid; gap: 7px; margin-top: 10px; }
+.question-options button {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #dce4df;
+  border-radius: 9px;
+  background: #f8faf8;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.question-options button:hover { transform: translateY(-1px); border-color: rgba(23, 107, 85, 0.35); }
+.question-options button.selected { border-color: var(--green); background: #f5fced; box-shadow: 0 0 0 2px rgba(23, 107, 85, 0.07); }
+.question-options button > span { color: var(--green); font-size: 10px; }
+.question-options button > div { min-width: 0; }
+.question-options b,
+.question-options small,
+.question-options em { display: block; }
+.question-options b { font-size: 8px; }
+.question-options small { margin-top: 3px; color: var(--muted); font-size: 7px; line-height: 1.35; }
+.question-options em { margin-top: 5px; color: var(--green-deep); font: 700 6px var(--font-geist-mono), "Courier New", monospace; font-style: normal; }
+.decision-method { margin: 10px 0 0; color: #75827e; font-size: 6px; line-height: 1.45; }
 
 .incident-list { padding: 5px 14px 7px; }
 .incident-item { padding: 13px 2px 12px 11px; border-bottom: 1px solid #e1e7e3; border-left: 3px solid var(--red); }
@@ -635,6 +717,37 @@ button:focus-visible {
   font: 700 7px var(--font-geist-mono), "Courier New", monospace;
 }
 
+.voi-evidence {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 13px;
+  padding: 10px 12px;
+  border: 1px solid rgba(23, 107, 85, 0.25);
+  border-radius: 10px;
+  background: #f4faef;
+}
+.voi-evidence.pending { border-color: rgba(184, 115, 20, 0.34); background: #fffaf0; }
+.voi-evidence > span {
+  padding: 5px 7px;
+  border-radius: 5px;
+  color: var(--green-deep);
+  background: var(--lime-soft);
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.voi-evidence.pending > span { color: #8c550c; background: #ffedcc; }
+.voi-evidence > div { min-width: 0; }
+.voi-evidence b,
+.voi-evidence small { display: block; }
+.voi-evidence b { font-size: 8px; }
+.voi-evidence small { margin-top: 3px; color: var(--muted); font-size: 7px; }
+.voi-evidence em { color: var(--green-deep); font: 750 7px var(--font-geist-mono), "Courier New", monospace; font-style: normal; }
+.voi-evidence.pending em { color: #8c550c; }
+
 .benchmark-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 50px minmax(0, 1fr) minmax(250px, 1.1fr);
@@ -715,7 +828,7 @@ button:focus-visible {
 .mission-log ol {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   list-style: none;
   margin: 15px 0 0;
@@ -789,6 +902,8 @@ button:focus-visible {
   .map-legend { display: none; }
   .benchmark-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
   .uncertainty-bounds { justify-content: flex-start; }
+  .voi-evidence { grid-template-columns: 1fr; gap: 7px; }
+  .voi-evidence > span { width: fit-content; }
   .event-evidence { align-items: flex-start; flex-wrap: wrap; }
   .event-evidence em { flex-basis: 100%; }
   .mission-log ol { grid-template-columns: 1fr; }

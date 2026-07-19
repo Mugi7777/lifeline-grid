@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   DEFAULT_NEEDS,
   VEHICLES,
+  applyDecisionAnswer,
+  buildDecisionAnalysis,
   buildGreedyBaseline,
   buildStressScenarios,
   buildUnsafeCandidate,
@@ -86,4 +88,43 @@ test("the low-discrepancy stress suite is deterministic and remains inside decla
   assert.ok(first.every((scenario) => scenario.demandScale >= 0.9 && scenario.demandScale <= 1.1));
   assert.ok(first.every((scenario) => scenario.socDelta >= -5 && scenario.socDelta <= 5));
   assert.ok(first.every((scenario) => scenario.travelScale >= 0.8 && scenario.travelScale <= 1.2));
+});
+
+test("the value-of-information engine ranks the pump surge as the decision-critical fact", () => {
+  const analysis = buildDecisionAnalysis();
+  const question = analysis.topQuestion;
+
+  assert.equal(analysis.algorithm, "Exact counterfactual value-of-information ranking");
+  assert.equal(analysis.questionCount, 3);
+  assert.equal(analysis.counterfactualPlanScenarioEvaluations, 93_696);
+  assert.equal(question.id, "water-startup-surge");
+  assert.equal(question.rank, 1);
+  assert.equal(question.assignmentChanges, 2);
+  assert.equal(question.avoidableViolationScenarios, 226);
+  assert.equal(question.expectedAvoidedViolationScenarios, 113);
+  assert.equal(question.options[1].unresolvedPlanViolationScenarios, 226);
+  assert.equal(question.options[1].violationScenarios, 0);
+});
+
+test("an adverse peak answer changes two missions without inflating continuous energy", () => {
+  const analysis = buildDecisionAnalysis();
+  const adverseNeeds = applyDecisionAnswer(DEFAULT_NEEDS, analysis.topQuestion, "adverse");
+  const water = adverseNeeds.find((need) => need.id === "water")!;
+  const originalVehicle = VEHICLES.find((vehicle) => vehicle.id === "E-21")!;
+  const originalAssignment = evaluateAssignment(originalVehicle, water);
+  const informedPlan = buildVerifiedPlan([], adverseNeeds);
+  const assignments = Object.fromEntries(
+    informedPlan.assignments.map((assignment) => [assignment.need.id, assignment.vehicle.id]),
+  );
+
+  assert.equal(water.powerKw, 4.2);
+  assert.equal(water.peakPowerKw, 6.5);
+  assert.equal(originalAssignment.demandKwh, 16.8);
+  assert.equal(originalAssignment.safe, false);
+  assert.deepEqual(assignments, {
+    clinic: "E-07",
+    shelter: "E-21",
+    water: "E-44",
+  });
+  assert.equal(informedPlan.optimization?.optimized.successRate, 100);
 });

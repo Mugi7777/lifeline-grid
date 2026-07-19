@@ -4,27 +4,33 @@ import { useMemo, useState } from "react";
 import {
   DEFAULT_NEEDS,
   VEHICLES,
+  applyDecisionAnswer,
+  buildDecisionAnalysis,
   buildUnsafeCandidate,
   buildVerifiedPlan,
   type Assignment,
+  type DecisionAnalysis,
+  type DecisionAnswerId,
   type DispatchPlan,
   type PowerNeed,
 } from "@/lib/planner";
 
-type Stage = "intake" | "candidate" | "verified" | "approved" | "rerouted";
+type Stage = "intake" | "candidate" | "clarify" | "verified" | "approved" | "rerouted";
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
 const stageIndex: Record<Stage, number> = {
   intake: 0,
   candidate: 1,
-  verified: 2,
-  approved: 3,
-  rerouted: 4,
+  clarify: 2,
+  verified: 3,
+  approved: 4,
+  rerouted: 5,
 };
 
 const actionLabels: Record<Stage, string> = {
   intake: "Analyze reports with GPT-5.6",
-  candidate: "Run robust constraint optimizer",
+  candidate: "Rank decision-critical questions",
+  clarify: "Confirm answer + optimize",
   verified: "Approve simulated dispatch",
   approved: "Interpret bridge closure + re-plan",
   rerouted: "Reset training scenario",
@@ -32,7 +38,8 @@ const actionLabels: Record<Stage, string> = {
 
 const actionSubtitles: Record<Stage, string> = {
   intake: "Narrative → power contracts",
-  candidate: "60 allocations × 256 stress scenarios",
+  candidate: "Exact counterfactual value-of-information",
+  clarify: "Human fact check → robust optimum",
   verified: "Human decision required",
   approved: "Free text event → new optimum",
   rerouted: "Replay the full mission loop",
@@ -47,7 +54,12 @@ function routePath(assignment: Assignment) {
   return `M ${vehicle.x} ${vehicle.y} Q ${controlX} ${controlY} ${need.x} ${need.y}`;
 }
 
-function proofRows(stage: Stage, plan: DispatchPlan) {
+function proofRows(
+  stage: Stage,
+  plan: DispatchPlan,
+  decision: DecisionAnalysis,
+  preClosurePlan: DispatchPlan | null,
+) {
   if (stage === "intake") {
     return [
       { state: "pending", label: "Power contracts", detail: "Waiting for structured intake" },
@@ -70,12 +82,28 @@ function proofRows(stage: Stage, plan: DispatchPlan) {
     ];
   }
 
+  if (stage === "clarify") {
+    const question = decision.topQuestion;
+    return [
+      { state: "pass", label: "Question search", detail: `${decision.questionCount} uncertainties ranked exactly` },
+      { state: "pending", label: "Highest-value fact", detail: `${question.facility} · ${question.fieldLabel}` },
+      { state: "fail", label: "Cost of guessing", detail: `${question.avoidableViolationScenarios} avoidable scenario failures` },
+      { state: "pending", label: "Operator verification", detail: "One fact required before optimization" },
+    ];
+  }
+
   if (stage === "rerouted") {
     const water = plan.assignments.find((assignment) => assignment.need.id === "water")!;
     const stress = plan.optimization?.optimized;
+    const affected = preClosurePlan?.assignments.find((assignment) => assignment.route.routeId === "east-bridge");
+    const missionChanges = preClosurePlan?.assignments.filter((before) => (
+      plan.assignments.find((after) => after.need.id === before.need.id)?.vehicle.id !== before.vehicle.id
+    )).length ?? 0;
     return [
-      { state: "fail", label: "Original mission state", detail: "East Bridge closure invalidated E-21 → Water" },
-      { state: "pass", label: "Global re-optimization", detail: `${water.vehicle.id} → Water via ${water.route.routeLabel}` },
+      affected
+        ? { state: "fail", label: "Original mission state", detail: `East Bridge invalidated ${affected.vehicle.id} → ${affected.need.facility}` }
+        : { state: "pass", label: "Original mission state", detail: "No active mission depended on East Bridge" },
+      { state: "pass", label: "Global re-optimization", detail: missionChanges > 0 ? `${missionChanges} missions rebuilt · ${water.vehicle.id} → Water` : "Recomputed globally · no mission change required" },
       { state: "pass", label: "Uncertainty stress test", detail: `${stress?.successRate ?? 0}% success across ${stress?.scenarioCount ?? 0} scenarios` },
       { state: "pass", label: "Human authority", detail: "Prior approval scope retained for simulation" },
     ];
@@ -83,6 +111,7 @@ function proofRows(stage: Stage, plan: DispatchPlan) {
 
   const evidence = plan.optimization;
   return [
+    { state: "pass", label: "Decision-critical fact", detail: `${decision.topQuestion.fieldLabel} verified by operator` },
     { state: "pass", label: "Exact allocation search", detail: `${evidence?.candidatePlans ?? 0} of ${evidence?.candidatePlans ?? 0} allocations evaluated` },
     { state: "pass", label: "Adversarial corner", detail: "Demand +10% · SoC −5 · travel +20% remains safe" },
     { state: "pass", label: "Stress-suite robustness", detail: `${evidence?.optimized.successRate ?? 0}% across ${evidence?.scenarioCount ?? 0} low-discrepancy scenarios` },
@@ -103,19 +132,33 @@ function statusForVehicle(vehicleId: string, stage: Stage, plan: DispatchPlan) {
 export default function Home() {
   const [stage, setStage] = useState<Stage>("intake");
   const [needs, setNeeds] = useState<PowerNeed[]>(DEFAULT_NEEDS);
+  const [resolvedNeeds, setResolvedNeeds] = useState<PowerNeed[] | null>(null);
+  const [decisionAnswer, setDecisionAnswer] = useState<DecisionAnswerId>("confirmed");
   const [aiMode, setAiMode] = useState<AiMode>("ready");
   const [eventMode, setEventMode] = useState<AiMode>("ready");
   const [eventSummary, setEventSummary] = useState("East Bridge closure awaiting interpretation");
   const [working, setWorking] = useState(false);
+  const decision = useMemo(() => buildDecisionAnalysis(needs), [needs]);
+  const selectedDecisionOption = decision.topQuestion.options.find((option) => option.id === decisionAnswer)!;
+  const activeNeeds = resolvedNeeds ?? needs;
 
   const plan = useMemo(() => {
     if (stage === "intake" || stage === "candidate") return buildUnsafeCandidate(needs);
-    return buildVerifiedPlan(stage === "rerouted" ? ["east-bridge"] : [], needs);
-  }, [needs, stage]);
+    return buildVerifiedPlan(stage === "rerouted" ? ["east-bridge"] : [], activeNeeds);
+  }, [activeNeeds, needs, stage]);
+  const preClosurePlan = useMemo(
+    () => stage === "rerouted" ? buildVerifiedPlan([], activeNeeds) : null,
+    [activeNeeds, stage],
+  );
+  const rerouteMissionChanges = preClosurePlan?.assignments.filter((before) => (
+    plan.assignments.find((after) => after.need.id === before.need.id)?.vehicle.id !== before.vehicle.id
+  )).length ?? 0;
 
-  const rows = proofRows(stage, plan);
+  const rows = proofRows(stage, plan, decision, preClosurePlan);
   const completed = stageIndex[stage];
   const isStructured = completed >= stageIndex.candidate;
+  const isProvisional = completed >= stageIndex.clarify;
+  const isVerified = completed >= stageIndex.verified;
   const isApproved = completed >= stageIndex.approved;
   const isRerouted = stage === "rerouted";
   const evidence = plan.optimization;
@@ -126,11 +169,23 @@ export default function Home() {
         protection: plan.criticalSiteHours.toFixed(1),
         unserved: plan.unservedCriticalKwh.toFixed(1),
         violations: String(plan.violationCount),
-        robustness: completed >= 2 ? (evidence?.optimized.successRate ?? 0).toFixed(1) : "0.0",
+        robustness: completed >= stageIndex.clarify ? (evidence?.optimized.successRate ?? 0).toFixed(1) : "0.0",
       };
+
+  function resetScenario() {
+    setStage("intake");
+    setAiMode("ready");
+    setEventMode("ready");
+    setEventSummary("East Bridge closure awaiting interpretation");
+    setNeeds(DEFAULT_NEEDS);
+    setResolvedNeeds(null);
+    setDecisionAnswer("confirmed");
+  }
 
   async function analyzeReports() {
     setWorking(true);
+    setResolvedNeeds(null);
+    setDecisionAnswer("confirmed");
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -158,8 +213,12 @@ export default function Home() {
       return;
     }
     setWorking(true);
-    await wait(stage === "candidate" ? 520 : 360);
-    if (stage === "candidate") setStage("verified");
+    await wait(stage === "candidate" ? 620 : stage === "clarify" ? 520 : 360);
+    if (stage === "candidate") setStage("clarify");
+    if (stage === "clarify") {
+      setResolvedNeeds(applyDecisionAnswer(needs, decision.topQuestion, decisionAnswer));
+      setStage("verified");
+    }
     if (stage === "verified") setStage("approved");
     if (stage === "approved") {
       try {
@@ -176,26 +235,23 @@ export default function Home() {
           event?: { operatorSummary?: string; blockedRouteIds?: string[] };
         };
         setEventMode(payload.mode === "gpt-5.6" ? "gpt-5.6" : "demo-fallback");
-        setEventSummary(payload.event?.operatorSummary ?? "East Bridge closure invalidated the active water-station route.");
+        setEventSummary(payload.event?.operatorSummary ?? "East Bridge is unavailable for the current planning window.");
       } catch {
         setEventMode("demo-fallback");
-        setEventSummary("East Bridge closure invalidated the active water-station route.");
+        setEventSummary("East Bridge is unavailable for the current planning window.");
       }
       setStage("rerouted");
     }
     if (stage === "rerouted") {
-      setStage("intake");
-      setAiMode("ready");
-      setEventMode("ready");
-      setEventSummary("East Bridge closure awaiting interpretation");
-      setNeeds(DEFAULT_NEEDS);
+      resetScenario();
     }
     setWorking(false);
   }
 
-  const proofTone = stage === "candidate" ? "blocked" : stage === "intake" ? "waiting" : "verified";
-  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "intake" ? "WAITING" : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "APPROVED" : "VERIFIED";
+  const proofTone = stage === "candidate" ? "blocked" : stage === "clarify" ? "question" : stage === "intake" ? "waiting" : "verified";
+  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "clarify" ? "FACT CHECK" : stage === "intake" ? "WAITING" : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "APPROVED" : "VERIFIED";
   const modeLabel = aiMode === "gpt-5.6" ? "GPT-5.6 LIVE" : aiMode === "demo-fallback" ? "DEMO FALLBACK" : "UNSTRUCTURED";
+  const actionSubtitle = stage === "clarify" ? selectedDecisionOption.label : actionSubtitles[stage];
 
   return (
     <main className={`command-shell stage-${stage}`}>
@@ -223,12 +279,12 @@ export default function Home() {
           <button className="primary-action" data-testid="primary-action" type="button" onClick={advance} disabled={working}>
             <span className="action-copy">
               <b>{working ? "Processing mission state…" : actionLabels[stage]}</b>
-              <small>{working ? "Every hard constraint remains enforced" : actionSubtitles[stage]}</small>
+              <small>{working ? "Every hard constraint remains enforced" : actionSubtitle}</small>
             </span>
             <span className="action-arrow" aria-hidden="true">→</span>
           </button>
           {stage !== "intake" && (
-            <button className="reset-action" type="button" onClick={() => { setStage("intake"); setAiMode("ready"); setEventMode("ready"); setEventSummary("East Bridge closure awaiting interpretation"); setNeeds(DEFAULT_NEEDS); }}>
+            <button className="reset-action" type="button" onClick={resetScenario}>
               Reset
             </button>
           )}
@@ -236,25 +292,25 @@ export default function Home() {
       </section>
 
       <section className="metric-grid" aria-label="Mission metrics" aria-live="polite">
-        <article className={`metric-card ${completed >= 2 ? "positive" : ""}`}>
+        <article className={`metric-card ${isVerified ? "positive" : stage === "clarify" ? "provisional" : ""}`}>
           <p>Critical protection</p>
           <div><strong>{metrics.protection}</strong><span>site-h</span></div>
-          <small className={completed >= 2 ? "metric-ok" : "metric-warning"}>{completed >= 2 ? "Full 12 h target protected" : "12 h target across critical sites"}</small>
+          <small className={isVerified ? "metric-ok" : "metric-warning"}>{isVerified ? "Full 12 h target protected" : stage === "clarify" ? "Provisional · one fact unresolved" : "12 h target across critical sites"}</small>
         </article>
-        <article className={`metric-card ${completed >= 2 ? "positive" : ""}`}>
+        <article className={`metric-card ${isVerified ? "positive" : stage === "clarify" ? "provisional" : ""}`}>
           <p>Unserved critical energy</p>
           <div><strong>{metrics.unserved}</strong><span>kWh</span></div>
-          <small className={completed >= 2 ? "metric-ok" : "metric-warning"}>{completed >= 2 ? "All critical demand covered" : "Power gap remains"}</small>
+          <small className={isVerified ? "metric-ok" : "metric-warning"}>{isVerified ? "All critical demand covered" : stage === "clarify" ? "Conditional on operator answer" : "Power gap remains"}</small>
         </article>
-        <article className={`metric-card ${stage === "candidate" ? "danger" : completed >= 2 ? "positive" : ""}`}>
+        <article className={`metric-card ${stage === "candidate" ? "danger" : isVerified ? "positive" : stage === "clarify" ? "provisional" : ""}`}>
           <p>Safety violations</p>
           <div><strong>{metrics.violations}</strong><span>{stage === "candidate" ? "blocked" : "hard gates"}</span></div>
-          <small className={stage === "candidate" ? "metric-danger" : completed >= 2 ? "metric-ok" : ""}>{stage === "candidate" ? "Unsafe dispatch prevented" : completed >= 2 ? "Deterministic proof passed" : "Awaiting candidate plan"}</small>
+          <small className={stage === "candidate" ? "metric-danger" : isVerified ? "metric-ok" : stage === "clarify" ? "metric-warning" : ""}>{stage === "candidate" ? "Unsafe dispatch prevented" : isVerified ? "Deterministic proof passed" : stage === "clarify" ? "Guessing remains blocked" : "Awaiting candidate plan"}</small>
         </article>
-        <article className={`metric-card accent-card ${completed >= 2 ? "positive" : ""}`}>
+        <article className={`metric-card accent-card ${isVerified ? "positive" : stage === "clarify" ? "provisional" : ""}`}>
           <p>Plan robustness</p>
-          <div><strong>{metrics.robustness}</strong><span>{completed >= 2 ? "% success" : "stress suite"}</span></div>
-          <small className={completed >= 2 ? "metric-ok" : ""}>{completed >= 2 ? "256 bounded uncertainty scenarios" : "Demand · SoC · travel uncertainty"}</small>
+          <div><strong>{metrics.robustness}</strong><span>{isProvisional ? "% success" : "stress suite"}</span></div>
+          <small className={isVerified ? "metric-ok" : stage === "clarify" ? "metric-warning" : ""}>{isVerified ? "256 bounded uncertainty scenarios" : stage === "clarify" ? "Provisional plan only" : "Demand · SoC · travel uncertainty"}</small>
         </article>
       </section>
 
@@ -290,7 +346,7 @@ export default function Home() {
               )}
             </svg>
 
-            {needs.map((need) => (
+            {activeNeeds.map((need) => (
               <div className={`site-node ${need.priority}`} key={need.id} style={{ left: `${need.x}%`, top: `${need.y}%` }}>
                 <span className="site-pulse" />
                 <div><b>{need.facility}</b><small>{need.powerKw.toFixed(1)} kW · {need.durationHours} h</small></div>
@@ -309,15 +365,16 @@ export default function Home() {
 
             {isRerouted && <div className="bridge-closure"><span>×</span><b>BRIDGE CLOSED</b></div>}
 
-            <div className={`map-note ${stage === "candidate" ? "risk-note" : completed >= 2 ? "safe-note" : "waiting-note"}`}>
-              <span>{stage === "candidate" ? "!" : completed >= 2 ? "✓" : "···"}</span>
+            <div className={`map-note ${stage === "candidate" ? "risk-note" : stage === "clarify" ? "question-note" : isVerified ? "safe-note" : "waiting-note"}`}>
+              <span>{stage === "candidate" ? "!" : stage === "clarify" ? "?" : isVerified ? "✓" : "···"}</span>
               <div>
                 <b>{stage === "intake" && "Three reports are waiting for structured intake"}</b>
                 <b>{stage === "candidate" && "E-12 cannot complete the Clinic mission"}</b>
+                <b>{stage === "clarify" && "One unresolved fact can change two missions"}</b>
                 <b>{stage === "verified" && "Exact robust optimum certified"}</b>
                 <b>{stage === "approved" && "Simulated dispatch approved by a human"}</b>
                 <b>{stage === "rerouted" && "Closure absorbed by a whole-plan re-optimization"}</b>
-                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "rerouted" ? "E-21 changes mission; E-44 restores Water coverage" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
+                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "clarify" ? `${decision.counterfactualPlanScenarioEvaluations.toLocaleString()} counterfactual evaluations · guessing blocked` : stage === "rerouted" ? rerouteMissionChanges > 0 ? `${rerouteMissionChanges} missions changed; every hard constraint rechecked` : "No active route affected; whole plan still recomputed" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
               </div>
             </div>
           </div>
@@ -327,9 +384,11 @@ export default function Home() {
               <div className="pipeline-preview">
                 <span><i>1</i><b>Understand</b><small>GPT-5.6 structures reports</small></span>
                 <em>→</em>
-                <span><i>2</i><b>Prove</b><small>Exact search + stress testing</small></span>
+                <span><i>2</i><b>Ask</b><small>Value-of-information ranking</small></span>
                 <em>→</em>
-                <span><i>3</i><b>Act</b><small>Human approves simulation</small></span>
+                <span><i>3</i><b>Prove</b><small>Exact robust optimization</small></span>
+                <em>→</em>
+                <span><i>4</i><b>Act</b><small>Human approves simulation</small></span>
               </div>
             ) : plan.assignments.map((assignment) => (
               <div className={`assignment-card ${assignment.safe ? "safe" : "blocked"}`} key={assignment.need.id}>
@@ -339,39 +398,81 @@ export default function Home() {
                   <span>{assignment.coverageHours.toFixed(1)} h cover</span>
                   <span>{assignment.postMissionSoc.toFixed(1)}% after</span>
                 </div>
-                <small>{assignment.safe ? isRerouted ? "RE-OPTIMIZED" : "ROBUST" : "BLOCKED"}</small>
+                <small>{assignment.safe ? isRerouted ? "RE-OPTIMIZED" : stage === "clarify" ? "PROVISIONAL" : "ROBUST" : "BLOCKED"}</small>
               </div>
             ))}
           </div>
         </article>
 
         <aside className="right-rail">
-          <article className="panel incident-panel">
-            <div className="panel-heading compact">
-              <div>
-                <p className="panel-kicker">GPT-5.6 INTAKE</p>
-                <h2>Incident reports</h2>
-              </div>
-              <span className={`mode-badge ${aiMode}`}>{modeLabel}</span>
-            </div>
-            <div className="incident-list">
-              {needs.map((need, index) => (
-                <div className={`incident-item ${need.priority}`} key={need.id}>
-                  <div className="incident-meta"><b>{need.facility}</b><span>02:{11 + index}</span></div>
-                  <p>{isStructured ? need.summary : need.report}</p>
-                  {isStructured && (
-                    <div className="contract-row">
-                      <span>{need.priority.toUpperCase()}</span>
-                      <span>{need.powerKw.toFixed(1)} kW × {need.durationHours} h</span>
-                      <span>{need.connector}</span>
-                      <span>CONF. {Math.round(need.confidence * 100)}%</span>
-                    </div>
-                  )}
+          {stage === "clarify" ? (
+            <article className="panel decision-panel">
+              <div className="panel-heading compact">
+                <div>
+                  <p className="panel-kicker">DECISION INTELLIGENCE</p>
+                  <h2>Ask before dispatch</h2>
                 </div>
-              ))}
-            </div>
-            {isStructured && <p className="source-proof">Source-linked contracts · Assumptions remain explicit</p>}
-          </article>
+                <span className="question-rank">RANK #1 / {decision.questionCount}</span>
+              </div>
+              <div className="decision-body">
+                <span className="decision-hold">DISPATCH HOLD · ONE FACT MATTERS MOST</span>
+                <h3>{decision.topQuestion.question}</h3>
+                <p className="decision-assumption">Current assumption: “{decision.topQuestion.assumption}”</p>
+                <div className="question-impact" aria-label="Value of information evidence">
+                  <span><b>{decision.topQuestion.avoidableViolationScenarios}</b><small>avoidable failures</small></span>
+                  <span><b>{decision.topQuestion.assignmentChanges}</b><small>missions can change</small></span>
+                  <span><b>{decision.counterfactualPlanScenarioEvaluations.toLocaleString()}</b><small>counterfactual evals</small></span>
+                </div>
+                <div className="question-options" role="radiogroup" aria-label={decision.topQuestion.question}>
+                  {decision.topQuestion.options.map((option) => (
+                    <button
+                      className={decisionAnswer === option.id ? "selected" : ""}
+                      type="button"
+                      role="radio"
+                      aria-checked={decisionAnswer === option.id}
+                      onClick={() => setDecisionAnswer(option.id)}
+                      key={option.id}
+                    >
+                      <span>{decisionAnswer === option.id ? "●" : "○"}</span>
+                      <div>
+                        <b>{option.label}</b>
+                        <small>{option.detail}</small>
+                        <em>{option.assignments.water} → Water · {option.assignments.shelter} → Shelter</em>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <p className="decision-method">Exact value-of-information ranking · equal-weight fictional counterfactuals · no guessed fact can authorize dispatch</p>
+              </div>
+            </article>
+          ) : (
+            <article className="panel incident-panel">
+              <div className="panel-heading compact">
+                <div>
+                  <p className="panel-kicker">GPT-5.6 INTAKE</p>
+                  <h2>Incident reports</h2>
+                </div>
+                <span className={`mode-badge ${aiMode}`}>{modeLabel}</span>
+              </div>
+              <div className="incident-list">
+                {activeNeeds.map((need, index) => (
+                  <div className={`incident-item ${need.priority}`} key={need.id}>
+                    <div className="incident-meta"><b>{need.facility}</b><span>02:{11 + index}</span></div>
+                    <p>{isStructured ? need.summary : need.report}</p>
+                    {isStructured && (
+                      <div className="contract-row">
+                        <span>{need.priority.toUpperCase()}</span>
+                        <span>{need.peakPowerKw && need.peakPowerKw > need.powerKw ? `${need.powerKw.toFixed(1)} avg · ${need.peakPowerKw.toFixed(1)} peak` : `${need.powerKw.toFixed(1)} kW × ${need.durationHours} h`}</span>
+                        <span>{need.connector}</span>
+                        <span>CONF. {Math.round(need.confidence * 100)}%</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {isStructured && <p className="source-proof">Source-linked contracts · Assumptions remain explicit</p>}
+            </article>
+          )}
 
           <article className="panel proof-panel">
             <div className="panel-heading compact">
@@ -417,6 +518,14 @@ export default function Home() {
               <span>TRAVEL {evidence.adversarialBounds.travel}</span>
             </div>
           </div>
+          <div className={`voi-evidence ${stage === "clarify" ? "pending" : "resolved"}`}>
+            <span>{stage === "clarify" ? "OPERATOR INPUT REQUIRED" : "DECISION FACT VERIFIED"}</span>
+            <div>
+              <b>Question #{decision.topQuestion.rank}: {decision.topQuestion.facility} {decision.topQuestion.fieldLabel}</b>
+              <small>{decision.topQuestion.avoidableViolationScenarios} avoidable failures · {decision.topQuestion.assignmentChanges} missions can change · {decision.counterfactualPlanScenarioEvaluations.toLocaleString()} exact counterfactual evaluations</small>
+            </div>
+            <em>{stage === "clarify" ? "guessing blocked" : selectedDecisionOption.label}</em>
+          </div>
           <div className="benchmark-grid">
             <article className="benchmark-card baseline">
               <div><p>Greedy baseline</p><span>FRAGILE</span></div>
@@ -441,14 +550,14 @@ export default function Home() {
             </article>
             <article className="algorithm-card">
               <p className="panel-kicker">ALGORITHM</p>
-              <h3>Exact lexicographic search</h3>
+              <h3>Value of information + exact search</h3>
               <ol>
-                <li><span>1</span>Protect priority-weighted service</li>
-                <li><span>2</span>Maximize bounded scenario success</li>
-                <li><span>3</span>Minimize priority-weighted arrival</li>
-                <li><span>4</span>Preserve the worst mobility margin</li>
+                <li><span>1</span>Rank facts by avoidable failure</li>
+                <li><span>2</span>Re-optimize every possible answer</li>
+                <li><span>3</span>Protect priority-weighted service</li>
+                <li><span>4</span>Certify the bounded worst case</li>
               </ol>
-              <small>256-point Halton sequence · deterministic and reproducible</small>
+              <small>3 questions · 6 counterfactual worlds · deterministic and reproducible</small>
             </article>
           </div>
           {isRerouted && (
@@ -468,10 +577,11 @@ export default function Home() {
         </div>
         <ol>
           <li className="done"><i>01</i><div><b>Reports received</b><small>3 fictional facilities · 02:14</small></div></li>
-          <li className={completed >= 1 ? "done" : "current"}><i>02</i><div><b>Needs structured</b><small>{completed >= 1 ? `${aiMode === "gpt-5.6" ? "GPT-5.6" : "Demo fallback"} · source linked` : "Awaiting analysis"}</small></div></li>
-          <li className={completed >= 2 ? "done" : completed === 1 ? "current risk" : ""}><i>03</i><div><b>Robust optimum certified</b><small>{completed === 1 ? "E-12 candidate blocked" : completed >= 2 ? `${evidence?.scenarioEvaluations.toLocaleString()} plan-scenarios checked` : "Not started"}</small></div></li>
-          <li className={completed >= 3 ? "done" : completed === 2 ? "current" : ""}><i>04</i><div><b>Human approval</b><small>{completed >= 3 ? "Recorded for simulation" : "Required"}</small></div></li>
-          <li className={completed >= 4 ? "done" : completed === 3 ? "current" : ""}><i>05</i><div><b>Disruption re-optimized</b><small>{completed >= 4 ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
+          <li className={completed >= stageIndex.clarify ? "done" : completed === stageIndex.candidate ? "current risk" : ""}><i>02</i><div><b>Unsafe shortcut blocked</b><small>{completed >= stageIndex.candidate ? `${aiMode === "gpt-5.6" ? "GPT-5.6" : "Demo fallback"} · E-12 rejected` : "Awaiting analysis"}</small></div></li>
+          <li className={completed >= stageIndex.verified ? "done" : completed === stageIndex.clarify ? "current" : ""}><i>03</i><div><b>Critical fact resolved</b><small>{completed >= stageIndex.verified ? selectedDecisionOption.label : completed === stageIndex.clarify ? `${decision.questionCount} questions ranked` : "Not started"}</small></div></li>
+          <li className={completed >= stageIndex.verified ? "done" : ""}><i>04</i><div><b>Robust optimum certified</b><small>{completed >= stageIndex.verified ? `${evidence?.scenarioEvaluations.toLocaleString()} plan-scenarios checked` : "Waiting for verified fact"}</small></div></li>
+          <li className={completed >= stageIndex.approved ? "done" : completed === stageIndex.verified ? "current" : ""}><i>05</i><div><b>Human approval</b><small>{completed >= stageIndex.approved ? "Recorded for simulation" : "Required"}</small></div></li>
+          <li className={completed >= stageIndex.rerouted ? "done" : completed === stageIndex.approved ? "current" : ""}><i>06</i><div><b>Disruption re-optimized</b><small>{completed >= stageIndex.rerouted ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
         </ol>
       </section>
 

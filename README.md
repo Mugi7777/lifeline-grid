@@ -19,6 +19,10 @@ GPT-5.6: source-linked power contracts
       ↓
 Unsafe candidate → visibly rejected
       ↓
+Decision-Critical Planner
+      ↓
+One highest-value operator question
+      ↓
 Exact multi-objective allocation search
       ↓
 256-scenario uncertainty stress test
@@ -36,12 +40,15 @@ GPT-5.6 interprets language. Deterministic code performs safety arithmetic and o
 2. **GPT-5.6 Structured Outputs** extracts source-linked power, duration, deadline, priority, connector, confidence, and assumptions.
 3. A plausible nearest-looking assignment sends E-12 to the clinic.
 4. The safety kernel rejects it because duration and the protected 35% mobility reserve fail.
-5. The optimizer evaluates every one of the **60 distinct vehicle allocations**.
-6. Each allocation is tested across a deterministic **256-point Halton uncertainty suite** covering demand, state-of-charge, and travel-time variation.
-7. A lexicographic objective first protects priority-weighted service, then maximizes scenario success, minimizes priority-weighted arrival, and preserves the worst mobility margin.
-8. The selected plan succeeds in all 256 demo scenarios. The nearest-feasible baseline succeeds in 207/256.
-9. A human approves the simulated dispatch.
-10. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
+5. The Decision-Critical Planner tests three unresolved assumptions and both possible answers to each.
+6. For every answer world, it compares keeping the provisional allocation with re-optimizing all 60 allocations across all 256 stress scenarios—**93,696 exact counterfactual plan-scenario evaluations**.
+7. It ranks the pump start-up surge question first because guessing wrong creates 226 avoidable violation scenarios and changes two vehicle missions.
+8. An operator confirms whether the station caps the surge locally. A guessed fact can never authorize dispatch.
+9. The optimizer evaluates every one of the **60 distinct vehicle allocations** against the confirmed machine state.
+10. Each allocation is tested across a deterministic **256-point Halton uncertainty suite** covering demand, state-of-charge, and travel-time variation.
+11. The selected plan succeeds in all 256 demo scenarios. The nearest-feasible baseline succeeds in 207/256.
+12. A human approves the simulated dispatch.
+13. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
 
 ## Optimization and safety kernel
 
@@ -53,6 +60,8 @@ For each vehicle–facility pair, the kernel checks:
 - arrival deadline;
 - required service duration; and
 - post-mission mobility reserve.
+
+Continuous energy and momentary peak power are modeled separately. A four-hour 4.2 kW pump mission still consumes 16.8 kWh when its start-up peak is 6.5 kW, but the assigned inverter must independently survive that peak.
 
 The energy available above the protected reserve is calculated as:
 
@@ -67,6 +76,18 @@ The current exact search enumerates all injective assignments for three faciliti
 - travel time and travel energy: ±20%.
 
 The selected plan must additionally survive the joint adversarial corner: demand +10%, SoC −5 points, and travel +20%. No hard constraint is relaxed to force a result. See [`EVALS.md`](./EVALS.md) for the reproducible evaluation and limitations.
+
+### Decision-Critical Planner
+
+The built-in fictional scenario contains three operator-owned uncertainty probes: pump start-up surge, possible shelter heating load, and the clinic cold-chain window. For each question and answer, deterministic code:
+
+1. applies the answer as machine state;
+2. stress-tests the existing provisional allocation;
+3. re-optimizes all 60 complete allocations;
+4. stress-tests the new optimum across the same 256 scenarios; and
+5. ranks the question by avoidable violations, criticality, and mission changes.
+
+The current top-ranked question is whether the water station handles its start-up surge. If the 6.5 kW peak reaches the vehicle, keeping the provisional plan fails 226/256 bounded scenarios; asking first and re-optimizing changes two missions and restores 256/256. The equal-weight two-answer test avoids 113 scenarios in expectation. These are fictional counterfactual results, not calibrated probabilities.
 
 ## OpenAI usage
 
@@ -112,6 +133,9 @@ Tests verify:
 - reproducible bounded stress scenarios;
 - measured improvement over the greedy baseline;
 - zero-violation global re-optimization after a closure; and
+- exact value-of-information question ranking;
+- separation of continuous energy from momentary peak power;
+- a two-mission counterfactual reallocation after an adverse answer; and
 - transparent report and event fallbacks.
 
 ## Repository map
@@ -119,7 +143,7 @@ Tests verify:
 - `app/page.tsx` — interactive command center and live evaluation
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
-- `lib/planner.ts` — safety kernel, exact optimizer, and stress suite
+- `lib/planner.ts` — safety kernel, exact optimizer, stress suite, and value-of-information ranking
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
 - `DEMO_SCRIPT.md` — sub-three-minute video plan

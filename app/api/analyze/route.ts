@@ -145,6 +145,7 @@ export async function POST(request: Request) {
         facility: need.facility,
         summary: need.summary,
         powerKw: need.power_kw,
+        peakPowerKw: need.power_kw,
         durationHours: need.duration_hours,
         deadlineMinutes: need.deadline_minutes,
         priority: need.priority,

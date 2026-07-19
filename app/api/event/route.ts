@@ -21,7 +21,7 @@ const FALLBACK_EVENT = {
   blockedRouteIds: ["east-bridge"],
   confidence: 0.99,
   sourceQuote: "East Bridge is closed to all traffic",
-  operatorSummary: "East Bridge closure invalidates the active water-station route.",
+  operatorSummary: "East Bridge is unavailable for the current planning window.",
   assumptions: ["Closure remains active for the re-planning window"],
 };
 
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         instructions: [
           "You convert a fictional disaster operations update into a machine-readable planning event.",
           "Extract only facts supported by the report and preserve a short source quote.",
+          "The operator summary must describe the reported route state without claiming which active mission it affects.",
           "Do not calculate routes, authorize dispatch, or invent unavailable route identifiers.",
           "This is a synthetic training simulation.",
         ].join(" "),

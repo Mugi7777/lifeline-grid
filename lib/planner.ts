@@ -8,6 +8,7 @@ export interface PowerNeed {
   report: string;
   sourceQuote: string;
   powerKw: number;
+  peakPowerKw?: number;
   durationHours: number;
   deadlineMinutes: number;
   priority: Priority;
@@ -16,6 +17,45 @@ export interface PowerNeed {
   assumptions: string[];
   x: number;
   y: number;
+}
+
+export type DecisionAnswerId = "confirmed" | "adverse";
+
+export interface DecisionQuestionOption {
+  id: DecisionAnswerId;
+  label: string;
+  detail: string;
+  adjustedValue: number;
+  assignments: Record<PowerNeed["id"], string>;
+  successRate: number;
+  violationScenarios: number;
+  unresolvedPlanViolationScenarios: number;
+  avoidedViolationScenarios: number;
+}
+
+export interface DecisionQuestion {
+  id: string;
+  needId: PowerNeed["id"];
+  facility: string;
+  question: string;
+  assumption: string;
+  field: "powerKw" | "peakPowerKw" | "durationHours";
+  fieldLabel: string;
+  priority: Priority;
+  rank: number;
+  score: number;
+  assignmentChanges: number;
+  avoidableViolationScenarios: number;
+  expectedAvoidedViolationScenarios: number;
+  options: [DecisionQuestionOption, DecisionQuestionOption];
+}
+
+export interface DecisionAnalysis {
+  algorithm: "Exact counterfactual value-of-information ranking";
+  questionCount: number;
+  counterfactualPlanScenarioEvaluations: number;
+  topQuestion: DecisionQuestion;
+  questions: DecisionQuestion[];
 }
 
 export interface Vehicle {
@@ -146,6 +186,7 @@ export const DEFAULT_NEEDS: PowerNeed[] = [
     report: "Control and pump equipment requires 4.2 kW for 4 hours. Power is needed within 55 minutes and the V2H interface has been checked.",
     sourceQuote: "4.2 kW for 4 hours ... V2H interface",
     powerKw: 4.2,
+    peakPowerKw: 4.2,
     durationHours: 4,
     deadlineMinutes: 55,
     priority: "critical",
@@ -285,6 +326,7 @@ export function evaluateAssignment(
   const route = getRoute(vehicle.id, need.id);
   const startingSoc = Math.max(0, Math.min(100, vehicle.soc + variation.socDelta));
   const requiredPowerKw = need.powerKw * variation.demandScale;
+  const requiredPeakPowerKw = (need.peakPowerKw ?? need.powerKw) * variation.demandScale;
   const demandKwh = requiredPowerKw * need.durationHours;
   const travelEnergy = route.roundTripKm * variation.travelScale * vehicle.travelKwhPerKm;
   const effectiveOneWayMinutes = route.oneWayMinutes * variation.travelScale;
@@ -316,8 +358,8 @@ export function evaluateAssignment(
     {
       code: "power",
       label: "Power envelope",
-      detail: `${vehicle.maxPowerKw.toFixed(1)} kW available / ${round(requiredPowerKw)} kW required`,
-      pass: vehicle.maxPowerKw + 0.001 >= requiredPowerKw,
+      detail: `${vehicle.maxPowerKw.toFixed(1)} kW available / ${round(requiredPeakPowerKw)} kW peak required`,
+      pass: vehicle.maxPowerKw + 0.001 >= requiredPeakPowerKw,
     },
     {
       code: "deadline",
@@ -574,6 +616,221 @@ export function buildVerifiedPlan(
   };
 
   return plan;
+}
+
+interface DecisionProbe {
+  id: string;
+  needId: PowerNeed["id"];
+  field: DecisionQuestion["field"];
+  fieldLabel: string;
+  adverseValue: number;
+  question: string;
+  assumption: string;
+  confirmedLabel: string;
+  adverseLabel: string;
+  confirmedDetail: string;
+  adverseDetail: string;
+}
+
+const DECISION_PROBES: DecisionProbe[] = [
+  {
+    id: "water-startup-surge",
+    needId: "water",
+    field: "peakPowerKw",
+    fieldLabel: "start-up peak",
+    adverseValue: 6.5,
+    question: "Can East Water Station absorb the pump start-up surge locally?",
+    assumption: "Pump start-up surge is handled on site",
+    confirmedLabel: "Yes · surge capped locally",
+    adverseLabel: "No · vehicle sees 6.5 kW peak",
+    confirmedDetail: "Continuous demand and peak both remain at 4.2 kW",
+    adverseDetail: "Energy stays 4.2 kW average, but the inverter must survive a 6.5 kW start",
+  },
+  {
+    id: "shelter-heating-load",
+    needId: "shelter",
+    field: "powerKw",
+    fieldLabel: "continuous load",
+    adverseValue: 3.2,
+    question: "Will North Shelter add space-heating load during the six-hour mission?",
+    assumption: "No space-heating load is included",
+    confirmedLabel: "No · lights and comms only",
+    adverseLabel: "Yes · demand rises to 3.2 kW",
+    confirmedDetail: "The reported 2.4 kW envelope remains valid",
+    adverseDetail: "A synthetic warming load raises continuous demand by 0.8 kW",
+  },
+  {
+    id: "clinic-cold-chain-window",
+    needId: "clinic",
+    field: "durationHours",
+    fieldLabel: "service duration",
+    adverseValue: 10,
+    question: "Is eight hours sufficient to bridge the clinic cold-chain outage?",
+    assumption: "Load remains stable for the stated window",
+    confirmedLabel: "Yes · eight-hour bridge",
+    adverseLabel: "No · extend service to ten hours",
+    confirmedDetail: "The source-linked eight-hour window is confirmed",
+    adverseDetail: "The synthetic restoration estimate slips by two hours",
+  },
+];
+
+function valueForField(need: PowerNeed, field: DecisionQuestion["field"]): number {
+  if (field === "peakPowerKw") return need.peakPowerKw ?? need.powerKw;
+  return need[field];
+}
+
+function patchNeed(
+  needs: PowerNeed[],
+  needId: PowerNeed["id"],
+  field: DecisionQuestion["field"],
+  value: number,
+): PowerNeed[] {
+  return needs.map((need) => need.id === needId ? { ...need, [field]: value } : { ...need });
+}
+
+function assignmentRecord(plan: DispatchPlan): Record<PowerNeed["id"], string> {
+  return Object.fromEntries(
+    plan.assignments.map((assignment) => [assignment.need.id, assignment.vehicle.id]),
+  ) as Record<PowerNeed["id"], string>;
+}
+
+function changedAssignments(
+  first: Record<PowerNeed["id"], string>,
+  second: Record<PowerNeed["id"], string>,
+) {
+  return (Object.keys(first) as PowerNeed["id"][])
+    .filter((needId) => first[needId] !== second[needId])
+    .length;
+}
+
+function assessPlanAgainstNeeds(
+  plan: DispatchPlan,
+  needs: PowerNeed[],
+  blockedRoutes: string[],
+  scenarios: ScenarioVariation[],
+) {
+  const rebound = needs.map((need) => {
+    const assignment = plan.assignments.find((candidate) => candidate.need.id === need.id);
+    if (!assignment) throw new Error(`Missing assignment for ${need.id}`);
+    return evaluateAssignment(assignment.vehicle, need, blockedRoutes);
+  });
+  return assessFixedAssignments(rebound, needs, blockedRoutes, scenarios);
+}
+
+export function buildDecisionAnalysis(
+  needs: PowerNeed[] = DEFAULT_NEEDS,
+  blockedRoutes: string[] = [],
+): DecisionAnalysis {
+  const scenarios = buildStressScenarios();
+  const unresolvedPlan = buildVerifiedPlan(blockedRoutes, needs);
+  let counterfactualPlanScenarioEvaluations = 0;
+
+  const questions = DECISION_PROBES.map((probe) => {
+    const need = needs.find((candidate) => candidate.id === probe.needId);
+    if (!need) throw new Error(`Missing need for decision probe ${probe.id}`);
+    const confirmedValue = valueForField(need, probe.field);
+    const variants: Array<{
+      id: DecisionAnswerId;
+      label: string;
+      detail: string;
+      value: number;
+    }> = [
+      {
+        id: "confirmed",
+        label: probe.confirmedLabel,
+        detail: probe.confirmedDetail,
+        value: confirmedValue,
+      },
+      {
+        id: "adverse",
+        label: probe.adverseLabel,
+        detail: probe.adverseDetail,
+        value: probe.adverseValue,
+      },
+    ];
+
+    const options = variants.map((variant) => {
+      const adjustedNeeds = patchNeed(needs, probe.needId, probe.field, variant.value);
+      const informedPlan = buildVerifiedPlan(blockedRoutes, adjustedNeeds);
+      const informedStress = informedPlan.optimization!.optimized;
+      const unresolvedStress = assessPlanAgainstNeeds(unresolvedPlan, adjustedNeeds, blockedRoutes, scenarios);
+      counterfactualPlanScenarioEvaluations += informedPlan.optimization!.scenarioEvaluations + scenarios.length;
+      return {
+        id: variant.id,
+        label: variant.label,
+        detail: variant.detail,
+        adjustedValue: variant.value,
+        assignments: assignmentRecord(informedPlan),
+        successRate: informedStress.successRate,
+        violationScenarios: informedStress.violationScenarios,
+        unresolvedPlanViolationScenarios: unresolvedStress.violationScenarios,
+        avoidedViolationScenarios: Math.max(
+          0,
+          unresolvedStress.violationScenarios - informedStress.violationScenarios,
+        ),
+      } satisfies DecisionQuestionOption;
+    }) as [DecisionQuestionOption, DecisionQuestionOption];
+
+    const assignmentChanges = changedAssignments(options[0].assignments, options[1].assignments);
+    const avoidableViolationScenarios = Math.max(...options.map((option) => option.avoidedViolationScenarios));
+    const expectedAvoidedViolationScenarios = round(
+      options.reduce((total, option) => total + option.avoidedViolationScenarios, 0) / options.length,
+      1,
+    );
+    const score = (
+      avoidableViolationScenarios * priorityWeight(need.priority)
+      + assignmentChanges * scenarios.length
+      + Math.round((1 - need.confidence) * 100)
+    );
+
+    return {
+      id: probe.id,
+      needId: probe.needId,
+      facility: need.facility,
+      question: probe.question,
+      assumption: probe.assumption,
+      field: probe.field,
+      fieldLabel: probe.fieldLabel,
+      priority: need.priority,
+      rank: 0,
+      score,
+      assignmentChanges,
+      avoidableViolationScenarios,
+      expectedAvoidedViolationScenarios,
+      options,
+    } satisfies DecisionQuestion;
+  })
+    .sort((first, second) => second.score - first.score || first.id.localeCompare(second.id))
+    .map((question, index) => ({ ...question, rank: index + 1 }));
+
+  return {
+    algorithm: "Exact counterfactual value-of-information ranking",
+    questionCount: questions.length,
+    counterfactualPlanScenarioEvaluations,
+    topQuestion: questions[0],
+    questions,
+  };
+}
+
+export function applyDecisionAnswer(
+  needs: PowerNeed[],
+  question: DecisionQuestion,
+  answerId: DecisionAnswerId,
+): PowerNeed[] {
+  const option = question.options.find((candidate) => candidate.id === answerId);
+  if (!option) throw new Error(`Unknown decision answer ${answerId}`);
+  return patchNeed(needs, question.needId, question.field, option.adjustedValue).map((need) => (
+    need.id === question.needId
+      ? {
+          ...need,
+          confidence: 1,
+          assumptions: [
+            ...need.assumptions.filter((assumption) => assumption !== question.assumption),
+            `Operator verified: ${option.label}`,
+          ],
+        }
+      : need
+  ));
 }
 
 export function getIdleVehicles(plan: DispatchPlan): Vehicle[] {
