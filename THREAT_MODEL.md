@@ -4,6 +4,10 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 
 ## Assets
 
+- regional road topology, inspection provenance, restrictions, and intervention budgets;
+- aggregated delivery demand and vulnerable-population indicators;
+- multi-operator fleet availability and commercial boundaries;
+
 - facility demand, priority, deadline, and source evidence;
 - vehicle availability, state of charge, connector, route, and reserve policy;
 - deterministic planner and contingency rules;
@@ -55,4 +59,3 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 - cryptographic key lifecycle and rotation design;
 - backup restoration and disaster-recovery exercise;
 - external incident response and vulnerability-disclosure process.
-

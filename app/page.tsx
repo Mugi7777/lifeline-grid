@@ -23,6 +23,7 @@ import {
   type AuditEvent,
   type EvidenceCore,
 } from "@/lib/operations";
+import RegionalAccess from "./regional-access";
 
 type Stage = "intake" | "candidate" | "clarify" | "verified" | "hardened" | "approved" | "authorized" | "rerouted";
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
@@ -282,6 +283,7 @@ function statusForVehicle(
 }
 
 export default function Home() {
+  const [productMode, setProductMode] = useState<"regional" | "emergency">("regional");
   const [stage, setStage] = useState<Stage>("intake");
   const [needs, setNeeds] = useState<PowerNeed[]>(DEFAULT_NEEDS);
   const [resolvedNeeds, setResolvedNeeds] = useState<PowerNeed[] | null>(null);
@@ -504,6 +506,10 @@ export default function Home() {
   const modeLabel = aiMode === "gpt-5.6" ? "GPT-5.6 LIVE" : aiMode === "demo-fallback" ? "DEMO FALLBACK" : "UNSTRUCTURED";
   const actionSubtitle = stage === "clarify" ? selectedDecisionOption.label : actionSubtitles[stage];
 
+  if (productMode === "regional") {
+    return <RegionalAccess onSwitchToEmergency={() => setProductMode("emergency")} />;
+  }
+
   return (
     <main className={`command-shell stage-${stage}`}>
       <header className="topbar">
@@ -515,6 +521,10 @@ export default function Home() {
           </div>
         </div>
         <div className="topbar-actions">
+          <nav className="product-switch" aria-label="Product mode">
+            <button type="button" onClick={() => setProductMode("regional")}>Regional access</button>
+            <button className="active" type="button" aria-current="page">Emergency grid</button>
+          </nav>
           <span className="simulation-pill"><i /> Synthetic scenario</span>
           <span className="incident-clock">INCIDENT 02:14:37</span>
         </div>

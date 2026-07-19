@@ -134,13 +134,49 @@ The product evaluates mission authorization separately from field qualification.
 
 Passing these tests establishes only software behavior in the synthetic environment. It does not establish identity assurance, secure key custody, trusted timestamps, durable audit retention, safety certification, or regulatory approval.
 
+## Regional Access OS evaluation
+
+The regional mode uses a fixed fictional Mizunoki District model with eight nodes, twelve road segments, six demand zones, and three heterogeneous operators. Road conditions, failure probabilities, households, vulnerable-resident counts, parcel volumes, costs, and deadlines are synthetic test fixtures.
+
+The fleet solver evaluates `(3 vehicles + unserved) ^ 6 demands = 4,096` assignments. For each vehicle subset it checks every stop ordering, shortest feasible graph paths, road weight limits, parcel and cold-chain capacity, shift duration, and delivery deadlines. The lexicographic objective protects critical service and vulnerable residents before optimizing efficiency.
+
+| Baseline property | Synthetic result |
+|---|---:|
+| Households covered on time | 418 / 418 |
+| Vulnerable residents covered on time | 152 / 152 |
+| Critical failures | 0 |
+| Delivery assignments evaluated | 4,096 |
+| Bounded stress scenarios | 64 |
+| Critical stress success | 100% |
+
+The road layer removes each of twelve segments and solves the entire pooled delivery problem again. Under the modeled North Forest Road loss:
+
+| Closure property | Synthetic result |
+|---|---:|
+| Households covered on time | 354 / 418 |
+| Vulnerable residents covered on time | 120 / 152 |
+| Community demand not served on time | Shirasagi |
+| Critical medicine/clinic failures | 0 |
+| Full-service stress success | 0% |
+| Critical-service stress success | 100% |
+
+The repair optimizer enumerates every subset of eligible condition-grade 3–5 roads, rejects portfolios over budget, and maximizes modeled expected access-risk reduction. Automated tests verify budget feasibility and that increasing budget cannot reduce the selected benefit.
+
+Regional tests additionally assert:
+
+- all selected road paths satisfy vehicle weight limits;
+- parcel, cold-chain, and shift constraints remain hard;
+- no late or unserved demand is hidden from the coverage metric;
+- N-1 closure results reproduce exactly; and
+- the complete regional analysis is deterministic for audit replay.
+
 ## Reproduce
 
 ```bash
 npm run test:planner
 ```
 
-The automated tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, dual-control separation, fail-closed field readiness, evidence tamper detection, and safe global re-optimization.
+The automated tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, dual-control separation, fail-closed field readiness, evidence tamper detection, safe global re-optimization, exact pooled rural delivery, road-access criticality, repair-budget feasibility, and deterministic regional replay.
 
 ## Limitations
 
@@ -155,5 +191,7 @@ The automated tests assert deterministic scenario generation, exact-search evide
 - Browser-generated integrity hashes are not identity signatures and are not stored in an append-only external system.
 - No grid power flow, battery degradation, traffic network, electrical certification, cyber-physical integration, or human-factors validation is modeled.
 - Passing this test suite is not a safety certification.
+- Regional failure probabilities and service-equity weights are fictional policy inputs, not calibrated forecasts.
+- The six-stop exact VRPTW demonstration does not establish large-fleet throughput or parity with global route platforms.
 
 A real pilot would require domain-owned scenarios, independent evaluation, validated solvers, certified hardware interfaces, security review, and emergency-governance approval.

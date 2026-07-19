@@ -2,6 +2,8 @@
 
 Lifeline Grid is currently a **software pilot candidate for supervised simulation and shadow-mode evaluation**. It is not approved for real emergency dispatch, vehicle control, electrical switching, or public-safety decision-making.
 
+The Regional Access mode is likewise advisory. It is not approved to diagnose structures, close roads, direct drivers, determine statutory inspection priority, or make eligibility decisions about residents. Its current road and delivery data are fictional.
+
 This distinction is enforced in the product. A mission can become `simulation-ready` only after machine checks and independent human co-signing. `field-ready` remains false while telemetry, equipment, cybersecurity, authority, or field-validation evidence is missing.
 
 ## Maturity levels
@@ -83,7 +85,8 @@ Exit criteria: independent electrical, cybersecurity, and safety acceptance.
 - monitoring, alerting, backups, recovery objectives, rate limits, and abuse prevention;
 - privacy assessment, jurisdiction-specific legal review, contracts, insurance, and support operations.
 
+For Regional Access, production additionally requires authoritative GIS topology, road-owner identifiers, inspection provenance, restriction freshness, validated travel costs, aggregated demand governance, transport-operator agreements, solver-scale benchmarks, and a formally approved service-equity policy. A road authority must own every structural interpretation and restriction; a licensed operator must own every real route decision.
+
 ## Ownership decisions required
 
 Social implementation cannot be completed by software alone. A pilot sponsor must name the deployment country and locality, emergency authority, electrical-safety owner, cybersecurity owner, data controller, vehicle/fleet partner, facility partner, and independent evaluator. Those choices determine the applicable standards, law, procurement route, and acceptance evidence.
-

@@ -1,10 +1,28 @@
 # Lifeline Grid
 
-**Turn stranded mobile batteries into a safety-verified emergency grid.**
+**Keep every resident connected to essentials—even when roads age or disasters strike.**
 
-Lifeline Grid is an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. It converts fictional disaster reports into a human-authorized mobile-power plan, proves the plan against physical constraints and bounded uncertainty, and globally re-optimizes when the fictional world changes.
+Lifeline Grid is a Japan-first **Regional Access OS** and an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. Its new default mode joins rural shared delivery, road-aging impact, repair-budget allocation, and emergency continuity in one inspectable regional twin. The original emergency mobile-power command center remains available as a second mode.
 
 > Synthetic simulation only. Lifeline Grid does not control real vehicles, facilities, or emergency operations. Demo metrics are scenario results, not real-world performance claims.
+
+## Regional Access OS
+
+The synthetic Mizunoki District model connects eight locations with twelve roads and coordinates six delivery zones across a postal EV, a refrigerated co-op van, and a municipal mixed-use bus. It evaluates:
+
+- delivery capacity, cold chain, time windows, shifts, and road weight limits;
+- every modeled single-road failure;
+- households and vulnerable residents losing on-time access;
+- exact pooled fleet assignments for the inspectable six-stop scenario;
+- a deterministic 64-scenario demand and travel stress suite; and
+- every eligible repair portfolio under an adjustable public budget.
+
+The baseline exact plan covers all 418 modeled households and 152 modeled vulnerable residents on time. Removing North Forest Road makes one community miss its service threshold—64 households and 32 vulnerable residents—while both critical deliveries remain protected. These values are deterministic fictional results.
+
+GPT-5.6 converts a narrative inspection note into a supported road event. Deterministic code performs graph routing, fleet optimization, N-1 impact, stress evaluation, and capital allocation. The model cannot diagnose a road or authorize a closure.
+
+See [`REGIONAL_PRODUCT.md`](./REGIONAL_PRODUCT.md) for the product definition and [`COMPETITIVE_STRATEGY.md`](./COMPETITIVE_STRATEGY.md) for the explicit Google/Cainiao build-partner boundary.
+See [`SCALE_ARCHITECTURE.md`](./SCALE_ARCHITECTURE.md) for the production control plane, solver portfolio, security model, degraded modes, and measurable service targets.
 
 ## Why this is not a chatbot
 
@@ -123,6 +141,7 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 
 - `/api/analyze` converts narrative reports into strict, source-linked power contracts.
 - `/api/event` converts a narrative disruption into structured mission state.
+- `/api/regional-event` converts a fictional inspection note into a supported road restriction.
 - The model never performs energy arithmetic, chooses the winning allocation, or authorizes dispatch.
 - Both endpoints display whether GPT-5.6 ran live or a transparent synthetic fallback was used.
 
@@ -165,6 +184,11 @@ Tests verify:
 - separation of continuous energy from momentary peak power;
 - a two-mission counterfactual reallocation after an adverse answer;
 - exact single-vehicle and single-route contingency coverage;
+- exact pooled heterogeneous regional delivery;
+- road weight, capacity, cold-chain, deadline, and shift invariants;
+- service-weighted N-1 road criticality;
+- exact budget-constrained repair portfolio selection;
+- deterministic regional stress and replay;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -177,7 +201,10 @@ Tests verify:
 - `app/page.tsx` — interactive command center and live evaluation
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
+- `app/api/regional-event/route.ts` — GPT-5.6 regional inspection-note interpretation
+- `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
+- `lib/regional.ts` — exact pooled VRPTW, road-graph N-1 analysis, stress suite, and exact repair portfolio
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
@@ -186,10 +213,13 @@ Tests verify:
 - `RUNBOOK.md` — supervised simulation procedure, stop conditions, and recovery
 - `DEMO_SCRIPT.md` — sub-three-minute video plan
 - `SUBMISSION.md` — English submission copy
+- `REGIONAL_PRODUCT.md` — target users, data contracts, commercial model, rollout, and product metrics
+- `COMPETITIVE_STRATEGY.md` — honest Google/Cainiao comparison and defensibility plan
+- `SCALE_ARCHITECTURE.md` — scale architecture, solver tiers, SLO targets, security, and evaluation gates
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for this deliberately small, inspectable demo. The 12 contingencies and three preparedness actions are operator-defined synthetic cases, not a complete hazard analysis. The in-browser evidence chain is portable integrity evidence, not durable storage or non-repudiation. A larger deployment would replace enumeration with a validated MILP or min-cost-flow implementation and require enterprise identity, append-only signed audit storage, certified telemetry, geographic routing, cybersecurity controls, emergency-governance review, field trials, and independent safety validation.
+Exact enumeration is appropriate for these deliberately small, inspectable demos. The regional engine certifies the modeled six-stop optimum; it does not claim Google-scale routing throughput. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. The in-browser evidence chain is portable integrity evidence, not durable storage or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, append-only signed audit storage, authoritative road data, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

@@ -6,7 +6,7 @@ Lifeline Grid
 
 ## Tagline
 
-Turn stranded mobile batteries into a safety-verified emergency grid.
+Keep rural communities connected to essentials—even when roads age or disasters strike.
 
 ## Track
 
@@ -14,13 +14,21 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. Deterministic planners identify the one fact worth checking, prove the allocation under bounded uncertainty, eliminate modeled single points of failure, require independent dual control, export a tamper-evident safety case, and globally re-optimize when reality changes.
+Lifeline Grid is a Regional Access OS for low-density communities. In daily mode it pools fragmented fleets, measures which aging roads disconnect residents from medicine and food, and selects the repair portfolio that protects the most access within budget. In emergency mode the same verified regional state coordinates mobile power. GPT-5.6 converts narrative reports into source-linked machine state; deterministic graph, routing, uncertainty, N-1, and capital-allocation engines calculate the decision.
 
 ## Inspiration
 
-Communities can face a paradox after an outage: critical facilities have no power while large batteries remain parked nearby. The missing layer is not another chatbot. It is trustworthy coordination that can interpret messy reports, respect physics, quantify fragility, preserve human authority, and adapt when conditions change.
+Rural communities face one connected problem in three time scales: daily delivery becomes uneconomic, aging roads threaten access, and disasters expose the same fragile network. Existing systems optimize each organization or route separately. The missing layer is a public-interest regional twin that can prove who loses essential access, coordinate fragmented capacity, prioritize limited infrastructure investment, and preserve human authority.
 
 ## What it does
+
+The default Regional Access mode opens on a fictional Japanese district. An exact pooled heterogeneous vehicle-routing solver coordinates a postal EV, refrigerated co-op van, and municipal mixed-use bus across capacity, cold-chain, time-window, shift, and road-weight constraints. All 418 modeled households and 152 modeled vulnerable residents are covered on time in the baseline.
+
+GPT-5.6 then converts a fictional road inspection note into a supported segment restriction. Deterministic code removes that segment and solves the whole regional plan again. The system shows that the modeled North Forest Road loss makes 64 households and 32 vulnerable residents miss the service threshold while both critical deliveries remain protected.
+
+Lifeline breaks all twelve modeled roads one at a time and ranks them by expected access loss—not only traffic or physical condition. A budget slider drives an exact repair-portfolio search across every eligible combination and shows the maximum modeled access-risk reduction within budget. Every figure is a reproducible synthetic result.
+
+The operator can then switch to Emergency Grid mode, where the same product coordinates mobile batteries through the original verified mission loop.
 
 The demo begins with three fictional reports from a clinic, shelter, and water station. GPT-5.6 extracts strict power contracts with source quotes and explicit assumptions.
 
@@ -38,8 +46,12 @@ When a fictional free-text update reports that East Bridge has closed, GPT-5.6 c
 
 ## How we built it
 
-- GPT-5.6 Responses API with strict Structured Outputs for incident and disruption interpretation
+- GPT-5.6 Responses API with strict Structured Outputs for inspection notes, incidents, and disruptions
 - React and TypeScript command-center interface
+- Exact pooled heterogeneous VRPTW for the inspectable regional scenario
+- Service-weighted road-graph N-1 analysis
+- Exact budget-constrained repair portfolio selection
+- Deterministic regional demand and travel stress testing
 - Deterministic physical safety kernel
 - Exact counterfactual value-of-information question ranking
 - Separate continuous-energy and momentary peak-power constraints
@@ -55,7 +67,7 @@ When a fictional free-text update reports that East Bridge has closed, GPT-5.6 c
 
 ## How GPT-5.6 is meaningfully used
 
-GPT-5.6 handles two language-to-state transitions: inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. The model never performs safety arithmetic, selects the optimal plan, or authorizes dispatch. This separation makes every consequential number reproducible and inspectable.
+GPT-5.6 handles three language-to-state transitions: a fictional inspection note becomes a supported regional road event, inconsistent incident reports become source-linked power contracts, and an operational disruption becomes a blocked-route event. The model never diagnoses a structure, performs safety arithmetic, selects the optimal plan, or authorizes dispatch. This separation makes every consequential number reproducible and inspectable.
 
 ## How Codex was used
 
@@ -76,6 +88,13 @@ The N-1 layer enumerates three preparedness actions and 12 single failures. Ever
 The Operational Trust Layer evaluates seven mission-authorization gates and five separate field-qualification gates. It rejects same-actor dual approval. Evidence objects are canonicalized before hashing; every audit entry commits to the prior hash; the full package is re-verified before download. Because the current site has only synthetic telemetry, no certified electrical interface, no independent security acceptance, no public authority, and no field trial, it remains field-blocked by design.
 
 ## Accomplishments
+
+- One product connects daily logistics, road-aging investment, and emergency continuity.
+- An inspectable exact search covers all 418 modeled households and 152 vulnerable residents in the baseline.
+- Every modeled road is removed and the complete regional delivery problem is solved again.
+- The highest-impact modeled closure exposes 64 households and 32 vulnerable residents without hiding the gap.
+- Every eligible repair portfolio is evaluated under the selected public budget.
+- Critical service remains a lexicographic objective ahead of distance or modeled emissions.
 
 - A persuasive unsafe plan is visibly rejected.
 - The optimization result is compared with a real baseline inside the product.
