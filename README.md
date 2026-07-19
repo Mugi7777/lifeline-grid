@@ -32,6 +32,8 @@ The new **Regional Scale Proof** makes computational headroom visible instead of
 
 The **Operational Data Trust Gateway** now places a fail-closed boundary in front of planning. A strict versioned bundle carries map, road-authority, weather, and fleet feeds. Deterministic policy checks signature status, freshness, validity, regional scope, coverage, missing classes, and conflicts, then selects `verified`, `degraded`, or `quarantined` mode. Five visible failure injections demonstrate that stale, conflicting, tampered, or missing data blocks consequential use. A canonical SHA-256 evidence export binds the bundle to its verdict without exporting source payloads. See [`DATA_TRUST_GATEWAY.md`](./DATA_TRUST_GATEWAY.md).
 
+The **Pilot Data Sandbox** accepts a bounded, de-identified road `FeatureCollection` selected from the user's device and analyzes it entirely in the browser tab. It validates up to 10,000 LineString/MultiLineString features and 200,000 coordinates, constructs a snapped endpoint graph, then uses iterative Tarjan low-link analysis to find graph bridges and articulation points. Every accepted segment is evaluated; ordinary roads are sampled only for map rendering. A SHA-256 evidence export binds the network fingerprint, findings, quality issues, operation counters, and blocked field gate. Local files are always unverified, and crossing/intersection topology is never inferred. See [`PILOT_DATA_SANDBOX.md`](./PILOT_DATA_SANDBOX.md).
+
 The **Portable Twin Capsule** saves the current synthetic closure, repair budget, regional-model identity, expected metrics and route evidence to both browser storage and a downloadable JSON file. Import is bounded and fail-closed: payload integrity, current model identity, plan evidence and deterministic reproduction must all pass before UI state is restored. Snapshots older than 24 hours remain verifiable but are visibly stale. See [`RECOVERY.md`](./RECOVERY.md) for source-code and state-backup instructions.
 
 GPT-5.6 converts a narrative inspection note into a supported road event. The new **Sol Reasoning Council** uses `gpt-5.6-sol` at high reasoning effort to turn conflicting, untrusted reports into exactly three testable road-state hypotheses, preserve counterevidence, and ask for the smallest decision-changing fact. Deterministic code then re-plans every hypothesis, runs 192 stress scenarios and 36 N-1 road cases, and withholds the model recommendation behind a human-authority gate. The model cannot diagnose a road, calculate the consequence, authorize a closure, or authorize dispatch.
@@ -248,6 +250,7 @@ Tests verify:
 - signed authority-event success, post-signature tamper, untrusted issuer, road-scope, expiry, future-time, inconsistent-window, and private-key-material rejection;
 - an invariant that fully configured software controls still cannot self-assert certification or field readiness;
 - verified, stale, conflicting, tampered, and missing-feed data-trust modes; strict bundle rejection; and deterministic SHA-256 evidence binding;
+- bounded local GeoJSON acceptance, per-feature isolation, duplicate and malformed topology rejection, exact bridge/articulation results for chains, cycles, and parallel roads, deterministic evidence binding, and a non-recursive 10,000-segment worst-case chain;
 - portable-twin round trips, closure and repair-budget restoration, stale-state disclosure, model mismatch, future timestamps, outer-digest tamper, and deterministic plan-evidence rejection;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
@@ -269,6 +272,7 @@ Tests verify:
 - `app/api/data-trust/route.ts` — strict operational-feed ingestion and provenance evidence
 - `app/api/assurance/route.ts` and `app/api/health/route.ts` — assurance claims, external gates, liveness, and dependency readiness
 - `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
+- `app/pilot-data-sandbox.tsx` and `app/pilot-network-map.tsx` — local-file pilot workflow, quality gates, evidence export, and real-basemap topology rendering
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
 - `lib/regional.ts` — exact pooled VRPTW, bounded deterministic multi-start solver, road-graph N-1 analysis, stress suite, and exact repair portfolio
 - `lib/regional-reasoning.ts` — strict hypothesis validation, deterministic counterfactual adjudication, and evidence-value ranking
@@ -276,6 +280,7 @@ Tests verify:
 - `lib/regional-ledger.ts` — plan diff and replayable hash-chain events
 - `lib/authority-event.ts` — public-key trust registry, bounded signed event contract, and fail-closed verifier
 - `lib/data-trust.ts` — source-class policy, freshness/scope/coverage/conflict evaluation, degraded modes, and canonical evidence
+- `lib/pilot-data-sandbox.ts` — bounded GeoJSON normalization, iterative bridge/articulation analysis, deterministic ranking, and evidence generation
 - `lib/continuity-capsule.ts` — bounded portable state, SHA-256 evidence, deterministic restore verification, and stale-state disclosure
 - `lib/assurance.ts` — code evidence, runtime states, prohibited claims, and independent blocking gates
 - `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
@@ -297,11 +302,12 @@ Tests verify:
 - `SECURITY.md` — vulnerability reporting, key boundaries, and current dependency posture
 - `DATA_GOVERNANCE.md` — stored data, access, integrity, and prohibited-data boundary
 - `DATA_TRUST_GATEWAY.md` — operational feed contract, failure modes, evidence and pilot boundary
+- `PILOT_DATA_SANDBOX.md` — local GeoJSON contract, algorithm, privacy boundary, tabletop protocol, and unmet pilot gates
 - `RECOVERY.md` — GitHub/ZIP source backup, restore verification, portable twin state, and remaining recovery gaps
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The Sol council is not a structural diagnosis, calibrated probability model, signed authority feed, or autonomous agent. Its hypotheses may still be semantically wrong; runtime validation and deterministic re-planning bound the consequences but do not make the source facts true. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. D1 now provides durable identity-scoped records and a replayable hash chain, but not enterprise tenancy, a KMS signature, trusted timestamps, write-once retention, or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, signed authority adapters, append-only audit storage, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
+Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The local GeoJSON sandbox identifies endpoint-graph single points but does not infer crossings, grade separation, passability, structural condition, demand, travel time, or route legality. The Sol council is not a structural diagnosis, calibrated probability model, signed authority feed, or autonomous agent. Its hypotheses may still be semantically wrong; runtime validation and deterministic re-planning bound the consequences but do not make the source facts true. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. D1 now provides durable identity-scoped records and a replayable hash chain, but not enterprise tenancy, a KMS signature, trusted timestamps, write-once retention, or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, signed authority adapters, append-only audit storage, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

@@ -60,6 +60,14 @@ export function buildAssuranceSnapshot(runtime: AssuranceRuntimeState) {
       frameworkRefs: ["ISO/IEC 27001:2022", "ISO/IEC 42001:2023", "NIST AI RMF 1.0"],
     },
     {
+      id: "DATA-02",
+      title: "Bounded local GeoJSON topology validation and evidence",
+      status: "implemented" as AssuranceControlStatus,
+      runtime: "enforced",
+      evidence: ["lib/pilot-data-sandbox.ts", "tests/pilot-data-sandbox.test.ts", "PILOT_DATA_SANDBOX.md"],
+      frameworkRefs: ["ISO/IEC 27001:2022", "ISO/IEC 42001:2023", "NIST AI RMF 1.0"],
+    },
+    {
       id: "BC-02",
       title: "Portable twin state with deterministic restore verification",
       status: "implemented" as AssuranceControlStatus,

@@ -27,6 +27,7 @@ The current synthetic Mizunoki District demonstration includes:
 - a deterministic 64-scenario demand and travel stress suite;
 - a visible 512/2,048-zone Regional Scale Proof using sparse multi-source Dijkstra, flow-based failure screening, 64 exact closure replays, runtime-specific latency measurement, real-basemap impact rendering, and exportable JSON evidence;
 - a fail-closed Operational Data Trust Gateway covering map, road-authority, weather, and fleet feeds with strict schema validation, integrity, freshness, scope, coverage, conflict and missing-source gates;
+- a local Pilot Data Sandbox that bounds and normalizes partner-selected GeoJSON, evaluates every accepted endpoint-graph segment with non-recursive bridge/articulation analysis, renders findings on a real basemap, and exports digest-bound evidence while keeping field use blocked;
 - a Portable Twin Capsule that stores a synthetic plan locally and as JSON, binds it to the model and route evidence, and restores only after deterministic reproduction;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
 - a GPT-5.6 Sol Reasoning Council that generates exactly three competing interpretations of conflicting reports, preserves counterevidence, and asks for decision-changing authority evidence;
@@ -101,6 +102,8 @@ The Reasoning Council does not weaken this boundary. It is intended to reduce pr
 The initial buyer should be a Japanese municipality-led delivery council with at least one logistics operator and one essential-service partner. Daily logistics creates recurring use and measurable operating value; infrastructure and emergency modes expand the same data asset instead of becoming separate products.
 
 The current hosted ledger is an identity-scoped prototype, not an enterprise collaboration product. A real pilot still requires organization tenancy, formal roles, retention and deletion policy, customer-managed or KMS-backed signatures, backup and recovery evidence, and a contractual operating model.
+
+The Pilot Data Sandbox reduces the integration barrier for a first supervised tabletop: a data owner can use an approved, de-identified, segmentized road export without creating a server-side copy. It does not replace an authenticated production GIS adapter, authoritative topology review, map licensing review, or independent comparison against expert-owned reference findings.
 
 ## Product metrics
 

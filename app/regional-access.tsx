@@ -9,6 +9,7 @@ import type { AssuranceSnapshot } from "@/lib/assurance";
 import RealRegionalMap from "./real-regional-map";
 import RegionalScaleLab from "./regional-scale-lab";
 import DataTrustGateway from "./data-trust-gateway";
+import PilotDataSandbox from "./pilot-data-sandbox";
 import ContinuityCapsule from "./continuity-capsule";
 
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
@@ -325,6 +326,8 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
       <RegionalScaleLab />
 
       <DataTrustGateway />
+
+      <PilotDataSandbox />
 
       <ContinuityCapsule
         closedSegmentId={closedSegmentId}

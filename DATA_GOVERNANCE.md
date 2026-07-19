@@ -16,6 +16,8 @@ The application does not persist a plan merely because it was calculated or disp
 
 The `POST /api/data-trust` validation surface does not persist submitted bundles. It returns a no-store evaluation and a digest-bound evidence manifest. This non-persistence does not authorize real operational data: the current prototype still prohibits real authority records, fleet data, resident information, and confidential source payloads.
 
+The Pilot Data Sandbox reads a selected GeoJSON file in the active browser tab. Its implementation does not post or persist the file; the downloaded evidence contains metadata, findings, counters, and digests rather than source geometry. OpenStreetMap basemap tiles are separate network requests and may expose the viewed area and ordinary request metadata to the tile provider. Local-only analysis is a minimization control, not authorization to process real data. Use only fictional or formally approved, de-identified, licensed, segmentized road exports under a written tabletop protocol.
+
 ## Current access control
 
 - list access is limited to the creating email or the explicitly assigned reviewer email;
@@ -35,8 +37,9 @@ Each event contains its predecessor hash and a digest of the relevant payload. V
 - resident names, addresses, health information, or other personal identifiers;
 - real delivery orders or commercially confidential operator data;
 - authoritative road-inspection records or unannounced restrictions;
-- credentials, API keys, payment data, or incident secrets; and
-- information whose owner has not approved processing in this prototype.
+- credentials, API keys, payment data, or incident secrets;
+- information whose owner has not approved processing in this prototype; and
+- unrestricted geometry that would reveal protected facilities, residents, critical infrastructure, or non-public restrictions.
 
 ## Required before a real pilot
 

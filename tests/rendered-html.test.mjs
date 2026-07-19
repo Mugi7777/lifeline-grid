@@ -37,6 +37,9 @@ test("renders development preview metadata", async () => {
   assert.match(html, /Verified bundle/);
   assert.match(html, /PORTABLE TWIN CAPSULE/);
   assert.match(html, /Save browser copy \+ JSON/);
+  assert.match(html, /PILOT DATA SANDBOX/);
+  assert.match(html, /Analyze local GeoJSON/);
+  assert.match(html, /LOCAL PROCESSING · NO UPLOAD/);
   assert.match(html, /PRODUCTION TRUST PLANE/);
   assert.match(html, /NOT CERTIFIED · FIELD BLOCKED/);
 });

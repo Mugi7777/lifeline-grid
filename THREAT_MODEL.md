@@ -25,8 +25,9 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 6. External map, authority, weather, and fleet feeds → Data Trust Gateway
 7. Browser → exported evidence file
 8. Browser storage or imported JSON → Portable Twin Capsule verifier
-9. Future external telemetry/routing systems → Lifeline adapters
-10. Future Lifeline service → vehicles, facilities, and incident-management systems
+9. Local GeoJSON file → in-tab bounded parser and topology analyzer; separate browser → OpenStreetMap tile provider request
+10. Future external telemetry/routing systems → Lifeline adapters
+11. Future Lifeline service → vehicles, facilities, and incident-management systems
 
 ## Threats and controls
 
@@ -44,6 +45,9 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 | Approval spoofing | One person or attacker authorizes a mission | server-side creator/reviewer identity separation and exact reviewer assignment | enterprise membership, phishing-resistant MFA, RBAC/ABAC, session assurance |
 | Audit tampering | Decision evidence is edited after the event | canonical JSON, D1 persistence, predecessor hashes, event-chain replay, and stored-record binding verification | KMS signature, trusted timestamps, write-once retention, legal hold |
 | Portable-state tampering or rollback | Edited or obsolete local state silently restores a misleading plan | bounded schema and size, SHA-256 payload/model/plan digests, deterministic plan reproduction, future-time rejection, and visible stale status | authenticated organizational backup, signed snapshots, anti-rollback registry, observed restore exercise |
+| Malicious or misleading GeoJSON | Oversized, malformed, mislabeled, topologically incomplete, or HTML-bearing features distort results or attack the UI | local-only 10 MB/10,000-feature/200,000-coordinate bounds; finite-coordinate and stable-ID validation; per-feature isolation; bounded text; HTML escaping; source remains unverified; field gate hard-blocked | authenticated GIS adapter, content scanning, authoritative schema, topology conformance suite, data-owner signature, expert reference comparison |
+| False intersection inference | Crossing lines, bridges, tunnels, or unsplit junctions create a false graph | only snapped line endpoints connect; UI and evidence explicitly disclose that intersections and grade separation are not inferred | data-owner segmentization, grade-separation attributes, topology QA, versioned network build pipeline |
+| Basemap privacy or availability | Tile requests reveal viewed coordinates or fail during an exercise | source GeoJSON is not uploaded; tile traffic is separately disclosed; computed overlay remains visible on tile failure | approved tile contract or self-hosted tiles, privacy review, caching/offline map, availability test |
 | Secret exposure | API or integration credentials leak | API key remains a hosted secret and is not exported | secret rotation, least privilege, KMS/HSM, scanning, incident procedure |
 | Denial of service | Oversized input exhausts planning compute or evidence generation is unavailable | strict 1 MB/model cardinality limits, finite-number checks, exact-search budgets, bounded scalable fallback | authenticated quotas, distributed rate limits, queues, multi-region capacity tests, offline runbook, recovery objectives |
 | Malicious dependency | Compromised package alters behavior | lockfile, deterministic CI, high/critical production audit gate, CodeQL, and Dependabot | SBOM, protected provenance, dependency allowlist, signed releases, vulnerability-response exercise |
@@ -67,6 +71,8 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 - A client-declared signature status from the public validation API can never unlock consequential review.
 - Missing, stale, conflicting, out-of-scope, or integrity-invalid required feeds cannot be hidden by an aggregate trust score.
 - A portable capsule cannot restore UI state until the current engine reproduces its model and plan evidence; stale age remains visible.
+- A local GeoJSON file can never become authoritative merely because it parses or produces a digest.
+- A graph bridge or articulation point can never be displayed as a structural diagnosis, closure instruction, or dispatch authority.
 
 ## Security verification backlog
 

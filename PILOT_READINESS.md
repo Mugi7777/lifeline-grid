@@ -33,6 +33,7 @@ This distinction is enforced in the product. A mission can become `simulation-re
 - a machine-readable assurance and health plane that cannot self-assert certification or field readiness;
 - security CI with lint, production build, deterministic tests, high/critical dependency audit, CodeQL, and Dependabot;
 - explicit separation of simulation authorization and field qualification;
+- bounded local GeoJSON processing for approved de-identified tabletop networks, including non-recursive bridge/articulation analysis, visible metadata and authority gates, real-basemap rendering, and digest-bound evidence export;
 - automated planner, operational-control, API, rendering, and production-build tests.
 
 ## Field-qualification gates
@@ -91,6 +92,8 @@ Exit criteria: independent electrical, cybersecurity, and safety acceptance.
 - privacy assessment, jurisdiction-specific legal review, contracts, insurance, and support operations.
 
 For Regional Access, production additionally requires authoritative GIS topology, road-owner identifiers, inspection provenance, restriction freshness, validated travel costs, aggregated demand governance, transport-operator agreements, solver-scale benchmarks, and a formally approved service-equity policy. A road authority must own every structural interpretation and restriction; a licensed operator must own every real route decision.
+
+The implemented local GeoJSON path supports L1 technical preparation only. It deliberately avoids server ingestion, but partner approval, a supervised protocol, expert reference labels, privacy/licensing review, and observed evaluation are still required before calling any session a completed tabletop pilot. L2 requires authenticated read-only adapters and operational shadow evidence; the local file path is not a substitute.
 
 ## Ownership decisions required
 
