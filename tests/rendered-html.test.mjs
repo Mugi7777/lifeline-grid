@@ -29,5 +29,12 @@ test("renders development preview metadata", async () => {
     response.headers.get("content-type") ?? "",
     /^text\/html\b/i,
   );
-  assert.match(await response.text(), developmentPreviewMeta);
+  const html = await response.text();
+  assert.match(html, developmentPreviewMeta);
+  assert.match(html, /REGIONAL SCALE PROOF/);
+  assert.match(html, /See the engine/);
+  assert.match(html, /OPERATIONAL DATA TRUST GATEWAY/);
+  assert.match(html, /Verified bundle/);
+  assert.match(html, /PRODUCTION TRUST PLANE/);
+  assert.match(html, /NOT CERTIFIED · FIELD BLOCKED/);
 });

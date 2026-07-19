@@ -178,6 +178,59 @@ test("regional planning endpoint rejects an unversioned payload", async () => {
   assert.equal(payload.error, "invalid_request_schema");
 });
 
+test("data trust endpoint validates a fresh source bundle without granting autonomy", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `data-trust-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const now = Date.now();
+  const iso = (offsetMs) => new Date(now + offsetMs).toISOString();
+  const feed = (id, sourceClass, digestChar, observedOffset, validOffset, recordCount, coveragePercent) => ({
+    id,
+    sourceClass,
+    label: id,
+    issuer: `https://demo.lifeline.invalid/${sourceClass}`,
+    sourceUri: `https://demo.lifeline.invalid/${sourceClass}/feed`,
+    regionId: "jp-gifu-gujo-test",
+    observedAt: iso(observedOffset),
+    validUntil: iso(validOffset),
+    recordCount,
+    coveragePercent,
+    signatureStatus: "verified",
+    digest: `sha256:${digestChar.repeat(64)}`,
+    conflicts: [],
+  });
+  const bundle = {
+    schemaVersion: "2026-07-19",
+    bundleId: "api-trust-test",
+    regionId: "jp-gifu-gujo-test",
+    createdAt: iso(-1000),
+    feeds: [
+      feed("topology", "map_topology", "a", -86_400_000, 86_400_000, 5481, 100),
+      feed("authority", "road_authority", "b", -60_000, 600_000, 12, 100),
+      feed("weather", "weather", "c", -120_000, 1_200_000, 64, 98),
+      feed("fleet", "fleet_availability", "d", -30_000, 240_000, 38, 100),
+    ],
+  };
+  const response = await worker.fetch(
+    new Request("http://localhost/api/data-trust", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(bundle),
+    }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.evaluation.planningMode, "verified");
+  assert.equal(payload.evaluation.decisionGate, "blocked");
+  assert.equal(payload.evaluation.autonomousAction, "prohibited");
+  assert.match(payload.evaluation.blockers.join(" "), /not an authenticated adapter attestation/);
+  assert.match(payload.evidence.sourceBundleDigest, /^sha256:[0-9a-f]{64}$/);
+  assert.equal(payload.advisoryOnly, true);
+  assert.equal(payload.transportTrust, "untrusted_public_validation");
+});
+
 test("durable regional ledger rejects unauthenticated reads before database access", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `regional-ledger-auth-${process.pid}-${Date.now()}`);
@@ -186,6 +239,57 @@ test("durable regional ledger rejects unauthenticated reads before database acce
     new Request("http://localhost/api/regional-runs", {
       method: "GET",
       headers: { accept: "application/json" },
+    }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 401);
+  const payload = await response.json();
+  assert.equal(payload.error, "authentication_required");
+});
+
+test("assurance endpoint exposes honest certification and field-operation gates", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `assurance-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/assurance"),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.claim.certification, "not_certified");
+  assert.equal(payload.claim.fieldOperation, "blocked");
+  assert.equal(payload.blockingGates.every((gate) => gate.satisfied === false), true);
+});
+
+test("health endpoint separates process liveness from operational readiness", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `health-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/health"),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.status, "ok");
+  assert.equal(payload.liveness, "ready");
+  assert.equal(payload.operationalReadiness, "prototype_only");
+  assert.equal(payload.safety.certification, "not_certified");
+});
+
+test("signed authority ingestion requires an authenticated operator before trust evaluation", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `authority-auth-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/authority-events/verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
     }),
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
     { waitUntil() {}, passThroughOnException() {} },

@@ -14,6 +14,8 @@ The durable Regional Access decision ledger is an identity-scoped pilot feature,
 
 The application does not persist a plan merely because it was calculated or displayed. Persistence begins only when an authenticated user explicitly records it.
 
+The `POST /api/data-trust` validation surface does not persist submitted bundles. It returns a no-store evaluation and a digest-bound evidence manifest. This non-persistence does not authorize real operational data: the current prototype still prohibits real authority records, fleet data, resident information, and confidential source payloads.
+
 ## Current access control
 
 - list access is limited to the creating email or the explicitly assigned reviewer email;

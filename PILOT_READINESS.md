@@ -28,6 +28,10 @@ This distinction is enforced in the product. A mission can become `simulation-re
 - independent Incident Lead and Safety Officer roles;
 - portable evidence package with canonical JSON, SHA-256 package integrity, and a hash-chained event log;
 - authenticated D1-backed regional plan history, predecessor diff, assigned reviewer, self-approval prevention, and server-side audit replay;
+- ECDSA P-256 signed road-authority envelope verification with pinned issuer, key ID, road scope, 24-hour validity bound, official reference, and fail-closed time checks;
+- atomic durable rejection of duplicate event IDs and stale/equal issuer sequences; verified events remain pending human review and are not applied to planning state;
+- a machine-readable assurance and health plane that cannot self-assert certification or field readiness;
+- security CI with lint, production build, deterministic tests, high/critical dependency audit, CodeQL, and Dependabot;
 - explicit separation of simulation authorization and field qualification;
 - automated planner, operational-control, API, rendering, and production-build tests.
 
@@ -35,7 +39,7 @@ This distinction is enforced in the product. A mission can become `simulation-re
 
 All of the following must be independently evidenced before a real pilot. The application currently marks every item as blocked.
 
-1. **Validated live telemetry** — authenticated, time-synchronized, freshness-bounded state of charge, route, connector, and availability data.
+1. **Validated authoritative data** — completed road-authority key ceremony and revocation process plus authenticated, time-synchronized, freshness-bounded road, route, fleet, and availability data.
 2. **Certified electrical interface** — approved V2L/V2H/V2B equipment, protection devices, installation procedures, inspection, and emergency isolation.
 3. **Cybersecurity assurance** — threat-model review, penetration test, software supply-chain controls, key management, logging, incident response, and independent sign-off.
 4. **Emergency authority** — a named local organization owns activation criteria, operator roles, accountability, data processing, and public communication.
@@ -81,7 +85,7 @@ Exit criteria: independent electrical, cybersecurity, and safety acceptance.
 - organization/tenant-scoped authorization beyond the implemented creator/reviewer email boundary;
 - KMS-signed append-only audit retention and legal hold beyond the implemented D1 hash chain;
 - KMS-backed digital signatures rather than an in-browser integrity hash;
-- authenticated telemetry and routing adapters with replay protection;
+- production telemetry/routing adapters and authority PKI operations beyond the implemented signed-event verifier and single-store replay gate;
 - configurable fleet/facility schemas and validated large-fleet optimization;
 - monitoring, alerting, backups, recovery objectives, rate limits, and abuse prevention;
 - privacy assessment, jurisdiction-specific legal review, contracts, insurance, and support operations.

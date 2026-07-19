@@ -4,8 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   REGIONAL_MODEL,
   analyzeRegionalAccess,
-  type RoadCriticality,
 } from "@/lib/regional";
+import type { AssuranceSnapshot } from "@/lib/assurance";
+import RealRegionalMap from "./real-regional-map";
+import RegionalScaleLab from "./regional-scale-lab";
+import DataTrustGateway from "./data-trust-gateway";
 
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
@@ -109,13 +112,6 @@ function formatMinutes(minutes: number) {
   return hours > 0 ? `${hours}h ${remainder}m` : `${remainder}m`;
 }
 
-function roadTone(item: RoadCriticality) {
-  if (item.rank === 1) return "critical";
-  if (item.road.conditionGrade >= 4) return "high";
-  if (item.road.conditionGrade === 3) return "watch";
-  return "stable";
-}
-
 export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessProps) {
   const [closedSegmentId, setClosedSegmentId] = useState<string | null>(null);
   const [budgetM, setBudgetM] = useState(120);
@@ -130,13 +126,13 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
   const [councilResult, setCouncilResult] = useState<CouncilResult | null>(null);
   const [councilWorking, setCouncilWorking] = useState(false);
   const [councilMessage, setCouncilMessage] = useState("Three competing worlds are ready to be generated and tested.");
+  const [assurance, setAssurance] = useState<AssuranceSnapshot | null>(null);
+  const [assuranceMessage, setAssuranceMessage] = useState("Verifying runtime controls without assuming readiness…");
   const analysis = useMemo(() => analyzeRegionalAccess(closedSegmentId, budgetM), [budgetM, closedSegmentId]);
   const criticalityById = useMemo(
     () => new Map(analysis.roadCriticality.map((item) => [item.road.id, item])),
     [analysis.roadCriticality],
   );
-  const usedRoads = new Set(analysis.activePlan.routes.flatMap((route) => route.usedRoadSegmentIds));
-  const repairedRoads = new Set(analysis.repairPortfolio.selectedRoads.map((item) => item.road.id));
   const activeClosure = closedSegmentId ? criticalityById.get(closedSegmentId) : null;
 
   async function loadLedger() {
@@ -161,6 +157,21 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
   useEffect(() => {
     const timer = window.setTimeout(() => void loadLedger(), 0);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/assurance", { headers: { Accept: "application/json" }, signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Assurance evidence unavailable");
+        const payload = await response.json() as AssuranceSnapshot;
+        setAssurance(payload);
+        setAssuranceMessage(`${payload.summary.implementedControls} software controls evidenced · ${payload.summary.blockingGatesOpen} independent gates remain open.`);
+      })
+      .catch((error) => {
+        if ((error as Error).name !== "AbortError") setAssuranceMessage("Runtime assurance could not be proven; operational use remains blocked.");
+      });
+    return () => controller.abort();
   }, []);
 
   async function interpretInspection() {
@@ -310,12 +321,53 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
         </div>
       </section>
 
+      <RegionalScaleLab />
+
+      <DataTrustGateway />
+
       <section className="regional-metrics" aria-label="Regional access metrics" aria-live="polite">
         <article><small>Household access</small><b>{analysis.activePlan.metrics.serviceCoveragePercent}%</b><span>{analysis.activePlan.metrics.householdsCovered}/418 covered on time</span></article>
         <article><small>Vulnerable coverage</small><b>{analysis.activePlan.metrics.vulnerableCoveragePercent}%</b><span>{analysis.activePlan.metrics.vulnerableResidentsCovered}/152 residents protected</span></article>
         <article><small>Critical stress proof</small><b>{analysis.stress.criticalServiceSuccessRate}%</b><span>{analysis.stress.scenarioCount} bounded scenarios</span></article>
         <article><small>Pooling distance gain</small><b>{analysis.pooledDistanceSavingPercent}%</b><span>vs single-stop dispatch</span></article>
         <article className="risk-metric"><small>Repair risk reduction</small><b>{analysis.repairPortfolio.riskReductionPercent}%</b><span>within ¥{budgetM}m budget</span></article>
+      </section>
+
+      <section className="regional-workspace map-first-workspace">
+        <article className="panel regional-map-panel">
+          <div className="regional-panel-heading">
+            <div><p className="panel-kicker">REAL GEOGRAPHY × SERVICE-WEIGHTED ROAD GRAPH</p><h2>{analysis.model.district}</h2></div>
+            <div className="regional-map-legend"><span><i className="risk" /> Access risk</span><span><i className="used" /> Active delivery</span><span><i className="repair" /> Repair portfolio</span></div>
+          </div>
+          <RealRegionalMap analysis={analysis} closedSegmentId={closedSegmentId} onRoadSelect={setClosedSegmentId} />
+        </article>
+
+        <aside className="regional-control-rail">
+          <article className="panel scenario-panel">
+            <div className="regional-panel-heading compact"><div><p className="panel-kicker">N-1 ACCESS TEST</p><h2>Break one road</h2></div><span>{analysis.roadCriticality.length} CASES</span></div>
+            <p className="scenario-summary">{eventSummary}</p>
+            <div className="road-risk-list">
+              {analysis.roadCriticality.slice(0, 4).map((item) => (
+                <button className={closedSegmentId === item.road.id ? "selected" : ""} type="button" onClick={() => setClosedSegmentId(item.road.id)} key={item.road.id}>
+                  <i>#{item.rank}</i><span><b>{item.road.label}</b><small>Condition {item.road.conditionGrade} · {(item.road.annualFailureProbability * 100).toFixed(1)}% modeled annual risk</small></span><em>{item.vulnerableResidentsAtRisk > 0 ? `${item.vulnerableResidentsAtRisk} people` : `+${item.addedVehicleMinutes} min`}</em>
+                </button>
+              ))}
+            </div>
+            <button className="clear-scenario" type="button" onClick={() => { setClosedSegmentId(null); setEventSummary("Inspection note has not been interpreted yet."); setAiMode("ready"); }} disabled={!closedSegmentId}>Restore baseline network</button>
+          </article>
+
+          <article className="panel budget-panel">
+            <div className="regional-panel-heading compact"><div><p className="panel-kicker">EXACT CAPITAL PORTFOLIO</p><h2>Spend where access matters</h2></div><strong>¥{budgetM}m</strong></div>
+            <label htmlFor="repair-budget">Annual repair budget <span>¥40m</span><span>¥200m</span></label>
+            <input id="repair-budget" type="range" min="40" max="200" step="10" value={budgetM} onChange={(event) => setBudgetM(Number(event.target.value))} />
+            <div className="portfolio-selection">
+              {analysis.repairPortfolio.selectedRoads.length > 0 ? analysis.repairPortfolio.selectedRoads.map((item) => (
+                <div key={item.road.id}><span>REPAIR</span><b>{item.road.label}</b><small>¥{item.road.repairCostM}m · risk −{roundPercent(item.expectedAnnualRisk * 0.85)}</small></div>
+              )) : <p>No modeled project fits this budget.</p>}
+            </div>
+            <div className="portfolio-proof"><span><b>{analysis.repairPortfolio.portfoliosEvaluated}</b><small>portfolios</small></span><span><b>¥{analysis.repairPortfolio.costM}m</b><small>selected</small></span><span><b>{analysis.repairPortfolio.riskReductionPercent}%</b><small>risk removed</small></span></div>
+          </article>
+        </aside>
       </section>
 
       <section className="panel reasoning-council-panel">
@@ -368,75 +420,54 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
         )}
       </section>
 
-      <section className="regional-workspace">
-        <article className="panel regional-map-panel">
-          <div className="regional-panel-heading">
-            <div><p className="panel-kicker">SERVICE-WEIGHTED ROAD GRAPH</p><h2>{analysis.model.district}</h2></div>
-            <div className="regional-map-legend"><span><i className="risk" /> Access risk</span><span><i className="used" /> Active delivery</span><span><i className="repair" /> Repair portfolio</span></div>
+      <section className="panel trust-plane-panel" aria-labelledby="trust-plane-title">
+        <div className="trust-plane-heading">
+          <div>
+            <p className="panel-kicker">PRODUCTION TRUST PLANE × ASSURANCE CASE</p>
+            <h2 id="trust-plane-title">Prove each safety claim—and block what is not proven.</h2>
+            <p>Cryptographic source integrity, replay protection and human decision authority are machine-enforced. Certification and field validation can only come from independent evidence.</p>
           </div>
-          <div className="regional-map" aria-label="Synthetic rural road and delivery network">
-            <div className="map-grid" />
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              {analysis.model.roads.map((road) => {
-                const from = analysis.model.nodes.find((node) => node.id === road.from)!;
-                const to = analysis.model.nodes.find((node) => node.id === road.to)!;
-                const item = criticalityById.get(road.id)!;
-                const classes = [
-                  "regional-road",
-                  roadTone(item),
-                  usedRoads.has(road.id) ? "used" : "",
-                  repairedRoads.has(road.id) ? "portfolio" : "",
-                  closedSegmentId === road.id ? "closed" : "",
-                ].filter(Boolean).join(" ");
-                return <line className={classes} x1={from.x} y1={from.y} x2={to.x} y2={to.y} key={road.id} />;
-              })}
-            </svg>
-            {analysis.model.nodes.map((node) => {
-              const demand = analysis.model.demands.find((item) => item.nodeId === node.id);
-              const failed = demand && (analysis.activePlan.metrics.unservedDemandIds.includes(demand.id) || analysis.activePlan.metrics.lateDemandIds.includes(demand.id));
-              return (
-                <div className={`regional-node ${node.kind} ${failed ? "access-failed" : ""}`} style={{ left: `${node.x}%`, top: `${node.y}%` }} key={node.id}>
-                  <i>{node.kind === "hub" ? "H" : node.kind === "clinic" ? "+" : "•"}</i>
-                  <span><b>{node.label}</b><small>{demand ? `${demand.households} hh · ${demand.vulnerableResidents} priority` : "shared depot"}</small></span>
-                </div>
-              );
-            })}
-            <div className={`regional-map-callout ${activeClosure ? "failure" : "baseline"}`}>
-              <span>{activeClosure ? "!" : "✓"}</span>
-              <div>
-                <b>{activeClosure ? `${activeClosure.road.label} removed from graph` : "All modeled communities remain connected"}</b>
-                <small>{activeClosure ? `${activeClosure.vulnerableResidentsAtRisk} vulnerable residents · ${activeClosure.householdsAtRisk} households lose on-time access` : `${analysis.activePlan.candidateAssignments.toLocaleString()} assignments searched · exact optimum certified`}</small>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <aside className="regional-control-rail">
-          <article className="panel scenario-panel">
-            <div className="regional-panel-heading compact"><div><p className="panel-kicker">N-1 ACCESS TEST</p><h2>Break one road</h2></div><span>{analysis.roadCriticality.length} CASES</span></div>
-            <p className="scenario-summary">{eventSummary}</p>
-            <div className="road-risk-list">
-              {analysis.roadCriticality.slice(0, 4).map((item) => (
-                <button className={closedSegmentId === item.road.id ? "selected" : ""} type="button" onClick={() => setClosedSegmentId(item.road.id)} key={item.road.id}>
-                  <i>#{item.rank}</i><span><b>{item.road.label}</b><small>Condition {item.road.conditionGrade} · {(item.road.annualFailureProbability * 100).toFixed(1)}% modeled annual risk</small></span><em>{item.vulnerableResidentsAtRisk > 0 ? `${item.vulnerableResidentsAtRisk} people` : `+${item.addedVehicleMinutes} min`}</em>
-                </button>
+          <span className="certification-blocked">NOT CERTIFIED · FIELD BLOCKED</span>
+        </div>
+        <div className="trust-runtime-grid" aria-live="polite">
+          <article className={assurance?.runtime.authorityRegistryConfigured ? "ready" : "blocked"}>
+            <small>Authority PKI</small><b>{assurance?.runtime.authorityRegistryConfigured ? "PINNED" : "KEYS REQUIRED"}</b><span>ECDSA P-256 · issuer + key ID + road scope</span>
+          </article>
+          <article className={assurance?.runtime.replayStoreReady ? "ready" : "blocked"}>
+            <small>Replay protection</small><b>{assurance?.runtime.replayStoreReady ? "DURABLE" : "UNPROVEN"}</b><span>Atomic event ID and monotonic sequence rejection</span>
+          </article>
+          <article className="ready">
+            <small>Decision authority</small><b>HUMAN GATE</b><span>Verified events remain pending until authorized review</span>
+          </article>
+          <article className="blocked">
+            <small>Safety claim</small><b>NO SELF-CERTIFY</b><span>Code evidence never becomes an audit certificate</span>
+          </article>
+        </div>
+        <div className="trust-evidence-grid">
+          <article>
+            <header><div><span>SOFTWARE EVIDENCE</span><b>Controls implemented in this release</b></div><em>{assurance?.summary.implementedControls ?? "—"}/{assurance?.summary.totalControls ?? "—"}</em></header>
+            <ul>
+              {(assurance?.controls ?? []).slice(0, 5).map((control) => (
+                <li key={control.id}><i>{control.status === "implemented" ? "✓" : "!"}</i><div><b>{control.id} · {control.title}</b><small>{control.runtime.replaceAll("_", " ")} · {control.frameworkRefs.join(" · ")}</small></div></li>
               ))}
-            </div>
-            <button className="clear-scenario" type="button" onClick={() => { setClosedSegmentId(null); setEventSummary("Inspection note has not been interpreted yet."); setAiMode("ready"); }} disabled={!closedSegmentId}>Restore baseline network</button>
+              {!assurance ? <li><i>…</i><div><b>Loading signed assurance snapshot</b><small>No runtime dependency is presumed healthy while loading.</small></div></li> : null}
+            </ul>
           </article>
-
-          <article className="panel budget-panel">
-            <div className="regional-panel-heading compact"><div><p className="panel-kicker">EXACT CAPITAL PORTFOLIO</p><h2>Spend where access matters</h2></div><strong>¥{budgetM}m</strong></div>
-            <label htmlFor="repair-budget">Annual repair budget <span>¥40m</span><span>¥200m</span></label>
-            <input id="repair-budget" type="range" min="40" max="200" step="10" value={budgetM} onChange={(event) => setBudgetM(Number(event.target.value))} />
-            <div className="portfolio-selection">
-              {analysis.repairPortfolio.selectedRoads.length > 0 ? analysis.repairPortfolio.selectedRoads.map((item) => (
-                <div key={item.road.id}><span>REPAIR</span><b>{item.road.label}</b><small>¥{item.road.repairCostM}m · risk −{roundPercent(item.expectedAnnualRisk * 0.85)}</small></div>
-              )) : <p>No modeled project fits this budget.</p>}
-            </div>
-            <div className="portfolio-proof"><span><b>{analysis.repairPortfolio.portfoliosEvaluated}</b><small>portfolios</small></span><span><b>¥{analysis.repairPortfolio.costM}m</b><small>selected</small></span><span><b>{analysis.repairPortfolio.riskReductionPercent}%</b><small>risk removed</small></span></div>
+          <article className="trust-gates">
+            <header><div><span>INDEPENDENT BLOCKING GATES</span><b>Required before operational claims</b></div><em>{assurance?.summary.blockingGatesOpen ?? 7} OPEN</em></header>
+            <ul>
+              {(assurance?.blockingGates ?? [
+                { id: "authority-pki", title: "Road authority key ceremony", satisfied: false, owner: "Road authority + security" },
+                { id: "penetration-test", title: "Independent penetration test", satisfied: false, owner: "Security assessor" },
+                { id: "dr-exercise", title: "Observed recovery exercise", satisfied: false, owner: "Operations + auditor" },
+                { id: "shadow-pilot", title: "Supervised regional shadow pilot", satisfied: false, owner: "Municipality + operators" },
+              ]).map((gate) => (
+                <li key={gate.id}><i>×</i><div><b>{gate.title}</b><small>Owner: {gate.owner}</small></div></li>
+              ))}
+            </ul>
           </article>
-        </aside>
+        </div>
+        <p className="trust-plane-message">{assuranceMessage} Signed data proves origin and integrity—not that a road is physically safe. No event is automatically applied.</p>
       </section>
 
       <section className="panel regional-plan-panel">
