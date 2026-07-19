@@ -6,6 +6,7 @@ import {
   applyDecisionAnswer,
   buildDecisionAnalysis,
   buildGreedyBaseline,
+  buildResilienceAnalysis,
   buildStressScenarios,
   buildUnsafeCandidate,
   buildVerifiedPlan,
@@ -127,4 +128,39 @@ test("an adverse peak answer changes two missions without inflating continuous e
     water: "E-44",
   });
   assert.equal(informedPlan.optimization?.optimized.successRate, 100);
+});
+
+test("the N-1 engine finds two hidden single points and eliminates both with the minimum intervention", () => {
+  const analysis = buildResilienceAnalysis();
+
+  assert.equal(analysis.algorithm, "Exact N-1 contingency search + minimum-intervention selection");
+  assert.equal(analysis.contingencyCount, 12);
+  assert.equal(analysis.actionCount, 3);
+  assert.equal(analysis.totalPlanScenarioEvaluations, 414_720);
+  assert.equal(analysis.baseline.protectedContingencies, 10);
+  assert.equal(analysis.baseline.protectionRate, 83.3);
+  assert.deepEqual(
+    analysis.weakestBaselineCases.map((contingency) => contingency.id),
+    ["vehicle-E-07", "route-river-road"],
+  );
+  assert.equal(analysis.selectedAction.id, "stage-e32-west-relay");
+  assert.equal(analysis.selectedAction.reserveVehicleId, "E-32");
+  assert.equal(analysis.selectedAction.protectedContingencies, 12);
+  assert.equal(analysis.selectedAction.worstCriticalSuccessRate, 100);
+  assert.equal(analysis.selectedAction.nMinusOneCertified, true);
+  assert.equal(analysis.eliminatedSinglePoints, 2);
+});
+
+test("the N-1 certificate stays honest when an adverse peak has no equivalent backup", () => {
+  const decision = buildDecisionAnalysis();
+  const adverseNeeds = applyDecisionAnswer(DEFAULT_NEEDS, decision.topQuestion, "adverse");
+  const analysis = buildResilienceAnalysis(adverseNeeds);
+  const unresolved = analysis.selectedAction.cases
+    .filter((contingency) => !contingency.criticalServiceProtected)
+    .map((contingency) => contingency.id);
+
+  assert.equal(analysis.selectedAction.id, "stage-e32-west-relay");
+  assert.equal(analysis.selectedAction.protectedContingencies, 10);
+  assert.equal(analysis.selectedAction.nMinusOneCertified, false);
+  assert.deepEqual(unresolved, ["vehicle-E-44", "route-ridge-bypass"]);
 });

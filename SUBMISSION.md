@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. An exact Decision-Critical Planner then determines which unresolved fact is worth asking a human, proves which mobile batteries can serve each facility, stress-tests every allocation under bounded uncertainty, requires human approval, and globally re-optimizes when reality changes.
+Lifeline Grid is an AI emergency-power command center for a fictional disaster scenario. GPT-5.6 converts narrative reports and disruption updates into source-linked machine state. Deterministic planners then identify the one fact worth checking, prove the allocation under bounded uncertainty, eliminate modeled single points of failure with the minimum preventive action, require human approval, and globally re-optimize when reality changes.
 
 ## Inspiration
 
@@ -30,6 +30,8 @@ Before choosing a plan, the Decision-Critical Planner asks a different question:
 
 After the operator confirms the fact, the optimizer evaluates every one of the 60 distinct assignments of five vehicles to three facilities. Each plan is tested across a reproducible 256-point Halton suite covering demand ±10%, SoC ±5 points, and travel ±20%—15,360 plan-scenario evaluations. The nearest-feasible baseline succeeds in 207/256 synthetic scenarios. The selected Lifeline plan succeeds in 256/256 and survives the joint adversarial bound.
 
+That robust plan still hides two discrete single points: losing E-07 or closing River Road can expose clinic service. Lifeline tests three preparedness actions against five vehicle losses and seven corridor closures, re-running the exact allocation and 256-scenario suite each time—414,720 additional plan-scenario evaluations. Without preparation, 10/12 cases protect critical service. Minimum-intervention selection stages idle E-32 at West Relay and raises the result to 12/12. If the verified 6.5 kW adverse pump peak has no equivalent backup, the interface refuses to claim the certificate.
+
 A human approves the simulated dispatch. When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
 
 ## How we built it
@@ -41,6 +43,8 @@ A human approves the simulated dispatch. When a fictional free-text update repor
 - Separate continuous-energy and momentary peak-power constraints
 - Exact lexicographic allocation search
 - Deterministic low-discrepancy uncertainty testing
+- Exact N-1 vehicle/corridor contingency search
+- Minimum-intervention reserve-action selection
 - Human approval boundary and auditable mission state
 - Automated unit, API, rendering, and production-build tests
 - Codex as the primary development collaborator
@@ -63,6 +67,8 @@ Before dispatch, the value-of-information engine tests every fictional question 
 
 For this inspectable five-vehicle/three-facility demo, the optimizer enumerates all 60 injective assignments, scores them lexicographically, tests each against 256 deterministic Halton scenarios, and checks the selected plan at the joint worst-case corner. Because every complete allocation is considered, the optimum is certified for the stated synthetic model.
 
+The N-1 layer enumerates three preparedness actions and 12 single failures. Every vehicle-loss recovery considers all 24 remaining allocations; every route-loss recovery considers all 60. Critical service must pass all 256 uncertainty scenarios. Actions are ranked by contingency coverage, worst critical success, then a transparent fictional intervention-burden score.
+
 ## Accomplishments
 
 - A persuasive unsafe plan is visibly rejected.
@@ -73,11 +79,14 @@ For this inspectable five-vehicle/three-facility demo, the optimizer enumerates 
 - Three uncertainty probes are ranked through 93,696 exact counterfactual evaluations.
 - One operator answer prevents 226 bounded-scenario failures if the adverse pump peak is real.
 - The adverse answer changes two missions while preserving 100% bounded-scenario success.
+- Exact N-1 search detects two single points hidden inside an otherwise 100%-robust plan.
+- A minimum-burden reserve action improves modeled critical recovery from 10/12 to 12/12 cases.
+- The certificate is withheld when an adverse peak leaves no equivalent backup.
 - Human approval remains mandatory.
 
 ## What we learned
 
-AI is most trustworthy when roles are explicit. Language models are excellent at translating human reports into structured state. Deterministic optimization is better for hard physical constraints. Value-of-information analysis prevents teams from asking every possible question—or guessing the one fact that matters. Humans must retain authority over facts and consequential action.
+AI is most trustworthy when roles are explicit. Language models are excellent at translating human reports into structured state. Deterministic optimization is better for hard physical constraints. Value-of-information analysis prevents teams from asking every possible question—or guessing the one fact that matters. N-1 analysis catches failure modes that continuous uncertainty testing alone can miss. Humans must retain authority over facts and consequential action.
 
 ## What is next
 
@@ -92,6 +101,7 @@ Every facility, vehicle, report, route, timestamp, and metric is fictional. Eval
 1. Opening command center
 2. E-12 blocked by duration and reserve checks
 3. Exact-search proof and 80.9% vs 100% benchmark
-4. Human-approved mission state
-5. GPT-5.6 event evidence and global re-plan
-6. Public video following `DEMO_SCRIPT.md`
+4. 10/12 → 12/12 N-1 certificate and E-32 reserve action
+5. Human-approved mission state
+6. GPT-5.6 event evidence and global re-plan
+7. Public video following `DEMO_SCRIPT.md`

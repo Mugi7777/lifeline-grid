@@ -8,6 +8,8 @@ Does a plan selected for bounded uncertainty fail less often than a nominal near
 
 Can the system identify which unresolved operator fact is worth checking before dispatch, measured by failures avoided after answer-specific re-optimization?
 
+Can it detect and remove modeled single points of failure before authorization, rather than waiting for a vehicle or corridor to fail?
+
 ## Compared strategies
 
 ### Greedy baseline
@@ -86,13 +88,44 @@ The adverse answer preserves average energy demand at 4.2 kW and changes only th
 
 The equal-weight expectation is a transparent demo convention, not a claim that the two answers are equally likely in real disasters.
 
+## N-1 contingency and preparedness evaluation
+
+The N-1 evaluator uses a fixed synthetic contingency register with 12 single failures:
+
+- one case for the loss of each of five vehicles; and
+- one case for the closure of each of seven current or candidate corridors.
+
+It compares three operator-defined preparedness actions: no preventive action, staging idle E-32 at West Relay, and pre-charging E-12 from 46% to 70%. For every action and contingency, the optimizer rebuilds the full allocation and evaluates it across all 256 Halton scenarios.
+
+A vehicle-loss case leaves four vehicles, so it has `4 × 3 × 2 = 24` complete allocations. A route-closure case retains five vehicles and has 60. The full exact evaluation is:
+
+```text
+3 actions × ((5 vehicle losses × 24 plans × 256 scenarios)
+           + (7 route closures × 60 plans × 256 scenarios))
+= 414,720 plan-scenario evaluations
+```
+
+The primary N-1 criterion is strict: both critical facilities must remain safe in all 256 bounded uncertainty scenarios after re-optimization.
+
+| Preparedness state | Protected contingencies | Rate | Worst critical scenario success | Burden score |
+|---|---:|---:|---:|---:|
+| No preventive action | 10 / 12 | 83.3% | 0.0% | 0 |
+| Stage E-32 at West Relay | 12 / 12 | 100.0% | 100.0% | 8 |
+| Pre-charge E-12 | 12 / 12 | 100.0% | 100.0% | 11 |
+
+Without preparation, E-07 loss and River Road closure expose clinic service. Both candidate actions eliminate those modeled single points, so the lexicographic selector chooses E-32 staging because it achieves the same N-1 coverage with the lower fictional burden score.
+
+The certificate remains conditional on verified machine state. If the pump answer is adverse and the vehicle must supply a 6.5 kW peak, only E-44 has enough inverter capacity. E-44 loss and Ridge Bypass closure then remain unresolved, and the engine reports 10/12 rather than issuing an N-1 certificate.
+
+Burden points are an explicit fictional ranking input, not cost, emissions, or operational evidence.
+
 ## Reproduce
 
 ```bash
 npm run test:planner
 ```
 
-The planner tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, and safe global re-optimization.
+The planner tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, and safe global re-optimization.
 
 ## Limitations
 
@@ -101,6 +134,9 @@ The planner tests assert deterministic scenario generation, exact-search evidenc
 - Facility demand, vehicle SoC, and travel variation are the only uncertain variables.
 - The three question probes and their adverse values are fictional operator policy inputs, not learned distributions.
 - The value-of-information score uses bounded scenario counts and equal answer weights, not calibrated real-world probabilities.
+- The 12 N-1 cases are a small operator-defined register, not a complete failure-mode or hazard analysis.
+- Preparedness burden points are fictional and are used only as a transparent tie-breaker after protection performance.
+- Simultaneous failures, cascading faults, repair time, staging congestion, and recovery execution time are not modeled.
 - No grid power flow, battery degradation, traffic network, electrical certification, cyber-physical integration, or human-factors validation is modeled.
 - Passing this test suite is not a safety certification.
 

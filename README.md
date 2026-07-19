@@ -27,6 +27,10 @@ Exact multi-objective allocation search
       ↓
 256-scenario uncertainty stress test
       ↓
+Exact N-1 contingency search
+      ↓
+Minimum-intervention reserve action
+      ↓
 Machine-checkable plan → Human approval
       ↑                              ↓
       └── GPT-5.6 event → global re-plan ┘
@@ -47,8 +51,10 @@ GPT-5.6 interprets language. Deterministic code performs safety arithmetic and o
 9. The optimizer evaluates every one of the **60 distinct vehicle allocations** against the confirmed machine state.
 10. Each allocation is tested across a deterministic **256-point Halton uncertainty suite** covering demand, state-of-charge, and travel-time variation.
 11. The selected plan succeeds in all 256 demo scenarios. The nearest-feasible baseline succeeds in 207/256.
-12. A human approves the simulated dispatch.
-13. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
+12. The N-1 engine evaluates three preparedness actions against five vehicle losses and seven corridor closures—**414,720 additional plan-scenario evaluations**.
+13. The unhardened plan protects critical service in 10/12 single-failure cases. Exact minimum-intervention selection stages idle E-32 at West Relay and raises that result to 12/12.
+14. A human approves the simulated dispatch.
+15. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
 
 ## Optimization and safety kernel
 
@@ -88,6 +94,16 @@ The built-in fictional scenario contains three operator-owned uncertainty probes
 5. ranks the question by avoidable violations, criticality, and mission changes.
 
 The current top-ranked question is whether the water station handles its start-up surge. If the 6.5 kW peak reaches the vehicle, keeping the provisional plan fails 226/256 bounded scenarios; asking first and re-optimizing changes two missions and restores 256/256. The equal-weight two-answer test avoids 113 scenarios in expectation. These are fictional counterfactual results, not calibrated probabilities.
+
+### N-1 Resilience Planner
+
+A plan that survives continuous uncertainty can still contain a discrete single point of failure. Lifeline therefore tests 12 modeled N-1 cases: loss of each of five vehicles and closure of each of seven current or candidate corridors.
+
+For every contingency and preparedness action, deterministic code re-runs the complete allocation search and all 256 uncertainty scenarios. The current three action candidates are no preventive action, staging idle E-32 at West Relay, and pre-charging E-12. This produces `3 × ((5 × 24 × 256) + (7 × 60 × 256)) = 414,720` candidate plan-scenario evaluations.
+
+Without preparation, E-07 loss and River Road closure expose clinic service, so only 10/12 cases protect critical service across the full stress suite. The minimum-burden action stages idle E-32 on an independent clinic corridor. That eliminates both modeled single points and certifies 12/12 N-1 critical-service recovery for the confirmed 4.2 kW pump-peak world.
+
+The certificate is conditional, not cosmetic. If the operator instead confirms a 6.5 kW pump peak, only E-44 can meet that peak in the fictional fleet and the UI reports 10/12 rather than claiming N-1 safety.
 
 ## OpenAI usage
 
@@ -132,10 +148,13 @@ Tests verify:
 - exact-search plan selection;
 - reproducible bounded stress scenarios;
 - measured improvement over the greedy baseline;
-- zero-violation global re-optimization after a closure; and
+- zero-violation global re-optimization after a closure;
 - exact value-of-information question ranking;
 - separation of continuous energy from momentary peak power;
-- a two-mission counterfactual reallocation after an adverse answer; and
+- a two-mission counterfactual reallocation after an adverse answer;
+- exact single-vehicle and single-route contingency coverage;
+- minimum-intervention reserve selection;
+- honest certificate failure when no equivalent high-power backup exists; and
 - transparent report and event fallbacks.
 
 ## Repository map
@@ -143,7 +162,7 @@ Tests verify:
 - `app/page.tsx` — interactive command center and live evaluation
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
-- `lib/planner.ts` — safety kernel, exact optimizer, stress suite, and value-of-information ranking
+- `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
 - `DEMO_SCRIPT.md` — sub-three-minute video plan
@@ -151,7 +170,7 @@ Tests verify:
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for this deliberately small, inspectable demo. A larger deployment would replace enumeration with a validated MILP or min-cost-flow implementation and require certified telemetry, geographic routing, cybersecurity controls, operator access control, emergency-governance review, field trials, and independent safety validation.
+Exact enumeration is appropriate for this deliberately small, inspectable demo. The 12 contingencies and three preparedness actions are operator-defined synthetic cases, not a complete hazard analysis. A larger deployment would replace enumeration with a validated MILP or min-cost-flow implementation and require certified telemetry, geographic routing, cybersecurity controls, operator access control, emergency-governance review, field trials, and independent safety validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

@@ -80,6 +80,12 @@ export interface RouteOption {
   oneWayMinutes: number;
 }
 
+export interface PlanningContext {
+  unavailableVehicleIds?: string[];
+  vehicleOverrides?: Record<string, Partial<Vehicle>>;
+  routeOverrides?: Record<string, Partial<RouteOption>>;
+}
+
 export interface SafetyCheck {
   code: "route" | "connector" | "power" | "deadline" | "duration" | "reserve";
   label: string;
@@ -106,6 +112,9 @@ export interface StressResult {
   successfulScenarios: number;
   successRate: number;
   violationScenarios: number;
+  criticalSuccessfulScenarios: number;
+  criticalSuccessRate: number;
+  criticalViolationScenarios: number;
   worstUnservedKwh: number;
   meanUnservedKwh: number;
   worstUnservedCriticalKwh: number;
@@ -138,6 +147,51 @@ export interface DispatchPlan {
   criticalSiteHours: number;
   allNeedsServed: boolean;
   optimization?: OptimizationEvidence;
+}
+
+export type ContingencyKind = "vehicle-loss" | "route-closure";
+
+export interface ContingencyCase {
+  id: string;
+  kind: ContingencyKind;
+  label: string;
+  detail: string;
+  criticalServiceProtected: boolean;
+  criticalSuccessRate: number;
+  fullMissionSuccessRate: number;
+  criticalViolationScenarios: number;
+  unservedCriticalKwh: number;
+  missionChanges: number;
+  assignments: Record<PowerNeed["id"], string>;
+  candidatePlans: number;
+  planScenarioEvaluations: number;
+}
+
+export interface PreparednessActionResult {
+  id: string;
+  label: string;
+  detail: string;
+  reserveVehicleId?: string;
+  actionCost: number;
+  actionCostLabel: string;
+  protectedContingencies: number;
+  protectionRate: number;
+  worstCriticalSuccessRate: number;
+  nMinusOneCertified: boolean;
+  planScenarioEvaluations: number;
+  cases: ContingencyCase[];
+}
+
+export interface ResilienceAnalysis {
+  algorithm: "Exact N-1 contingency search + minimum-intervention selection";
+  contingencyCount: number;
+  actionCount: number;
+  totalPlanScenarioEvaluations: number;
+  baseline: PreparednessActionResult;
+  selectedAction: PreparednessActionResult;
+  candidateActions: PreparednessActionResult[];
+  eliminatedSinglePoints: number;
+  weakestBaselineCases: ContingencyCase[];
 }
 
 interface ScenarioVariation {
@@ -288,10 +342,34 @@ const round = (value: number, digits = 1) => {
   return Math.round(value * scale) / scale;
 };
 
-function getRoute(vehicleId: string, needId: PowerNeed["id"]): RouteOption {
+function routeKey(vehicleId: string, needId: PowerNeed["id"]) {
+  return `${vehicleId}/${needId}`;
+}
+
+function getRoute(
+  vehicleId: string,
+  needId: PowerNeed["id"],
+  context: PlanningContext = {},
+): RouteOption {
   const route = ROUTES.find((candidate) => candidate.vehicleId === vehicleId && candidate.needId === needId);
   if (!route) throw new Error(`Missing synthetic route ${vehicleId}/${needId}`);
-  return route;
+  return {
+    ...route,
+    ...(context.routeOverrides?.[routeKey(vehicleId, needId)] ?? {}),
+    vehicleId,
+    needId,
+  };
+}
+
+function getAvailableVehicles(context: PlanningContext = {}) {
+  const unavailable = new Set(context.unavailableVehicleIds ?? []);
+  return VEHICLES
+    .filter((vehicle) => !unavailable.has(vehicle.id))
+    .map((vehicle) => ({
+      ...vehicle,
+      ...(context.vehicleOverrides?.[vehicle.id] ?? {}),
+      id: vehicle.id,
+    }));
 }
 
 function halton(index: number, base: number) {
@@ -322,8 +400,9 @@ export function evaluateAssignment(
   need: PowerNeed,
   blockedRoutes: string[] = [],
   variation: ScenarioVariation = NOMINAL,
+  context: PlanningContext = {},
 ): Assignment {
-  const route = getRoute(vehicle.id, need.id);
+  const route = getRoute(vehicle.id, need.id, context);
   const startingSoc = Math.max(0, Math.min(100, vehicle.soc + variation.socDelta));
   const requiredPowerKw = need.powerKw * variation.demandScale;
   const requiredPeakPowerKw = (need.peakPowerKw ?? need.powerKw) * variation.demandScale;
@@ -422,8 +501,10 @@ function assessFixedAssignments(
   needs: PowerNeed[],
   blockedRoutes: string[],
   scenarios: ScenarioVariation[],
+  context: PlanningContext = {},
 ): StressResult {
   let successfulScenarios = 0;
+  let criticalSuccessfulScenarios = 0;
   let totalUnserved = 0;
   let worstUnserved = 0;
   let totalCriticalUnserved = 0;
@@ -432,11 +513,15 @@ function assessFixedAssignments(
 
   for (const scenario of scenarios) {
     const evaluated = assignments.map((assignment) => (
-      evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, scenario)
+      evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, scenario, context)
     ));
     const byNeed = new Map(evaluated.map((assignment) => [assignment.need.id, assignment]));
     const success = needs.every((need) => byNeed.get(need.id)?.safe === true);
+    const criticalSuccess = needs
+      .filter((need) => need.priority === "critical")
+      .every((need) => byNeed.get(need.id)?.safe === true);
     if (success) successfulScenarios += 1;
+    if (criticalSuccess) criticalSuccessfulScenarios += 1;
 
     const unserved = needs
       .reduce((total, need) => total + (byNeed.get(need.id)?.safe ? 0 : need.powerKw * need.durationHours * scenario.demandScale), 0);
@@ -457,6 +542,9 @@ function assessFixedAssignments(
     successfulScenarios,
     successRate: round((successfulScenarios / scenarios.length) * 100, 1),
     violationScenarios: scenarios.length - successfulScenarios,
+    criticalSuccessfulScenarios,
+    criticalSuccessRate: round((criticalSuccessfulScenarios / scenarios.length) * 100, 1),
+    criticalViolationScenarios: scenarios.length - criticalSuccessfulScenarios,
     worstUnservedKwh: round(worstUnserved),
     meanUnservedKwh: round(totalUnserved / scenarios.length, 2),
     worstUnservedCriticalKwh: round(worstCriticalUnserved),
@@ -479,6 +567,7 @@ export function buildUnsafeCandidate(needs: PowerNeed[] = DEFAULT_NEEDS): Dispat
 export function buildGreedyBaseline(
   blockedRoutes: string[] = [],
   needs: PowerNeed[] = DEFAULT_NEEDS,
+  context: PlanningContext = {},
 ): DispatchPlan {
   const priorityOrder: Record<Priority, number> = { critical: 0, high: 1, standard: 2 };
   const orderedNeeds = [...needs].sort((a, b) => {
@@ -489,9 +578,9 @@ export function buildGreedyBaseline(
   const assignments: Assignment[] = [];
 
   for (const need of orderedNeeds) {
-    const selected = VEHICLES
+    const selected = getAvailableVehicles(context)
       .filter((vehicle) => !usedVehicles.has(vehicle.id))
-      .map((vehicle) => evaluateAssignment(vehicle, need, blockedRoutes))
+      .map((vehicle) => evaluateAssignment(vehicle, need, blockedRoutes, NOMINAL, context))
       .filter((assignment) => assignment.safe)
       .sort((a, b) => (
         a.route.oneWayMinutes - b.route.oneWayMinutes
@@ -532,8 +621,10 @@ function betterCandidate(next: CandidateScore, current: CandidateScore | null) {
 export function buildVerifiedPlan(
   blockedRoutes: string[] = [],
   needs: PowerNeed[] = DEFAULT_NEEDS,
+  context: PlanningContext = {},
 ): DispatchPlan {
   const scenarios = buildStressScenarios();
+  const availableVehicles = getAvailableVehicles(context);
   let candidatePlans = 0;
   let robustFeasiblePlans = 0;
   let winningAssignments: Assignment[] | null = null;
@@ -544,7 +635,7 @@ export function buildVerifiedPlan(
     if (needIndex === needs.length) {
       candidatePlans += 1;
       const adversarial = assignments.map((assignment) => (
-        evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, ADVERSARIAL_CORNER)
+        evaluateAssignment(assignment.vehicle, assignment.need, blockedRoutes, ADVERSARIAL_CORNER, context)
       ));
       const robustPriority = adversarial.reduce((total, assignment) => (
         total + (assignment.safe ? priorityWeight(assignment.need.priority) : 0)
@@ -552,7 +643,7 @@ export function buildVerifiedPlan(
       const fullyRobust = adversarial.every((assignment) => assignment.safe);
       if (fullyRobust) robustFeasiblePlans += 1;
 
-      const stress = assessFixedAssignments(assignments, needs, blockedRoutes, scenarios);
+      const stress = assessFixedAssignments(assignments, needs, blockedRoutes, scenarios, context);
       const score: CandidateScore = {
         robustPriority,
         stressSuccesses: stress.successfulScenarios,
@@ -572,13 +663,13 @@ export function buildVerifiedPlan(
     }
 
     const need = needs[needIndex];
-    for (const vehicle of VEHICLES) {
+    for (const vehicle of availableVehicles) {
       if (usedVehicleIds.has(vehicle.id)) continue;
       usedVehicleIds.add(vehicle.id);
       search(
         needIndex + 1,
         usedVehicleIds,
-        [...assignments, evaluateAssignment(vehicle, need, blockedRoutes)],
+        [...assignments, evaluateAssignment(vehicle, need, blockedRoutes, NOMINAL, context)],
       );
       usedVehicleIds.delete(vehicle.id);
     }
@@ -591,7 +682,7 @@ export function buildVerifiedPlan(
   const selectedStress = winningStress as StressResult;
   selectedAssignments.sort((a, b) => needs.findIndex((need) => need.id === a.need.id) - needs.findIndex((need) => need.id === b.need.id));
   const plan = summarize(selectedAssignments, blockedRoutes, needs);
-  const baseline = buildGreedyBaseline(blockedRoutes, needs);
+  const baseline = buildGreedyBaseline(blockedRoutes, needs, context);
 
   plan.optimization = {
     algorithm: "Exact lexicographic search + Halton stress test",
@@ -611,7 +702,7 @@ export function buildVerifiedPlan(
       soc: "±5 points",
       travel: "±20%",
     },
-    baseline: assessFixedAssignments(baseline.assignments, needs, blockedRoutes, scenarios),
+    baseline: assessFixedAssignments(baseline.assignments, needs, blockedRoutes, scenarios, context),
     optimized: selectedStress,
   };
 
@@ -831,6 +922,187 @@ export function applyDecisionAnswer(
         }
       : need
   ));
+}
+
+interface ContingencySpec {
+  id: string;
+  kind: ContingencyKind;
+  label: string;
+  detail: string;
+  unavailableVehicleId?: string;
+  blockedRouteId?: string;
+}
+
+interface PreparednessAction {
+  id: string;
+  label: string;
+  detail: string;
+  reserveVehicleId?: string;
+  actionCost: number;
+  actionCostLabel: string;
+  context: PlanningContext;
+}
+
+const CONTINGENCY_CASES: ContingencySpec[] = [
+  ...VEHICLES.map((vehicle) => ({
+    id: `vehicle-${vehicle.id}`,
+    kind: "vehicle-loss" as const,
+    label: `${vehicle.id} unavailable`,
+    detail: `The ${vehicle.id} battery leaves the response pool before service begins`,
+    unavailableVehicleId: vehicle.id,
+  })),
+  { id: "route-river-road", kind: "route-closure", label: "River Road closed", detail: "The primary clinic corridor is unavailable", blockedRouteId: "river-road" },
+  { id: "route-clinic-cut", kind: "route-closure", label: "Clinic Cut closed", detail: "The short local clinic approach is unavailable", blockedRouteId: "clinic-cut" },
+  { id: "route-north-link", kind: "route-closure", label: "North Link closed", detail: "The primary shelter corridor is unavailable", blockedRouteId: "north-link" },
+  { id: "route-east-bridge", kind: "route-closure", label: "East Bridge closed", detail: "The primary water-station corridor is unavailable", blockedRouteId: "east-bridge" },
+  { id: "route-ridge-bypass", kind: "route-closure", label: "Ridge Bypass closed", detail: "The eastern alternate corridor is unavailable", blockedRouteId: "ridge-bypass" },
+  { id: "route-west-relay", kind: "route-closure", label: "West Relay closed", detail: "The proposed reserve staging corridor is unavailable", blockedRouteId: "west-relay" },
+  { id: "route-charge-link", kind: "route-closure", label: "Charge Link closed", detail: "The proposed pre-charge access corridor is unavailable", blockedRouteId: "charge-link" },
+];
+
+const PREPAREDNESS_ACTIONS: PreparednessAction[] = [
+  {
+    id: "none",
+    label: "No preventive action",
+    detail: "Keep the nominal robust allocation and react only after a failure",
+    actionCost: 0,
+    actionCostLabel: "0 burden points",
+    context: {},
+  },
+  {
+    id: "stage-e32-west-relay",
+    label: "Stage E-32 at West Relay",
+    detail: "Hold idle E-32 as a clinic-capable reserve on an independent corridor",
+    reserveVehicleId: "E-32",
+    actionCost: 8,
+    actionCostLabel: "8 burden points · 8 km staging",
+    context: {
+      vehicleOverrides: {
+        "E-32": { soc: 62 },
+      },
+      routeOverrides: {
+        "E-32/clinic": { routeId: "west-relay", routeLabel: "West Relay", roundTripKm: 18, oneWayMinutes: 30 },
+        "E-32/shelter": { routeId: "north-link", routeLabel: "North Link via West Relay", roundTripKm: 26, oneWayMinutes: 38 },
+        "E-32/water": { routeId: "east-bridge", routeLabel: "East Bridge via West Relay", roundTripKm: 42, oneWayMinutes: 62 },
+      },
+    },
+  },
+  {
+    id: "precharge-e12",
+    label: "Pre-charge E-12 at Charge Link",
+    detail: "Raise E-12 from 46% to 70% so it can become a clinic reserve",
+    reserveVehicleId: "E-12",
+    actionCost: 11,
+    actionCostLabel: "11 burden points · +10.6 kWh",
+    context: {
+      vehicleOverrides: {
+        "E-12": { soc: 70 },
+      },
+      routeOverrides: {
+        "E-12/clinic": { routeId: "charge-link", routeLabel: "Charge Link", roundTripKm: 17, oneWayMinutes: 22 },
+      },
+    },
+  },
+];
+
+function evaluatePreparednessAction(
+  action: PreparednessAction,
+  primaryPlan: DispatchPlan,
+  needs: PowerNeed[],
+  baseBlockedRoutes: string[],
+): PreparednessActionResult {
+  const primaryAssignments = assignmentRecord(primaryPlan);
+  const cases = CONTINGENCY_CASES.map((contingency) => {
+    const blockedRoutes = contingency.blockedRouteId
+      ? [...new Set([...baseBlockedRoutes, contingency.blockedRouteId])]
+      : baseBlockedRoutes;
+    const context: PlanningContext = {
+      ...action.context,
+      unavailableVehicleIds: contingency.unavailableVehicleId
+        ? [...new Set([...(action.context.unavailableVehicleIds ?? []), contingency.unavailableVehicleId])]
+        : action.context.unavailableVehicleIds,
+    };
+    const recoveryPlan = buildVerifiedPlan(blockedRoutes, needs, context);
+    const stress = recoveryPlan.optimization!.optimized;
+    const recoveryAssignments = assignmentRecord(recoveryPlan);
+    const criticalServiceProtected = stress.criticalSuccessRate === 100;
+
+    return {
+      id: contingency.id,
+      kind: contingency.kind,
+      label: contingency.label,
+      detail: contingency.detail,
+      criticalServiceProtected,
+      criticalSuccessRate: stress.criticalSuccessRate,
+      fullMissionSuccessRate: stress.successRate,
+      criticalViolationScenarios: stress.criticalViolationScenarios,
+      unservedCriticalKwh: recoveryPlan.unservedCriticalKwh,
+      missionChanges: changedAssignments(primaryAssignments, recoveryAssignments),
+      assignments: recoveryAssignments,
+      candidatePlans: recoveryPlan.optimization!.candidatePlans,
+      planScenarioEvaluations: recoveryPlan.optimization!.scenarioEvaluations,
+    } satisfies ContingencyCase;
+  });
+  const protectedContingencies = cases.filter((contingency) => contingency.criticalServiceProtected).length;
+  const planScenarioEvaluations = cases.reduce((total, contingency) => total + contingency.planScenarioEvaluations, 0);
+
+  return {
+    id: action.id,
+    label: action.label,
+    detail: action.detail,
+    reserveVehicleId: action.reserveVehicleId,
+    actionCost: action.actionCost,
+    actionCostLabel: action.actionCostLabel,
+    protectedContingencies,
+    protectionRate: round((protectedContingencies / cases.length) * 100, 1),
+    worstCriticalSuccessRate: Math.min(...cases.map((contingency) => contingency.criticalSuccessRate)),
+    nMinusOneCertified: protectedContingencies === cases.length,
+    planScenarioEvaluations,
+    cases,
+  };
+}
+
+function betterPreparednessAction(
+  next: PreparednessActionResult,
+  current: PreparednessActionResult,
+) {
+  if (next.protectedContingencies !== current.protectedContingencies) {
+    return next.protectedContingencies > current.protectedContingencies;
+  }
+  if (next.worstCriticalSuccessRate !== current.worstCriticalSuccessRate) {
+    return next.worstCriticalSuccessRate > current.worstCriticalSuccessRate;
+  }
+  if (next.actionCost !== current.actionCost) return next.actionCost < current.actionCost;
+  return next.id.localeCompare(current.id) < 0;
+}
+
+export function buildResilienceAnalysis(
+  needs: PowerNeed[] = DEFAULT_NEEDS,
+  baseBlockedRoutes: string[] = [],
+): ResilienceAnalysis {
+  const primaryPlan = buildVerifiedPlan(baseBlockedRoutes, needs);
+  const candidateActions = PREPAREDNESS_ACTIONS.map((action) => (
+    evaluatePreparednessAction(action, primaryPlan, needs, baseBlockedRoutes)
+  ));
+  const baseline = candidateActions.find((action) => action.id === "none")!;
+  const selectedAction = candidateActions.reduce((best, action) => (
+    betterPreparednessAction(action, best) ? action : best
+  ));
+
+  return {
+    algorithm: "Exact N-1 contingency search + minimum-intervention selection",
+    contingencyCount: CONTINGENCY_CASES.length,
+    actionCount: PREPAREDNESS_ACTIONS.length,
+    totalPlanScenarioEvaluations: candidateActions.reduce(
+      (total, action) => total + action.planScenarioEvaluations,
+      0,
+    ),
+    baseline,
+    selectedAction,
+    candidateActions,
+    eliminatedSinglePoints: Math.max(0, selectedAction.protectedContingencies - baseline.protectedContingencies),
+    weakestBaselineCases: baseline.cases.filter((contingency) => !contingency.criticalServiceProtected),
+  };
 }
 
 export function getIdleVehicles(plan: DispatchPlan): Vehicle[] {

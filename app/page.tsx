@@ -6,6 +6,7 @@ import {
   VEHICLES,
   applyDecisionAnswer,
   buildDecisionAnalysis,
+  buildResilienceAnalysis,
   buildUnsafeCandidate,
   buildVerifiedPlan,
   type Assignment,
@@ -13,9 +14,10 @@ import {
   type DecisionAnswerId,
   type DispatchPlan,
   type PowerNeed,
+  type ResilienceAnalysis,
 } from "@/lib/planner";
 
-type Stage = "intake" | "candidate" | "clarify" | "verified" | "approved" | "rerouted";
+type Stage = "intake" | "candidate" | "clarify" | "verified" | "hardened" | "approved" | "rerouted";
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
 const stageIndex: Record<Stage, number> = {
@@ -23,15 +25,17 @@ const stageIndex: Record<Stage, number> = {
   candidate: 1,
   clarify: 2,
   verified: 3,
-  approved: 4,
-  rerouted: 5,
+  hardened: 4,
+  approved: 5,
+  rerouted: 6,
 };
 
 const actionLabels: Record<Stage, string> = {
   intake: "Analyze reports with GPT-5.6",
   candidate: "Rank decision-critical questions",
   clarify: "Confirm answer + optimize",
-  verified: "Approve simulated dispatch",
+  verified: "Eliminate single points of failure",
+  hardened: "Approve simulated dispatch",
   approved: "Interpret bridge closure + re-plan",
   rerouted: "Reset training scenario",
 };
@@ -40,7 +44,8 @@ const actionSubtitles: Record<Stage, string> = {
   intake: "Narrative → power contracts",
   candidate: "Exact counterfactual value-of-information",
   clarify: "Human fact check → robust optimum",
-  verified: "Human decision required",
+  verified: "Exact N-1 search → minimum intervention",
+  hardened: "Human decision required",
   approved: "Free text event → new optimum",
   rerouted: "Replay the full mission loop",
 };
@@ -59,6 +64,7 @@ function proofRows(
   plan: DispatchPlan,
   decision: DecisionAnalysis,
   preClosurePlan: DispatchPlan | null,
+  resilience: ResilienceAnalysis | null,
 ) {
   if (stage === "intake") {
     return [
@@ -105,24 +111,42 @@ function proofRows(
         : { state: "pass", label: "Original mission state", detail: "No active mission depended on East Bridge" },
       { state: "pass", label: "Global re-optimization", detail: missionChanges > 0 ? `${missionChanges} missions rebuilt · ${water.vehicle.id} → Water` : "Recomputed globally · no mission change required" },
       { state: "pass", label: "Uncertainty stress test", detail: `${stress?.successRate ?? 0}% success across ${stress?.scenarioCount ?? 0} scenarios` },
+      { state: resilience?.selectedAction.nMinusOneCertified ? "pass" : "pending", label: "N-1 recovery library", detail: `${resilience?.selectedAction.protectedContingencies ?? 0}/${resilience?.contingencyCount ?? 0} single failures protected` },
       { state: "pass", label: "Human authority", detail: "Prior approval scope retained for simulation" },
     ];
   }
 
   const evidence = plan.optimization;
+  if (stage === "verified") {
+    return [
+      { state: "pass", label: "Decision-critical fact", detail: `${decision.topQuestion.fieldLabel} verified by operator` },
+      { state: "pass", label: "Robust allocation", detail: `${evidence?.optimized.successRate ?? 0}% across ${evidence?.scenarioCount ?? 0} uncertainty scenarios` },
+      { state: "fail", label: "Single-point exposure", detail: `${resilience?.weakestBaselineCases.length ?? 0} failures can break critical protection` },
+      { state: "pending", label: "Minimum intervention", detail: resilience?.selectedAction.label ?? "Contingency search pending" },
+      { state: "pending", label: "Human approval", detail: "Blocked until resilience action is reviewed" },
+    ];
+  }
+
+  const nMinusOneCertified = resilience?.selectedAction.nMinusOneCertified ?? false;
   return [
     { state: "pass", label: "Decision-critical fact", detail: `${decision.topQuestion.fieldLabel} verified by operator` },
     { state: "pass", label: "Exact allocation search", detail: `${evidence?.candidatePlans ?? 0} of ${evidence?.candidatePlans ?? 0} allocations evaluated` },
-    { state: "pass", label: "Adversarial corner", detail: "Demand +10% · SoC −5 · travel +20% remains safe" },
-    { state: "pass", label: "Stress-suite robustness", detail: `${evidence?.optimized.successRate ?? 0}% across ${evidence?.scenarioCount ?? 0} low-discrepancy scenarios` },
+    { state: nMinusOneCertified ? "pass" : "fail", label: "N-1 resilience", detail: `${resilience?.selectedAction.protectedContingencies ?? 0}/${resilience?.contingencyCount ?? 0} single failures protect critical service` },
+    { state: "pass", label: "Minimum intervention", detail: `${resilience?.selectedAction.label ?? "None"} · ${resilience?.selectedAction.actionCostLabel ?? "not scored"}` },
     stage === "approved"
       ? { state: "pass", label: "Human approval", detail: "Incident Lead · simulated at 02:19" }
       : { state: "pending", label: "Human approval", detail: "Required before simulated dispatch" },
   ];
 }
 
-function statusForVehicle(vehicleId: string, stage: Stage, plan: DispatchPlan) {
+function statusForVehicle(
+  vehicleId: string,
+  stage: Stage,
+  plan: DispatchPlan,
+  reserveVehicleId?: string,
+) {
   const assignment = plan.assignments.find((item) => item.vehicle.id === vehicleId);
+  if (!assignment && stageIndex[stage] >= stageIndex.hardened && vehicleId === reserveVehicleId) return "standby";
   if (!assignment || stage === "intake") return "idle";
   if (!assignment.safe) return "risk";
   if (stage === "approved" || stage === "rerouted") return "dispatched";
@@ -141,6 +165,14 @@ export default function Home() {
   const decision = useMemo(() => buildDecisionAnalysis(needs), [needs]);
   const selectedDecisionOption = decision.topQuestion.options.find((option) => option.id === decisionAnswer)!;
   const activeNeeds = resolvedNeeds ?? needs;
+  const completed = stageIndex[stage];
+  const isStructured = completed >= stageIndex.candidate;
+  const isProvisional = completed >= stageIndex.clarify;
+  const isVerified = completed >= stageIndex.verified;
+  const isHardened = completed >= stageIndex.hardened;
+  const isApproved = completed >= stageIndex.approved;
+  const isRerouted = stage === "rerouted";
+  const shouldAnalyzeResilience = completed >= stageIndex.verified;
 
   const plan = useMemo(() => {
     if (stage === "intake" || stage === "candidate") return buildUnsafeCandidate(needs);
@@ -150,26 +182,27 @@ export default function Home() {
     () => stage === "rerouted" ? buildVerifiedPlan([], activeNeeds) : null,
     [activeNeeds, stage],
   );
+  const resilience = useMemo(
+    () => shouldAnalyzeResilience ? buildResilienceAnalysis(activeNeeds) : null,
+    [activeNeeds, shouldAnalyzeResilience],
+  );
   const rerouteMissionChanges = preClosurePlan?.assignments.filter((before) => (
     plan.assignments.find((after) => after.need.id === before.need.id)?.vehicle.id !== before.vehicle.id
   )).length ?? 0;
 
-  const rows = proofRows(stage, plan, decision, preClosurePlan);
-  const completed = stageIndex[stage];
-  const isStructured = completed >= stageIndex.candidate;
-  const isProvisional = completed >= stageIndex.clarify;
-  const isVerified = completed >= stageIndex.verified;
-  const isApproved = completed >= stageIndex.approved;
-  const isRerouted = stage === "rerouted";
+  const rows = proofRows(stage, plan, decision, preClosurePlan, resilience);
   const evidence = plan.optimization;
 
   const metrics = stage === "intake"
-    ? { protection: "0.0", unserved: "24.0", violations: "—", robustness: "—" }
+    ? { protection: "0.0", unserved: "24.0", violations: "—", robustness: "—", nMinusOne: "—" }
     : {
         protection: plan.criticalSiteHours.toFixed(1),
         unserved: plan.unservedCriticalKwh.toFixed(1),
         violations: String(plan.violationCount),
         robustness: completed >= stageIndex.clarify ? (evidence?.optimized.successRate ?? 0).toFixed(1) : "0.0",
+        nMinusOne: isVerified
+          ? `${isHardened ? resilience?.selectedAction.protectedContingencies ?? 0 : resilience?.baseline.protectedContingencies ?? 0}/${resilience?.contingencyCount ?? 0}`
+          : "—",
       };
 
   function resetScenario() {
@@ -213,13 +246,14 @@ export default function Home() {
       return;
     }
     setWorking(true);
-    await wait(stage === "candidate" ? 620 : stage === "clarify" ? 520 : 360);
+    await wait(stage === "candidate" ? 620 : stage === "clarify" ? 520 : stage === "verified" ? 680 : 360);
     if (stage === "candidate") setStage("clarify");
     if (stage === "clarify") {
       setResolvedNeeds(applyDecisionAnswer(needs, decision.topQuestion, decisionAnswer));
       setStage("verified");
     }
-    if (stage === "verified") setStage("approved");
+    if (stage === "verified") setStage("hardened");
+    if (stage === "hardened") setStage("approved");
     if (stage === "approved") {
       try {
         const response = await fetch("/api/event", {
@@ -248,8 +282,8 @@ export default function Home() {
     setWorking(false);
   }
 
-  const proofTone = stage === "candidate" ? "blocked" : stage === "clarify" ? "question" : stage === "intake" ? "waiting" : "verified";
-  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "clarify" ? "FACT CHECK" : stage === "intake" ? "WAITING" : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "APPROVED" : "VERIFIED";
+  const proofTone = stage === "candidate" ? "blocked" : stage === "clarify" ? "question" : stage === "intake" ? "waiting" : stage === "verified" ? "exposed" : "verified";
+  const proofLabel = stage === "candidate" ? "BLOCKED" : stage === "clarify" ? "FACT CHECK" : stage === "intake" ? "WAITING" : stage === "verified" ? `${resilience?.weakestBaselineCases.length ?? 0} GAPS` : stage === "rerouted" ? "RE-PLANNED" : stage === "approved" ? "APPROVED" : resilience?.selectedAction.nMinusOneCertified ? "N-1 READY" : "MAXIMIZED";
   const modeLabel = aiMode === "gpt-5.6" ? "GPT-5.6 LIVE" : aiMode === "demo-fallback" ? "DEMO FALLBACK" : "UNSTRUCTURED";
   const actionSubtitle = stage === "clarify" ? selectedDecisionOption.label : actionSubtitles[stage];
 
@@ -312,6 +346,11 @@ export default function Home() {
           <div><strong>{metrics.robustness}</strong><span>{isProvisional ? "% success" : "stress suite"}</span></div>
           <small className={isVerified ? "metric-ok" : stage === "clarify" ? "metric-warning" : ""}>{isVerified ? "256 bounded uncertainty scenarios" : stage === "clarify" ? "Provisional plan only" : "Demand · SoC · travel uncertainty"}</small>
         </article>
+        <article className={`metric-card resilience-card ${stage === "verified" ? "danger" : isHardened ? "positive" : ""}`}>
+          <p>Single-failure recovery</p>
+          <div><strong>{metrics.nMinusOne}</strong><span>N-1 cases</span></div>
+          <small className={stage === "verified" ? "metric-danger" : isHardened ? "metric-ok" : ""}>{stage === "verified" ? `${resilience?.weakestBaselineCases.length ?? 0} hidden single points detected` : isHardened ? resilience?.selectedAction.nMinusOneCertified ? "Every modeled single failure protected" : "Best attainable protection shown honestly" : "Vehicles · roads · reserve actions"}</small>
+        </article>
       </section>
 
       <section className="workspace-grid">
@@ -354,7 +393,7 @@ export default function Home() {
             ))}
 
             {VEHICLES.map((vehicle) => {
-              const status = statusForVehicle(vehicle.id, stage, plan);
+              const status = statusForVehicle(vehicle.id, stage, plan, resilience?.selectedAction.reserveVehicleId);
               return (
                 <div className={`vehicle-node ${status}`} key={vehicle.id} style={{ left: `${vehicle.x}%`, top: `${vehicle.y}%` }}>
                   <span className="vehicle-icon" aria-hidden="true">◆</span>
@@ -364,6 +403,9 @@ export default function Home() {
             })}
 
             {isRerouted && <div className="bridge-closure"><span>×</span><b>BRIDGE CLOSED</b></div>}
+            {isHardened && resilience?.selectedAction.reserveVehicleId && (
+              <div className="reserve-staging"><span>◇</span><b>{resilience.selectedAction.reserveVehicleId} N-1 RESERVE</b></div>
+            )}
 
             <div className={`map-note ${stage === "candidate" ? "risk-note" : stage === "clarify" ? "question-note" : isVerified ? "safe-note" : "waiting-note"}`}>
               <span>{stage === "candidate" ? "!" : stage === "clarify" ? "?" : isVerified ? "✓" : "···"}</span>
@@ -371,10 +413,11 @@ export default function Home() {
                 <b>{stage === "intake" && "Three reports are waiting for structured intake"}</b>
                 <b>{stage === "candidate" && "E-12 cannot complete the Clinic mission"}</b>
                 <b>{stage === "clarify" && "One unresolved fact can change two missions"}</b>
-                <b>{stage === "verified" && "Exact robust optimum certified"}</b>
+                <b>{stage === "verified" && "Robust plan has two hidden single points"}</b>
+                <b>{stage === "hardened" && "Minimum-intervention N-1 plan certified"}</b>
                 <b>{stage === "approved" && "Simulated dispatch approved by a human"}</b>
                 <b>{stage === "rerouted" && "Closure absorbed by a whole-plan re-optimization"}</b>
-                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "clarify" ? `${decision.counterfactualPlanScenarioEvaluations.toLocaleString()} counterfactual evaluations · guessing blocked` : stage === "rerouted" ? rerouteMissionChanges > 0 ? `${rerouteMissionChanges} missions changed; every hard constraint rechecked` : "No active route affected; whole plan still recomputed" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
+                <small>{stage === "candidate" ? "Duration and mobility reserve both fail" : stage === "clarify" ? `${decision.counterfactualPlanScenarioEvaluations.toLocaleString()} counterfactual evaluations · guessing blocked` : stage === "verified" ? `${resilience?.totalPlanScenarioEvaluations.toLocaleString() ?? 0} contingency evaluations found ${resilience?.weakestBaselineCases.length ?? 0} gaps` : stage === "hardened" ? `${resilience?.selectedAction.label} · ${resilience?.selectedAction.protectedContingencies}/${resilience?.contingencyCount} protected` : stage === "rerouted" ? rerouteMissionChanges > 0 ? `${rerouteMissionChanges} missions changed; every hard constraint rechecked` : "No active route affected; whole plan still recomputed" : stage === "intake" ? "No dispatch decision has been made" : `${evidence?.scenarioEvaluations.toLocaleString() ?? 0} plan-scenario evaluations · no relaxed constraints`}</small>
               </div>
             </div>
           </div>
@@ -388,7 +431,9 @@ export default function Home() {
                 <em>→</em>
                 <span><i>3</i><b>Prove</b><small>Exact robust optimization</small></span>
                 <em>→</em>
-                <span><i>4</i><b>Act</b><small>Human approves simulation</small></span>
+                <span><i>4</i><b>Survive</b><small>N-1 contingency proof</small></span>
+                <em>→</em>
+                <span><i>5</i><b>Act</b><small>Human approves simulation</small></span>
               </div>
             ) : plan.assignments.map((assignment) => (
               <div className={`assignment-card ${assignment.safe ? "safe" : "blocked"}`} key={assignment.need.id}>
@@ -398,7 +443,7 @@ export default function Home() {
                   <span>{assignment.coverageHours.toFixed(1)} h cover</span>
                   <span>{assignment.postMissionSoc.toFixed(1)}% after</span>
                 </div>
-                <small>{assignment.safe ? isRerouted ? "RE-OPTIMIZED" : stage === "clarify" ? "PROVISIONAL" : "ROBUST" : "BLOCKED"}</small>
+                <small>{assignment.safe ? isRerouted ? "RE-OPTIMIZED" : isHardened ? "N-1 PRIMARY" : stage === "clarify" ? "PROVISIONAL" : "ROBUST" : "BLOCKED"}</small>
               </div>
             ))}
           </div>
@@ -510,7 +555,7 @@ export default function Home() {
           <div className="benchmark-heading">
             <div>
               <p className="panel-kicker">LIVE EVALUATION · NOT A CLAIM</p>
-              <h2>Why the optimizer beats “send the nearest feasible battery”</h2>
+              <h2>Why the plan beats “send the nearest”—and survives one failure</h2>
             </div>
             <div className="uncertainty-bounds">
               <span>DEMAND {evidence.adversarialBounds.demand}</span>
@@ -526,6 +571,33 @@ export default function Home() {
             </div>
             <em>{stage === "clarify" ? "guessing blocked" : selectedDecisionOption.label}</em>
           </div>
+          {resilience && (
+            <div className={`resilience-evidence ${isHardened ? "certified" : "exposed"}`} aria-label="N-1 resilience evidence">
+              <div className="resilience-heading">
+                <span>{isHardened ? "N-1 RECOVERY CERTIFICATE" : "HIDDEN SINGLE-POINT SCAN"}</span>
+                <small>{resilience.actionCount} preparedness actions × {resilience.contingencyCount} single failures × 256 stress scenarios</small>
+              </div>
+              <div className="resilience-score baseline-score">
+                <b>{resilience.baseline.protectedContingencies}/{resilience.contingencyCount}</b>
+                <small>without preparation</small>
+              </div>
+              <div className="resilience-arrow"><span>→</span><small>min intervention</small></div>
+              <div className="resilience-score prepared-score">
+                <b>{resilience.selectedAction.protectedContingencies}/{resilience.contingencyCount}</b>
+                <small>{resilience.selectedAction.nMinusOneCertified ? "critical service certified" : "best attainable result"}</small>
+              </div>
+              <div className="resilience-action">
+                <b>{resilience.selectedAction.label}</b>
+                <small>{resilience.selectedAction.detail}</small>
+                <em>{resilience.totalPlanScenarioEvaluations.toLocaleString()} plan-scenario evaluations · {resilience.selectedAction.actionCostLabel}</em>
+              </div>
+              {!isHardened && (
+                <div className="resilience-gaps">
+                  {resilience.weakestBaselineCases.map((contingency) => <span key={contingency.id}>{contingency.label}</span>)}
+                </div>
+              )}
+            </div>
+          )}
           <div className="benchmark-grid">
             <article className="benchmark-card baseline">
               <div><p>Greedy baseline</p><span>FRAGILE</span></div>
@@ -550,14 +622,14 @@ export default function Home() {
             </article>
             <article className="algorithm-card">
               <p className="panel-kicker">ALGORITHM</p>
-              <h3>Value of information + exact search</h3>
+              <h3>Ask, optimize, then survive</h3>
               <ol>
                 <li><span>1</span>Rank facts by avoidable failure</li>
                 <li><span>2</span>Re-optimize every possible answer</li>
                 <li><span>3</span>Protect priority-weighted service</li>
-                <li><span>4</span>Certify the bounded worst case</li>
+                <li><span>4</span>Eliminate N-1 single points</li>
               </ol>
-              <small>3 questions · 6 counterfactual worlds · deterministic and reproducible</small>
+              <small>Value of information · exact allocation · low-discrepancy stress · contingency search</small>
             </article>
           </div>
           {isRerouted && (
@@ -580,8 +652,9 @@ export default function Home() {
           <li className={completed >= stageIndex.clarify ? "done" : completed === stageIndex.candidate ? "current risk" : ""}><i>02</i><div><b>Unsafe shortcut blocked</b><small>{completed >= stageIndex.candidate ? `${aiMode === "gpt-5.6" ? "GPT-5.6" : "Demo fallback"} · E-12 rejected` : "Awaiting analysis"}</small></div></li>
           <li className={completed >= stageIndex.verified ? "done" : completed === stageIndex.clarify ? "current" : ""}><i>03</i><div><b>Critical fact resolved</b><small>{completed >= stageIndex.verified ? selectedDecisionOption.label : completed === stageIndex.clarify ? `${decision.questionCount} questions ranked` : "Not started"}</small></div></li>
           <li className={completed >= stageIndex.verified ? "done" : ""}><i>04</i><div><b>Robust optimum certified</b><small>{completed >= stageIndex.verified ? `${evidence?.scenarioEvaluations.toLocaleString()} plan-scenarios checked` : "Waiting for verified fact"}</small></div></li>
-          <li className={completed >= stageIndex.approved ? "done" : completed === stageIndex.verified ? "current" : ""}><i>05</i><div><b>Human approval</b><small>{completed >= stageIndex.approved ? "Recorded for simulation" : "Required"}</small></div></li>
-          <li className={completed >= stageIndex.rerouted ? "done" : completed === stageIndex.approved ? "current" : ""}><i>06</i><div><b>Disruption re-optimized</b><small>{completed >= stageIndex.rerouted ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
+          <li className={completed >= stageIndex.hardened ? "done" : completed === stageIndex.verified ? "current risk" : ""}><i>05</i><div><b>Single points eliminated</b><small>{completed >= stageIndex.hardened ? `${resilience?.selectedAction.protectedContingencies}/${resilience?.contingencyCount} N-1 cases protected` : completed === stageIndex.verified ? `${resilience?.weakestBaselineCases.length ?? 0} gaps found` : "Not started"}</small></div></li>
+          <li className={completed >= stageIndex.approved ? "done" : completed === stageIndex.hardened ? "current" : ""}><i>06</i><div><b>Human approval</b><small>{completed >= stageIndex.approved ? "Recorded for simulation" : "Required"}</small></div></li>
+          <li className={completed >= stageIndex.rerouted ? "done" : completed === stageIndex.approved ? "current" : ""}><i>07</i><div><b>Disruption re-optimized</b><small>{completed >= stageIndex.rerouted ? "All remaining missions rebuilt" : "Ready for closure drill"}</small></div></li>
         </ol>
       </section>
 
