@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Starter Project",
-  description: "A clean starting point for building your site.",
+  title: "Lifeline Grid · Verified Mobile Power Coordination",
+  description:
+    "A synthetic disaster-response command center that turns incident reports into safety-verified mobile power plans.",
   other: {
     "codex-preview": "development",
   },
