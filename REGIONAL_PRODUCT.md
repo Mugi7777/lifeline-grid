@@ -25,6 +25,7 @@ The current synthetic Mizunoki District demonstration includes:
 - a service-weighted road criticality ranking;
 - exact repair-portfolio selection under a user-controlled budget;
 - a deterministic 64-scenario demand and travel stress suite;
+- a visible 512/2,048-zone Regional Scale Proof using sparse multi-source Dijkstra, flow-based failure screening, 64 exact closure replays, runtime-specific latency measurement, real-basemap impact rendering, and exportable JSON evidence;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
 - a GPT-5.6 Sol Reasoning Council that generates exactly three competing interpretations of conflicting reports, preserves counterevidence, and asks for decision-changing authority evidence;
 - deterministic re-planning of every valid hypothesis with a hard human-authority gate;

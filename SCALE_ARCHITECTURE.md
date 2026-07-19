@@ -1,6 +1,6 @@
 # Scale Architecture
 
-The current browser demonstration is deliberately exact and small. A production Regional Access OS must preserve the same objectives and evidence while moving computation, identity, data, and operations into independently scalable services.
+The product combines a deliberately exact six-stop operational scenario with a separate bounded scale proof. The scale proof analyzes up to 2,048 synthetic zones and 5,481 sparse links in the current browser experience, but it does not replace production load, concurrency, geographic-data, or solver validation. A production Regional Access OS must preserve the same objectives and evidence while moving computation, identity, data, and operations into independently scalable services.
 
 ## Target architecture
 

@@ -6,6 +6,8 @@ Regional mode is also synthetic unless an approved tabletop protocol explicitly 
 
 When testing the durable ledger, recording a plan stores the signed-in email, optional reviewer email, complete submitted regional model, computed result, and audit events. Use synthetic identities and data only. A creator may record a draft or assign another authenticated email; only that distinct reviewer may approve or reject it. Verify the audit chain after each decision.
 
+When testing signed road events, use a synthetic issuer key and the exact versioned envelope. Keep the private key outside Lifeline Grid. A `202 Accepted` response means only that the signature, scope, freshness, and replay checks passed and a pending review receipt was recorded. It does not mean the road state is true, safe, approved, or applied. Verify the linked official reference through an approved out-of-band channel before a tabletop reviewer records any simulated planning change.
+
 This runbook applies only to supervised simulation and tabletop evaluation. It does not authorize real emergency use.
 
 ## Roles
@@ -45,6 +47,8 @@ Stop the exercise and mark the result invalid if any of the following occurs:
 - the N-1 count is incomplete but appears certified;
 - the same actor fills both approval roles;
 - evidence-package verification fails;
+- the authority registry, event signature, validity window, road scope, or durable replay store cannot be proven;
+- a signed road event appears applied without an authorized human review;
 - confidential, personal, operational, or real emergency information is entered.
 
 ## Degraded-mode behavior

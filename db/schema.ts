@@ -61,3 +61,22 @@ export const regionalAuditEvents = sqliteTable("regional_audit_events", {
   uniqueIndex("regional_audit_events_run_sequence_uidx").on(table.runId, table.sequence),
   uniqueIndex("regional_audit_events_event_hash_uidx").on(table.eventHash),
 ]);
+
+export const authorityEventReceipts = sqliteTable("authority_event_receipts", {
+  eventId: text("event_id").primaryKey(),
+  issuer: text("issuer").notNull(),
+  keyId: text("key_id").notNull(),
+  sequence: integer("sequence").notNull(),
+  eventDigest: text("event_digest").notNull(),
+  roadSegmentId: text("road_segment_id").notNull(),
+  roadState: text("road_state", { enum: ["open", "closed", "weight_limited"] }).notNull(),
+  issuedAt: text("issued_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  receivedBy: text("received_by").notNull(),
+  receivedAt: text("received_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  reviewStatus: text("review_status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+}, (table) => [
+  uniqueIndex("authority_event_receipts_issuer_sequence_uidx").on(table.issuer, table.sequence),
+  uniqueIndex("authority_event_receipts_digest_uidx").on(table.eventDigest),
+  index("authority_event_receipts_road_received_idx").on(table.roadSegmentId, table.receivedAt),
+]);

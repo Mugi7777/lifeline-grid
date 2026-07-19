@@ -656,11 +656,12 @@ export function solveRegionalDelivery(
   }
 
   visit(0);
-  if (!bestPlan) throw new Error("No feasible regional delivery plan exists");
-  const result = {
-    ...bestPlan,
+  const selectedPlan = bestPlan as RegionalDeliveryPlan | null;
+  if (!selectedPlan) throw new Error("No feasible regional delivery plan exists");
+  const result: RegionalDeliveryPlan = {
+    ...selectedPlan,
     feasibleAssignments,
-    search: { ...bestPlan.search, feasibleCandidates: feasibleAssignments },
+    search: { ...selectedPlan.search, feasibleCandidates: feasibleAssignments },
   };
   if (cacheKey) defaultPlanCache.set(cacheKey, result);
   return result;
