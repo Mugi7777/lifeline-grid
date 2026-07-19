@@ -9,6 +9,7 @@ import type { AssuranceSnapshot } from "@/lib/assurance";
 import RealRegionalMap from "./real-regional-map";
 import RegionalScaleLab from "./regional-scale-lab";
 import DataTrustGateway from "./data-trust-gateway";
+import ContinuityCapsule from "./continuity-capsule";
 
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
@@ -324,6 +325,17 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
       <RegionalScaleLab />
 
       <DataTrustGateway />
+
+      <ContinuityCapsule
+        closedSegmentId={closedSegmentId}
+        repairBudgetM={budgetM}
+        onRestore={(restoredClosure, restoredBudget) => {
+          setClosedSegmentId(restoredClosure);
+          setBudgetM(restoredBudget);
+          setAiMode("ready");
+          setEventSummary("Portable twin state was integrity-checked and reproduced by the current deterministic engine.");
+        }}
+      />
 
       <section className="regional-metrics" aria-label="Regional access metrics" aria-live="polite">
         <article><small>Household access</small><b>{analysis.activePlan.metrics.serviceCoveragePercent}%</b><span>{analysis.activePlan.metrics.householdsCovered}/418 covered on time</span></article>

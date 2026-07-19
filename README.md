@@ -32,6 +32,8 @@ The new **Regional Scale Proof** makes computational headroom visible instead of
 
 The **Operational Data Trust Gateway** now places a fail-closed boundary in front of planning. A strict versioned bundle carries map, road-authority, weather, and fleet feeds. Deterministic policy checks signature status, freshness, validity, regional scope, coverage, missing classes, and conflicts, then selects `verified`, `degraded`, or `quarantined` mode. Five visible failure injections demonstrate that stale, conflicting, tampered, or missing data blocks consequential use. A canonical SHA-256 evidence export binds the bundle to its verdict without exporting source payloads. See [`DATA_TRUST_GATEWAY.md`](./DATA_TRUST_GATEWAY.md).
 
+The **Portable Twin Capsule** saves the current synthetic closure, repair budget, regional-model identity, expected metrics and route evidence to both browser storage and a downloadable JSON file. Import is bounded and fail-closed: payload integrity, current model identity, plan evidence and deterministic reproduction must all pass before UI state is restored. Snapshots older than 24 hours remain verifiable but are visibly stale. See [`RECOVERY.md`](./RECOVERY.md) for source-code and state-backup instructions.
+
 GPT-5.6 converts a narrative inspection note into a supported road event. The new **Sol Reasoning Council** uses `gpt-5.6-sol` at high reasoning effort to turn conflicting, untrusted reports into exactly three testable road-state hypotheses, preserve counterevidence, and ask for the smallest decision-changing fact. Deterministic code then re-plans every hypothesis, runs 192 stress scenarios and 36 N-1 road cases, and withholds the model recommendation behind a human-authority gate. The model cannot diagnose a road, calculate the consequence, authorize a closure, or authorize dispatch.
 
 See [`REGIONAL_PRODUCT.md`](./REGIONAL_PRODUCT.md) for the product definition and [`COMPETITIVE_STRATEGY.md`](./COMPETITIVE_STRATEGY.md) for the explicit Google/Cainiao build-partner boundary.
@@ -208,6 +210,10 @@ npm run dev
 
 The entire deterministic mission loop remains available without a secret through clearly labeled synthetic fallbacks.
 
+## Save your own backup
+
+Download the current source directly from [GitHub as a ZIP](https://github.com/Mugi7777/lifeline-grid/archive/refs/heads/main.zip), then keep another copy outside GitHub. Hosted secrets and database contents are intentionally excluded. Detailed restore and verification instructions are in [`RECOVERY.md`](./RECOVERY.md).
+
 ## Test and build
 
 ```bash
@@ -242,6 +248,7 @@ Tests verify:
 - signed authority-event success, post-signature tamper, untrusted issuer, road-scope, expiry, future-time, inconsistent-window, and private-key-material rejection;
 - an invariant that fully configured software controls still cannot self-assert certification or field readiness;
 - verified, stale, conflicting, tampered, and missing-feed data-trust modes; strict bundle rejection; and deterministic SHA-256 evidence binding;
+- portable-twin round trips, closure and repair-budget restoration, stale-state disclosure, model mismatch, future timestamps, outer-digest tamper, and deterministic plan-evidence rejection;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -269,6 +276,7 @@ Tests verify:
 - `lib/regional-ledger.ts` — plan diff and replayable hash-chain events
 - `lib/authority-event.ts` — public-key trust registry, bounded signed event contract, and fail-closed verifier
 - `lib/data-trust.ts` — source-class policy, freshness/scope/coverage/conflict evaluation, degraded modes, and canonical evidence
+- `lib/continuity-capsule.ts` — bounded portable state, SHA-256 evidence, deterministic restore verification, and stale-state disclosure
 - `lib/assurance.ts` — code evidence, runtime states, prohibited claims, and independent blocking gates
 - `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
@@ -289,6 +297,7 @@ Tests verify:
 - `SECURITY.md` — vulnerability reporting, key boundaries, and current dependency posture
 - `DATA_GOVERNANCE.md` — stored data, access, integrity, and prohibited-data boundary
 - `DATA_TRUST_GATEWAY.md` — operational feed contract, failure modes, evidence and pilot boundary
+- `RECOVERY.md` — GitHub/ZIP source backup, restore verification, portable twin state, and remaining recovery gaps
 
 ## Honest prototype boundary
 

@@ -61,11 +61,14 @@ Stop the exercise and mark the result invalid if any of the following occurs:
 ## Recovery
 
 1. Preserve the browser-visible state and error message without adding sensitive data.
-2. Reset the training scenario.
-3. Re-run the automated test suite and production build.
-4. Reproduce with the built-in scenario.
-5. Compare the new evidence package hash and audit event count with the expected workflow.
-6. Document the cause, fix, tests, and reviewer before resuming evaluation.
+2. Export a Portable Twin Capsule when the current synthetic state is still readable; retain the full payload digest.
+3. Keep the GitHub source URL and an independently stored source ZIP identified in `RECOVERY.md`.
+4. Reset the training scenario or restore into a clean browser only after capsule verification succeeds.
+5. Re-run the automated test suite and production build.
+6. Reproduce with the built-in scenario.
+7. Compare the new evidence package hash and audit event count with the expected workflow.
+8. Treat a capsule older than 24 hours as stale and revalidate every source before review.
+9. Document the cause, fix, tests, restoration time, lost-state interval, and reviewer before resuming evaluation.
 
 ## Post-exercise review
 

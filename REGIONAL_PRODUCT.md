@@ -27,6 +27,7 @@ The current synthetic Mizunoki District demonstration includes:
 - a deterministic 64-scenario demand and travel stress suite;
 - a visible 512/2,048-zone Regional Scale Proof using sparse multi-source Dijkstra, flow-based failure screening, 64 exact closure replays, runtime-specific latency measurement, real-basemap impact rendering, and exportable JSON evidence;
 - a fail-closed Operational Data Trust Gateway covering map, road-authority, weather, and fleet feeds with strict schema validation, integrity, freshness, scope, coverage, conflict and missing-source gates;
+- a Portable Twin Capsule that stores a synthetic plan locally and as JSON, binds it to the model and route evidence, and restores only after deterministic reproduction;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
 - a GPT-5.6 Sol Reasoning Council that generates exactly three competing interpretations of conflicting reports, preserves counterevidence, and asks for decision-changing authority evidence;
 - deterministic re-planning of every valid hypothesis with a hard human-authority gate;

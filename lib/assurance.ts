@@ -60,6 +60,14 @@ export function buildAssuranceSnapshot(runtime: AssuranceRuntimeState) {
       frameworkRefs: ["ISO/IEC 27001:2022", "ISO/IEC 42001:2023", "NIST AI RMF 1.0"],
     },
     {
+      id: "BC-02",
+      title: "Portable twin state with deterministic restore verification",
+      status: "implemented" as AssuranceControlStatus,
+      runtime: "enforced",
+      evidence: ["lib/continuity-capsule.ts", "tests/continuity-capsule.test.ts", "RECOVERY.md"],
+      frameworkRefs: ["ISO 22301:2019", "ISO/IEC 27001:2022"],
+    },
+    {
       id: "BC-01",
       title: "Tested recovery objectives and disaster-recovery exercise",
       status: "externally_blocked" as AssuranceControlStatus,

@@ -35,6 +35,8 @@ test("renders development preview metadata", async () => {
   assert.match(html, /See the engine/);
   assert.match(html, /OPERATIONAL DATA TRUST GATEWAY/);
   assert.match(html, /Verified bundle/);
+  assert.match(html, /PORTABLE TWIN CAPSULE/);
+  assert.match(html, /Save browser copy \+ JSON/);
   assert.match(html, /PRODUCTION TRUST PLANE/);
   assert.match(html, /NOT CERTIFIED · FIELD BLOCKED/);
 });
