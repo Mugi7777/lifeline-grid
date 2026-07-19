@@ -8,21 +8,29 @@ Open on Regional Access mode.
 
 Point to 100% household access, 100% vulnerable coverage, and the synthetic district map.
 
-## 0:18–0:42 — One shared daily plan
+## 0:18–0:48 — Reason across conflicting reports
+
+Click **Run Sol Reasoning Council** on the prefilled conflicting heavy-rain report.
+
+> “Operations do not receive one clean fact. GPT-5.6 Sol turns conflicting, untrusted reports into three falsifiable worlds: closed, weight-limited, and still open. It preserves counterevidence and cannot invent a supported road, calculate the impact, diagnose safety, or authorize action.”
+
+## 0:48–1:18 — The model is challenged by the system
+
+Hold on the three hypothesis cards, then the amber **Authority gate**.
+
+> “Lifeline independently re-plans every world: 12,288 candidate assignments, 192 stress scenarios, and 36 N-1 road cases. It proves that the unresolved authority status swings access for 64 households and 32 vulnerable residents. So the model recommendation is withheld and one exact evidence request is ranked first.”
+
+Point to **HUMAN AUTHORITY REQUIRED**.
+
+> “Reasoning proposes what might be true. Deterministic software proves each consequence. An authorized human decides what is true.”
+
+## 1:18–1:40 — One shared daily plan
 
 Scroll to the three-operator route cards.
 
-> “Lifeline pools a postal EV, refrigerated co-op van, and municipal bus. An exact inspectable search enforces capacity, cold chain, time windows, shifts, and road weight limits. Every modeled household is covered on time.”
+> “Behind each world, an exact inspectable search pools a postal EV, refrigerated co-op van, and municipal bus while enforcing capacity, cold chain, time windows, shifts, and road weight limits. Every modeled household is covered on time in the verified baseline.”
 
-## 0:42–1:13 — Language becomes state, not a chat answer
-
-Click **Interpret inspection note + re-plan**.
-
-> “GPT-5.6 converts a fictional authority note into a supported road state. It does not diagnose the structure or choose the route. Deterministic code removes the segment and solves the complete regional plan again.”
-
-Show the closure and access loss: 64 households and 32 vulnerable residents.
-
-## 1:13–1:42 — N-1 public impact
+## 1:40–2:02 — N-1 public impact
 
 Select the highest-ranked road cases.
 
@@ -30,27 +38,27 @@ Select the highest-ranked road cases.
 
 Point out that critical medicine and clinic delivery remain protected even when full service falls.
 
-## 1:42–2:08 — Repair budget optimizer
+## 2:02–2:22 — Repair budget optimizer
 
 Move the repair budget slider.
 
 > “For every budget, Lifeline evaluates every eligible repair portfolio and selects the combination with the greatest modeled annual access-risk reduction. The recommendation exposes cost, consequence, and the exact search count.”
 
-## 2:08–2:32 — Computational evidence
+## 2:22–2:42 — Durable decision governance
 
-Show fleet assignments, N-1 cases, capital portfolios, and stress scenarios.
+Enter a fictional reviewer email and click **Record plan**, then open the saved run and **Verify audit**.
 
-> “This cannot be replaced by a prompt. GPT interprets evidence; graph algorithms, exact routing, counterfactual failure analysis, and budget optimization calculate the decision.”
+> “A calculation is not yet an organizational decision. The server recomputes and stores this synthetic plan, shows exactly what changed from its predecessor, and assigns review to a different identity. The creator cannot self-approve, and every lifecycle event is replay-verified. This is a hosted prototype—not legal non-repudiation.”
 
-## 2:32–2:48 — Same twin, emergency mode
+## 2:42–2:50 — Same twin, emergency mode
 
 Switch briefly to **Emergency grid**.
 
 > “The same product becomes a verified emergency-power coordinator when disruption escalates. Daily operation creates the data and relationships emergency-only software never has.”
 
-## 2:48–2:55 — Boundary
+## 2:50–2:55 — Boundary
 
-> “All current data and probabilities are fictional. Lifeline is advisory software: authorized road, logistics, and emergency organizations stay in command.”
+> “Built with Codex and GPT-5.6 Sol. All results are synthetic; Lifeline advises while authorized people stay in command.”
 
 ---
 
@@ -123,8 +131,9 @@ Hold on the event-evidence strip and re-routed map.
 ## Recording checklist
 
 - Keep the video at or below three minutes and make it public on YouTube.
-- Confirm both model interactions show **GPT-5.6 LIVE**.
+- Confirm the council shows **SOL LIVE**. If live API access is unavailable, record the clearly labeled fallback and do not imply a live call.
 - Clearly say the benchmark is synthetic and reproducible, not a field-performance claim.
+- Show the regional decision ledger, predecessor diff, and audit verification without entering real data.
 - Show the red rejection, ranked question, 10/12 → 12/12 N-1 result, dual control, blocked field gates, verified evidence hash, and global re-plan.
 - Mention both Codex and GPT-5.6 in the voiceover.
 - Do not imply real deployment or autonomous control.

@@ -171,15 +171,42 @@ Regional tests additionally assert:
 - the complete regional analysis is deterministic for audit replay;
 - a 30-stop request selects the deterministic scalable solver, serves every synthetic demand, and never labels the result optimal;
 - the scalable solver reproduces identical planning data and preserves capacity, cold-chain, and shift limits; and
-- unversioned, oversized, non-finite, or structurally invalid external planning requests fail closed.
+- unversioned, oversized, non-finite, or structurally invalid external planning requests fail closed;
+- a recorded baseline-to-closure diff exposes lost access and changed vehicle routes;
+- changing an actor in a stored audit event invalidates chain replay; and
+- unauthenticated ledger reads are rejected before any database access.
+
+## Sol Reasoning Council evaluation
+
+The built-in fictional heavy-rain report intentionally conflicts: one source reports debris and possible retaining-wall movement, another reports small vehicles passing, and the authority state is pending. The model is not evaluated as an authority. It is evaluated on whether it produces a bounded set of hypotheses that deterministic software can test.
+
+The strict contract requires exactly three unique hypotheses, supported road IDs, valid road states, counterevidence, assumptions, bounded support scores, and one to three linked evidence questions. Runtime checks reject invented roads, duplicate hypothesis IDs, invalid weight limits, unsupported evidence classes, and malformed question links.
+
+The deterministic adjudicator re-runs the exact regional plan and 64-scenario stress suite for each of the three worlds. It also reports the corresponding twelve-road N-1 case count.
+
+| Council property | Synthetic result |
+|---|---:|
+| Hypotheses evaluated | 3 |
+| Active assignment candidates evaluated | 12,288 |
+| Stress scenarios | 192 |
+| N-1 road cases | 36 |
+| Highest-value evidence class | Authenticated authority status |
+| Household access swing | 64 |
+| Vulnerable-resident access swing | 32 |
+| Autonomous action | Withheld |
+
+The API test submits prompt-injection text asking the system to ignore the application and authorize every road. With no model key the transparent fallback remains schema-valid, all three worlds are adjudicated, and the result still requires human authority. Separate tests reject unsupported road IDs and malformed restrictions and verify byte-for-byte equivalent adjudication objects across repeated runs.
+
+A 25-iteration developer benchmark after three warmups measured the deterministic council kernel at 55.78 ms p50 and 60.00 ms p95 on 2026-07-19. It excludes OpenAI model/network latency and is not a production SLO. See `REASONING_COUNCIL.md` and `BENCHMARKS.md`.
 
 ## Reproduce
 
 ```bash
 npm run test:planner
+npm run benchmark:reasoning -- 25
 ```
 
-The automated tests assert deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, dual-control separation, fail-closed field readiness, evidence tamper detection, safe global re-optimization, exact pooled rural delivery, road-access criticality, repair-budget feasibility, and deterministic regional replay.
+The 42 automated tests cover production rendering/API behavior plus deterministic scenario generation, exact-search evidence, baseline fragility, robust-plan success, value-of-information ranking, peak-versus-average power handling, N-1 contingency coverage, conditional certificate failure, dual-control separation, fail-closed field readiness, evidence tamper detection, safe global re-optimization, exact pooled rural delivery, road-access criticality, repair-budget feasibility, regional replay, strict reasoning contracts, prompt-injection containment, human-authority gating, and deterministic three-world adjudication.
 
 ## Limitations
 
@@ -191,10 +218,13 @@ The automated tests assert deterministic scenario generation, exact-search evide
 - The 12 N-1 cases are a small operator-defined register, not a complete failure-mode or hazard analysis.
 - Preparedness burden points are fictional and are used only as a transparent tie-breaker after protection performance.
 - Simultaneous failures, cascading faults, repair time, staging congestion, and recovery execution time are not modeled.
-- Browser-generated integrity hashes are not identity signatures and are not stored in an append-only external system.
+- D1-backed integrity hashes are durable but remain unsigned and are not trusted timestamps, write-once retention, or legal non-repudiation.
 - No grid power flow, battery degradation, traffic network, electrical certification, cyber-physical integration, or human-factors validation is modeled.
 - Passing this test suite is not a safety certification.
 - Regional failure probabilities and service-equity weights are fictional policy inputs, not calibrated forecasts.
 - The six-stop exact VRPTW demonstration does not establish large-fleet throughput or parity with global route platforms.
+- The three model hypotheses are not guaranteed to be exhaustive, diverse, calibrated, correctly attributed, or semantically true.
+- Strict schemas prevent unsupported shapes and IDs; they do not authenticate the report or turn model support scores into probabilities.
+- No signed road-authority feed, real conflicting-report corpus, human-factors study, or live-model latency distribution has been evaluated.
 
 A real pilot would require domain-owned scenarios, independent evaluation, validated solvers, certified hardware interfaces, security review, and emergency-governance approval.

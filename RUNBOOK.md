@@ -4,6 +4,8 @@
 
 Regional mode is also synthetic unless an approved tabletop protocol explicitly supplies de-identified authoritative data. An operator may simulate one road restriction and a repair budget, inspect the recomputed service coverage, compare exact portfolios, and record disagreements. Stop immediately if a participant interprets a modeled condition or probability as an engineering diagnosis, uses resident-level identity, or attempts to issue a real closure or dispatch instruction from the interface.
 
+When testing the durable ledger, recording a plan stores the signed-in email, optional reviewer email, complete submitted regional model, computed result, and audit events. Use synthetic identities and data only. A creator may record a draft or assign another authenticated email; only that distinct reviewer may approve or reject it. Verify the audit chain after each decision.
+
 This runbook applies only to supervised simulation and tabletop evaluation. It does not authorize real emergency use.
 
 ## Roles

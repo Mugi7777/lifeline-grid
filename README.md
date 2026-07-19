@@ -18,9 +18,11 @@ The synthetic Mizunoki District model connects eight locations with twelve roads
 - a deterministic 64-scenario demand and travel stress suite; and
 - every eligible repair portfolio under an adjustable public budget.
 
+Authenticated users can explicitly record a plan in a durable D1 decision ledger. The server recomputes the plan, links it to the prior version, stores the operational diff, assigns an optional independent reviewer, and appends SHA-256-linked audit events. The creator cannot approve their own run.
+
 The baseline exact plan covers all 418 modeled households and 152 modeled vulnerable residents on time. Removing North Forest Road makes one community miss its service threshold—64 households and 32 vulnerable residents—while both critical deliveries remain protected. These values are deterministic fictional results.
 
-GPT-5.6 converts a narrative inspection note into a supported road event. Deterministic code performs graph routing, fleet optimization, N-1 impact, stress evaluation, and capital allocation. The model cannot diagnose a road or authorize a closure.
+GPT-5.6 converts a narrative inspection note into a supported road event. The new **Sol Reasoning Council** uses `gpt-5.6-sol` at high reasoning effort to turn conflicting, untrusted reports into exactly three testable road-state hypotheses, preserve counterevidence, and ask for the smallest decision-changing fact. Deterministic code then re-plans every hypothesis, runs 192 stress scenarios and 36 N-1 road cases, and withholds the model recommendation behind a human-authority gate. The model cannot diagnose a road, calculate the consequence, authorize a closure, or authorize dispatch.
 
 See [`REGIONAL_PRODUCT.md`](./REGIONAL_PRODUCT.md) for the product definition and [`COMPETITIVE_STRATEGY.md`](./COMPETITIVE_STRATEGY.md) for the explicit Google/Cainiao build-partner boundary.
 See [`SCALE_ARCHITECTURE.md`](./SCALE_ARCHITECTURE.md) for the production control plane, solver portfolio, security model, degraded modes, and measurable service targets.
@@ -28,6 +30,26 @@ See [`SCALE_ARCHITECTURE.md`](./SCALE_ARCHITECTURE.md) for the production contro
 ## Why this is not a chatbot
 
 A chatbot can summarize a power request. Emergency coordination also requires state, constraints, optimization, authorization, evaluation, and recovery.
+
+In Regional Access mode the system goes further than a single model answer:
+
+```text
+Conflicting untrusted reports
+      ↓
+GPT-5.6 Sol: three competing, falsifiable road states
+      ↓
+Strict schema + supported-road validation
+      ↓
+Deterministic re-plan of every world
+      ↓
+192 stress scenarios + 36 N-1 road cases
+      ↓
+Rank the evidence with the largest access consequence
+      ↓
+Human road authority required; model recommendation withheld
+```
+
+For the built-in synthetic conflict, the authority-status question separates a world with no access loss from one exposing 64 households and 32 vulnerable residents. That consequence is reproduced by the regional kernel; it is not a number supplied by the model.
 
 Lifeline Grid closes that loop:
 
@@ -143,9 +165,14 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 - `/api/analyze` converts narrative reports into strict, source-linked power contracts.
 - `/api/event` converts a narrative disruption into structured mission state.
 - `/api/regional-event` converts a fictional inspection note into a supported road restriction.
+- `/api/regional-reasoning` asks `gpt-5.6-sol` for exactly three bounded, competing hypotheses and evidence questions, then rejects malformed or invented road states and deterministically adjudicates every valid hypothesis.
 - `/api/regional-plan` accepts a versioned regional model, enforces bounded runtime validation, chooses the exact or scalable solver, and returns a deterministic SHA-256 request identity plus route-level constraint evidence.
-- The model never performs energy arithmetic, chooses the winning allocation, or authorizes dispatch.
-- Both endpoints display whether GPT-5.6 ran live or a transparent synthetic fallback was used.
+- `/api/regional-runs` persists authenticated, identity-scoped planning records and version differences.
+- `/api/regional-runs/:id/review` and `/audit` enforce assigned independent review and replay the stored hash chain.
+- The reasoning route uses the Responses API with strict Structured Outputs, `store: false`, and high reasoning effort. Reports are explicitly treated as untrusted data rather than instructions.
+- The model never performs energy arithmetic, supplies impact metrics, chooses the winning allocation, diagnoses infrastructure, or authorizes dispatch.
+- Model confidence is never treated as authority. Hidden chain-of-thought is not displayed or used as evidence; the product shows schema-bound claims, counterevidence, and independently reproduced metrics.
+- Every model-backed surface displays whether GPT-5.6 ran live or a transparent deterministic fallback was used.
 
 ### Codex
 
@@ -173,6 +200,7 @@ The entire deterministic mission loop remains available without a secret through
 ```bash
 npm run test:planner
 npm test
+npm run benchmark:reasoning -- 25
 ```
 
 Tests verify:
@@ -192,6 +220,8 @@ Tests verify:
 - service-weighted N-1 road criticality;
 - exact budget-constrained repair portfolio selection;
 - deterministic regional stress and replay;
+- strict three-hypothesis reasoning contracts, prompt-injection containment, unsupported-road rejection, human-authority gating, and deterministic counterfactual replay;
+- regional plan-diff, audit-chain replay, tamper detection, and unauthenticated-ledger rejection;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -205,10 +235,16 @@ Tests verify:
 - `app/api/analyze/route.ts` — GPT-5.6 report interpretation
 - `app/api/event/route.ts` — GPT-5.6 disruption interpretation
 - `app/api/regional-event/route.ts` — GPT-5.6 regional inspection-note interpretation
+- `app/api/regional-reasoning/route.ts` — GPT-5.6 Sol hypothesis generation and bounded reasoning contract
 - `app/api/regional-plan/route.ts` — versioned external planning contract and deterministic audit response
+- `app/api/regional-runs/` — identity-scoped durable run history, review workflow, and audit verification
 - `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
 - `lib/regional.ts` — exact pooled VRPTW, bounded deterministic multi-start solver, road-graph N-1 analysis, stress suite, and exact repair portfolio
+- `lib/regional-reasoning.ts` — strict hypothesis validation, deterministic counterfactual adjudication, and evidence-value ranking
+- `lib/regional-contract.ts` — strict versioned request boundary and canonical plan evidence
+- `lib/regional-ledger.ts` — plan diff and replayable hash-chain events
+- `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
 - `EVALS.md` — evaluation method, results, and limitations
@@ -221,10 +257,12 @@ Tests verify:
 - `COMPETITIVE_STRATEGY.md` — honest Google/Cainiao comparison and defensibility plan
 - `SCALE_ARCHITECTURE.md` — scale architecture, solver tiers, SLO targets, security, and evaluation gates
 - `BENCHMARKS.md` — reproducible 100/250-stop synthetic performance fixture and result boundaries
+- `REASONING_COUNCIL.md` — Sol reasoning boundary, adjudication algorithm, tests, benchmark, and safety limitations
+- `DATA_GOVERNANCE.md` — stored data, access, integrity, and prohibited-data boundary
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. The API digest supports replay identity, not durable storage or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, append-only signed audit storage, authoritative road data, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
+Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The Sol council is not a structural diagnosis, calibrated probability model, signed authority feed, or autonomous agent. Its hypotheses may still be semantically wrong; runtime validation and deterministic re-planning bound the consequences but do not make the source facts true. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. D1 now provides durable identity-scoped records and a replayable hash chain, but not enterprise tenancy, a KMS signature, trusted timestamps, write-once retention, or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, signed authority adapters, append-only audit storage, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 
