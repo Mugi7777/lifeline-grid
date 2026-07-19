@@ -20,6 +20,18 @@ When testing signed road events, use a synthetic issuer key and the exact versio
 
 This runbook applies only to supervised simulation and tabletop evaluation. It does not authorize real emergency use.
 
+### Nankai Trough 72H tabletop
+
+1. Confirm the panel says `SYNTHETIC`, `AUTO PLAN · HUMAN AUTHORITY REQUIRED`, and `FIELD OPERATION BLOCKED` before discussing any result.
+2. Begin at `0–6 hours`. Review the blocked and unknown roads; both must remain unusable by ground routing.
+3. Inspect supply, critical-power, hospital-transfer, and drone-search gaps. Treat every facility, patient case, asset, deadline, inventory, and search area as fictional.
+4. Run the highest-ranked road-clearance counterfactual. State aloud that opening one graph edge is a comparison, not a structural assessment, work estimate, clearance order, or road-opening instruction.
+5. Compare the 24-hour and 72-hour phases. Record disagreements with the exercise reference plan and any unsupported inference by an operator.
+6. Export the replay JSON and retain its digest with the exercise record. A matching digest proves byte-level reproducibility only.
+7. Stop if anyone attempts to use the result for patient triage, hospital acceptance, vehicle or aircraft dispatch, road opening, drone launch, or a real incident.
+
+For a future supervised partner tabletop, the exercise owner must provide a separate authoritative reference plan, explicit medical and aviation reviewers, data approval, and documented authority roles. The current software cannot conduct a shadow or field exercise.
+
 ## Roles
 
 - **Field Operator** — enters or verifies source facts; cannot approve dispatch.
@@ -62,6 +74,8 @@ Stop the exercise and mark the result invalid if any of the following occurs:
 - confidential, personal, operational, or real emergency information is entered;
 - an imported road file lacks data-owner approval, reviewed segmentization, declared scope, or license;
 - a topology finding is interpreted as physical bridge condition, passability, or authority to act.
+- a Nankai response score is interpreted as triage, hospital acceptance, dispatch, flight tasking, drone-launch authority, structural clearance priority, or a forecast;
+- real patient, hospital, aircraft, inventory, restricted-infrastructure, or incident-command data is entered into the synthetic lab.
 
 ## Degraded-mode behavior
 

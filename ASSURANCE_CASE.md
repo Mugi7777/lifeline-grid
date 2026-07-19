@@ -49,6 +49,7 @@ Only public keys belong in `AUTHORITY_TRUST_REGISTRY_JSON`. The parser rejects J
 - `/api/health` — liveness separated from operational readiness.
 - `tests/authority-event.test.ts` — valid signature, tamper, scope, time, and private-key rejection tests.
 - `tests/assurance.test.ts` — proof that code-only runtime success cannot self-assert certification.
+- `lib/nankai-response.ts`, `tests/nankai-response.test.ts`, and `NANKAI_RESPONSE_LAB.md` — bounded multi-modal counterfactual evidence, fail-closed route invariants, deterministic replay, and the human-only action boundary.
 - `THREAT_MODEL.md`, `RUNBOOK.md`, and `PILOT_READINESS.md` — threats, stop conditions, and rollout boundaries.
 
 ## Evidence acceptance rules

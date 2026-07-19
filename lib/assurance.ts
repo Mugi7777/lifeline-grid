@@ -68,6 +68,14 @@ export function buildAssuranceSnapshot(runtime: AssuranceRuntimeState) {
       frameworkRefs: ["ISO/IEC 27001:2022", "ISO/IEC 42001:2023", "NIST AI RMF 1.0"],
     },
     {
+      id: "OPS-02",
+      title: "Bounded multi-modal emergency response counterfactuals",
+      status: "implemented" as AssuranceControlStatus,
+      runtime: "synthetic_tabletop_only",
+      evidence: ["lib/nankai-response.ts", "tests/nankai-response.test.ts", "NANKAI_RESPONSE_LAB.md"],
+      frameworkRefs: ["ISO 22320:2018", "ISO 22301:2019", "ISO/IEC 42001:2023"],
+    },
+    {
       id: "BC-02",
       title: "Portable twin state with deterministic restore verification",
       status: "implemented" as AssuranceControlStatus,

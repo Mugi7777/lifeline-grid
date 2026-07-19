@@ -4,6 +4,8 @@ Lifeline Grid is currently a **software pilot candidate for supervised simulatio
 
 The Regional Access mode is likewise advisory. It is not approved to diagnose structures, close roads, direct drivers, determine statutory inspection priority, or make eligibility decisions about residents. Its current road and delivery data are fictional.
 
+The Nankai Trough 72H Response Lab is currently L1 software for a supervised synthetic tabletop only. Its supply flow is an allocation envelope rather than a vehicle schedule, and its medical, drone, power, and road-clearance outputs do not provide triage, facility acceptance, flight authorization, dispatch, switching, launch, or road authority.
+
 This distinction is enforced in the product. A mission can become `simulation-ready` only after machine checks and independent human co-signing. `field-ready` remains false while telemetry, equipment, cybersecurity, authority, or field-validation evidence is missing.
 
 ## Maturity levels
@@ -34,6 +36,7 @@ This distinction is enforced in the product. A mission can become `simulation-re
 - security CI with lint, production build, deterministic tests, high/critical dependency audit, CodeQL, and Dependabot;
 - explicit separation of simulation authorization and field qualification;
 - bounded local GeoJSON processing for approved de-identified tabletop networks, including non-recursive bridge/articulation analysis, visible metadata and authority gates, real-basemap rendering, and digest-bound evidence export;
+- fail-closed synthetic Nankai routing; commodity min-cost flow; exact lexicographic power, medical and drone assignment; single-corridor counterfactual replay; and canonical evidence export with every consequential action blocked;
 - automated planner, operational-control, API, rendering, and production-build tests.
 
 ## Field-qualification gates
@@ -92,6 +95,8 @@ Exit criteria: independent electrical, cybersecurity, and safety acceptance.
 - privacy assessment, jurisdiction-specific legal review, contracts, insurance, and support operations.
 
 For Regional Access, production additionally requires authoritative GIS topology, road-owner identifiers, inspection provenance, restriction freshness, validated travel costs, aggregated demand governance, transport-operator agreements, solver-scale benchmarks, and a formally approved service-equity policy. A road authority must own every structural interpretation and restriction; a licensed operator must own every real route decision.
+
+For the Nankai module, shadow mode additionally requires authenticated hazard, tsunami, weather, road, inventory, fleet, facility, hospital-capacity, and airspace adapters; privacy and clinical governance; receiving-hospital confirmation; shared vehicle/load scheduling; medical, aviation, logistics and incident-command owners; offline operation; and observed disagreement analysis against an expert-owned reference. L2 must remain read-only and may not issue dispatch or tasking commands.
 
 The implemented local GeoJSON path supports L1 technical preparation only. It deliberately avoids server ingestion, but partner approval, a supervised protocol, expert reference labels, privacy/licensing review, and observed evaluation are still required before calling any session a completed tabletop pilot. L2 requires authenticated read-only adapters and operational shadow evidence; the local file path is not a substitute.
 

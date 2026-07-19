@@ -1199,6 +1199,172 @@ button:focus-visible {
 .regional-ai-mode.gpt-5\.6 { color: var(--green-deep); background: var(--lime-soft); }
 .regional-ai-mode.demo-fallback { color: #8c550c; background: var(--amber-soft); }
 
+.nankai-lab-panel { position: relative; margin-top: 10px; padding: 18px; overflow: hidden; border-color: #303b3b; background: radial-gradient(circle at 8% 0%,rgba(85,216,255,.13),transparent 25%),radial-gradient(circle at 92% 8%,rgba(242,211,94,.09),transparent 24%),linear-gradient(145deg,#081412,#13231f 63%,#172720); color: white; }
+.nankai-lab-panel::before { position: absolute; inset: 0; background: linear-gradient(90deg,rgba(119,204,180,.025) 1px,transparent 1px),linear-gradient(rgba(119,204,180,.025) 1px,transparent 1px); background-size: 24px 24px; content: ""; pointer-events: none; }
+.nankai-lab-heading { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.nankai-lab-heading .panel-kicker { color: #55d8ff; }
+.nankai-lab-heading h2 { max-width: 920px; margin: 6px 0 0; font-size: 22px; letter-spacing: -.045em; }
+.nankai-lab-heading p:last-child { max-width: 900px; margin: 7px 0 0; color: #9aada6; font-size: 9px; line-height: 1.5; }
+.nankai-authority-badge { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid rgba(242,211,94,.28); border-radius: 7px; background: rgba(242,211,94,.08); color: #f2d35e; font-size: 7px; font-weight: 900; letter-spacing: .06em; white-space: nowrap; }
+.nankai-authority-badge i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(242,211,94,.08); }
+.nankai-phase-bar { position: relative; display: grid; grid-template-columns: minmax(330px,.8fr) minmax(400px,1.35fr); gap: 7px; margin-top: 14px; }
+.nankai-phase-bar > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; padding: 5px; border: 1px solid #2d4640; border-radius: 10px; background: rgba(2,13,10,.54); }
+.nankai-phase-bar > div button { min-width: 0; padding: 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #83968f; cursor: pointer; text-align: left; }
+.nankai-phase-bar > div button:hover { color: #d8e5e0; }
+.nankai-phase-bar > div button.active { border-color: #45645a; background: rgba(255,255,255,.07); color: white; }
+.nankai-phase-bar button b,
+.nankai-phase-bar button small { display: block; }
+.nankai-phase-bar button b { font-size: 8px; }
+.nankai-phase-bar button small { margin-top: 3px; color: #6f847c; font-size: 5px; }
+.nankai-phase-bar button.active small { color: #55d8ff; }
+.nankai-phase-bar > article { position: relative; display: grid; grid-template-columns: minmax(0,1fr) auto; align-content: center; min-width: 0; padding: 9px 10px; border: 1px solid #304940; border-radius: 10px; background: rgba(3,17,12,.57); }
+.nankai-phase-bar > article.active { border-color: rgba(184,244,93,.36); background: rgba(184,244,93,.07); }
+.nankai-phase-bar article > span,
+.nankai-phase-bar article > b,
+.nankai-phase-bar article > small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nankai-phase-bar article > span { grid-column: 1; color: #738a81; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-phase-bar article.active > span { color: var(--lime); }
+.nankai-phase-bar article > b { grid-column: 1; margin-top: 4px; font-size: 7px; }
+.nankai-phase-bar article > small { grid-column: 1; margin-top: 3px; color: #7b9188; font-size: 5px; }
+.nankai-phase-bar article > button,
+.nankai-phase-bar article > em { grid-column: 2; grid-row: 1 / span 3; align-self: center; margin-left: 10px; padding: 8px 9px; border: 0; border-radius: 7px; background: var(--lime); color: #143023; cursor: pointer; font-size: 6px; font-style: normal; font-weight: 900; white-space: nowrap; }
+.nankai-phase-bar article > em { background: #243a32; color: #80968d; }
+.nankai-metric-strip { position: relative; display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); margin-top: 7px; overflow: hidden; border: 1px solid #2d473e; border-radius: 10px; background: rgba(1,12,9,.58); }
+.nankai-metric-strip > span { min-width: 0; padding: 10px; border-right: 1px solid #2d473e; }
+.nankai-metric-strip > span:last-child { border-right: 0; }
+.nankai-metric-strip b,
+.nankai-metric-strip small,
+.nankai-metric-strip em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nankai-metric-strip b { color: #55d8ff; font-size: 16px; letter-spacing: -.04em; }
+.nankai-metric-strip span.risk b { color: #fa938b; }
+.nankai-metric-strip span.safe b { color: var(--lime); }
+.nankai-metric-strip small { margin-top: 3px; color: #84988f; font-size: 5px; }
+.nankai-metric-strip em { margin-top: 4px; color: #647a71; font-size: 5px; font-style: normal; }
+.nankai-workspace { position: relative; display: grid; grid-template-columns: minmax(560px,1.7fr) minmax(290px,.62fr); gap: 8px; margin-top: 8px; }
+.nankai-map-card,
+.nankai-clearance-rail { min-width: 0; overflow: hidden; border: 1px solid #304a41; border-radius: 11px; background: rgba(3,15,11,.68); }
+.nankai-map-card > header,
+.nankai-clearance-rail > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 50px; padding: 10px 12px; border-bottom: 1px solid #2e473e; }
+.nankai-map-card header span,
+.nankai-map-card header b,
+.nankai-clearance-rail header span,
+.nankai-clearance-rail header b { display: block; }
+.nankai-map-card header span,
+.nankai-clearance-rail header span { color: #55d8ff; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-map-card header b,
+.nankai-clearance-rail header b { margin-top: 4px; font-size: 7px; }
+.nankai-map-card header em,
+.nankai-clearance-rail header em { color: #82968e; font-size: 5px; font-style: normal; font-weight: 900; white-space: nowrap; }
+.nankai-map-frame { position: relative; min-height: 590px; overflow: hidden; background: #10211c; }
+.nankai-response-map { position: absolute; inset: 0; z-index: 1; background: #dbe5df; }
+.nankai-map-disclosure { position: absolute; z-index: 520; top: 10px; left: 50px; display: flex; align-items: center; gap: 7px; max-width: 410px; padding: 7px 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 7px; background: rgba(6,17,14,.91); box-shadow: 0 5px 16px rgba(0,0,0,.22); color: white; }
+.nankai-map-disclosure > i { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #e4a43b; }
+.nankai-map-disclosure > i.ready { background: #55d8ff; }
+.nankai-map-disclosure > i.degraded { background: #fa938b; }
+.nankai-map-disclosure b,
+.nankai-map-disclosure small { display: block; }
+.nankai-map-disclosure b { font-size: 6px; }
+.nankai-map-disclosure small { margin-top: 2px; color: #91a49d; font-size: 5px; line-height: 1.35; }
+.nankai-map-reset { position: absolute; z-index: 520; top: 10px; right: 10px; padding: 7px 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 7px; background: rgba(6,17,14,.91); color: white; cursor: pointer; font-size: 5px; font-weight: 850; }
+.nankai-map-legend { position: absolute; z-index: 520; right: 10px; bottom: 25px; display: grid; grid-template-columns: auto auto; gap: 5px 9px; padding: 7px 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 7px; background: rgba(6,17,14,.89); color: #c9d7d2; font-size: 5px; }
+.nankai-map-legend span { display: flex; align-items: center; gap: 5px; }
+.nankai-map-legend i { width: 16px; height: 3px; border-radius: 3px; background: #73d9ad; }
+.nankai-map-legend i.blocked { background: #d94a43; }
+.nankai-map-legend i.unknown { background: #e4a43b; }
+.nankai-map-legend i.drone { border-top: 2px dotted #6ab9ff; background: transparent; }
+.nankai-map-degraded { position: absolute; z-index: 520; left: 10px; bottom: 22px; margin: 0; padding: 6px 8px; border-radius: 6px; background: rgba(92,32,28,.92); color: #ffd6d3; font-size: 5px; }
+.nankai-node { display: flex; align-items: center; gap: 6px; width: 170px; color: #07110f; }
+.nankai-node > i { display: grid; place-items: center; flex: 0 0 auto; width: 27px; height: 27px; border: 2px solid white; border-radius: 8px; background: #0d5744; box-shadow: 0 2px 9px rgba(0,0,0,.26); color: white; font-size: 10px; font-style: normal; font-weight: 900; }
+.nankai-node.hospital > i { background: #c93e38; }
+.nankai-node.airbase > i { background: #2f76b4; }
+.nankai-node.command > i { background: #07110f; color: var(--lime); }
+.nankai-node.isolated > i { background: #d94a43; animation: nankai-pulse 1.6s infinite; }
+.nankai-node > span { padding: 4px 6px; border: 1px solid rgba(255,255,255,.8); border-radius: 6px; background: rgba(255,255,255,.92); box-shadow: 0 2px 7px rgba(0,0,0,.16); }
+.nankai-node b,
+.nankai-node small { display: block; white-space: nowrap; }
+.nankai-node b { font-size: 7px; }
+.nankai-node small { margin-top: 2px; color: #697770; font-size: 5px; }
+.nankai-node.isolated small { color: #c93e38; font-weight: 900; }
+@keyframes nankai-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(217,74,67,.35); } 50% { box-shadow: 0 0 0 8px rgba(217,74,67,0); } }
+.nankai-map-popup { min-width: 215px; color: #07110f; }
+.nankai-map-popup > span,
+.nankai-map-popup > b,
+.nankai-map-popup > small,
+.nankai-map-popup > em { display: block; }
+.nankai-map-popup > span { color: #c93e38; font-size: 8px; font-weight: 900; }
+.nankai-map-popup > b { margin-top: 5px; font-size: 13px; }
+.nankai-map-popup > small { margin-top: 4px; color: #596a63; font-size: 9px; }
+.nankai-map-popup dl { margin: 8px 0 0; }
+.nankai-map-popup dl div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid #e1e7e3; }
+.nankai-map-popup dt,
+.nankai-map-popup dd { margin: 0; font-size: 9px; }
+.nankai-map-popup dd { font-weight: 850; }
+.nankai-map-popup > em { margin-top: 7px; color: #8a5e16; font-size: 9px; font-style: normal; }
+.nankai-clearance-rail { display: flex; min-height: 640px; flex-direction: column; }
+.nankai-clearance-list { display: grid; padding: 7px 10px; }
+.nankai-clearance-list > button { display: grid; grid-template-columns: 25px minmax(0,1fr) auto; gap: 8px; align-items: center; min-width: 0; padding: 9px 3px; border: 0; border-bottom: 1px solid #294239; background: transparent; color: white; cursor: pointer; text-align: left; }
+.nankai-clearance-list > button.selected { margin: 1px 0; padding: 9px 8px; border: 1px solid rgba(184,244,93,.3); border-radius: 8px; background: rgba(184,244,93,.08); }
+.nankai-clearance-list > button > i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: #253d35; color: #94a89f; font-size: 7px; font-style: normal; font-weight: 900; }
+.nankai-clearance-list > button.selected > i { background: var(--lime); color: #143023; }
+.nankai-clearance-list button > span b,
+.nankai-clearance-list button > span small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nankai-clearance-list button > span b { font-size: 7px; }
+.nankai-clearance-list button > span small { margin-top: 2px; color: #71877e; font-size: 5px; }
+.nankai-clearance-list button > em { color: #f2d35e; font-size: 7px; font-style: normal; font-weight: 900; }
+.nankai-clearance-list button > div { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: hidden; border: 1px solid #2b463c; border-radius: 6px; }
+.nankai-clearance-list button > div span { padding: 5px; border-right: 1px solid #2b463c; }
+.nankai-clearance-list button > div span:last-child { border-right: 0; }
+.nankai-clearance-list button > div b,
+.nankai-clearance-list button > div small { display: block; }
+.nankai-clearance-list button > div b { color: #79dfbd; font-size: 7px; }
+.nankai-clearance-list button > div small { margin-top: 2px; color: #667b72; font-size: 4px; }
+.nankai-no-clearance { padding: 24px 10px; text-align: center; }
+.nankai-no-clearance b,
+.nankai-no-clearance span { display: block; }
+.nankai-no-clearance b { color: var(--lime); font-size: 8px; }
+.nankai-no-clearance span { margin-top: 5px; color: #81958d; font-size: 6px; line-height: 1.45; }
+.nankai-clearance-rail > p { margin: auto 11px 11px; padding: 9px; border: 1px solid rgba(242,211,94,.2); border-radius: 8px; background: rgba(242,211,94,.05); color: #899b94; font-size: 5px; line-height: 1.5; }
+.nankai-mission-grid { position: relative; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 8px; }
+.nankai-mission-card { display: flex; min-width: 0; min-height: 260px; flex-direction: column; padding: 11px; border: 1px solid #304a41; border-radius: 10px; background: rgba(3,15,11,.67); }
+.nankai-mission-card > header { display: flex; justify-content: space-between; gap: 8px; }
+.nankai-mission-card > header span { color: #55d8ff; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-mission-card > header em { color: #788e85; font-size: 5px; font-style: normal; font-weight: 900; }
+.nankai-mission-card h3 { margin: 7px 0 0; font-size: 9px; line-height: 1.35; }
+.nankai-supply-bars { display: grid; gap: 9px; margin-top: 13px; }
+.nankai-supply-bars > div { display: grid; grid-template-columns: minmax(72px,.8fr) minmax(70px,1fr) auto; gap: 7px; align-items: center; }
+.nankai-supply-bars span b,
+.nankai-supply-bars span small { display: block; }
+.nankai-supply-bars span b { font-size: 6px; }
+.nankai-supply-bars span small { margin-top: 2px; color: #748981; font-size: 5px; }
+.nankai-supply-bars > div > i { height: 6px; overflow: hidden; border-radius: 99px; background: #294039; }
+.nankai-supply-bars > div > i em { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#278e70,#73d9ad); }
+.nankai-supply-bars strong { color: #73d9ad; font-size: 6px; }
+.nankai-mission-list { display: grid; gap: 5px; margin-top: 10px; }
+.nankai-mission-list > div { display: grid; grid-template-columns: 18px minmax(0,1fr) auto; gap: 6px; align-items: center; padding: 6px; border: 1px solid #2b443b; border-radius: 7px; background: rgba(255,255,255,.02); }
+.nankai-mission-list > div > i { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 5px; background: rgba(184,244,93,.1); color: var(--lime); font-size: 6px; font-style: normal; font-weight: 900; }
+.nankai-mission-list > div.gap > i { background: rgba(250,147,139,.1); color: #fa938b; }
+.nankai-mission-list b,
+.nankai-mission-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nankai-mission-list b { font-size: 6px; }
+.nankai-mission-list small { margin-top: 2px; color: #71867e; font-size: 5px; }
+.nankai-mission-list > div > em { color: var(--lime); font-size: 5px; font-style: normal; font-weight: 900; }
+.nankai-mission-list > div.gap > em { color: #fa938b; }
+.nankai-mission-card > footer { margin-top: auto; padding-top: 9px; border-top: 1px solid #294139; color: #71857d; font-size: 5px; line-height: 1.4; }
+.nankai-evidence-row { position: relative; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 8px; }
+.nankai-evidence-row article { min-width: 0; padding: 10px 11px; border: 1px solid #304a41; border-radius: 9px; background: rgba(3,15,11,.66); }
+.nankai-evidence-row article.blocked { border-color: rgba(250,147,139,.28); background: rgba(111,35,30,.1); }
+.nankai-evidence-row article > span { display: block; color: #55d8ff; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-evidence-row article.blocked > span { color: #fa938b; }
+.nankai-evidence-row article > b { display: block; margin-top: 5px; font-size: 7px; }
+.nankai-evidence-row article > p { margin: 5px 0 0; color: #7d9289; font-size: 5px; line-height: 1.45; }
+.nankai-export button { margin-top: 7px; padding: 6px 8px; border: 0; border-radius: 6px; background: #55d8ff; color: #0a2730; cursor: pointer; font-size: 5px; font-weight: 900; }
+.nankai-export button:disabled { cursor: wait; opacity: .6; }
+.nankai-official-basis { position: relative; display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 8px 9px; border: 1px solid #2c453c; border-radius: 8px; background: rgba(2,13,9,.5); }
+.nankai-official-basis > span { margin-right: auto; color: #83978f; font-size: 5px; font-weight: 900; letter-spacing: .08em; }
+.nankai-official-basis a { padding: 5px 7px; border: 1px solid #345047; border-radius: 6px; color: #8edfc5; font-size: 5px; font-weight: 800; text-decoration: none; }
+.nankai-official-basis a:hover { border-color: #5d7c71; color: white; }
+.nankai-boundary { position: relative; margin: 8px 0 0; color: #7b8f87; font-size: 6px; line-height: 1.5; }
+
 .scale-lab-panel {
   position: relative;
   overflow: hidden;
@@ -2273,6 +2439,15 @@ button:focus-visible {
 .regional-footer { padding-bottom: 4px; }
 
 @media (max-width: 1160px) {
+  .nankai-phase-bar { grid-template-columns: 1fr; }
+  .nankai-metric-strip { grid-template-columns: repeat(3, 1fr); }
+  .nankai-metric-strip > span:nth-child(3) { border-right: 0; }
+  .nankai-metric-strip > span:nth-child(-n+3) { border-bottom: 1px solid #2d473e; }
+  .nankai-workspace { grid-template-columns: 1fr; }
+  .nankai-clearance-rail { min-height: 0; }
+  .nankai-mission-grid { grid-template-columns: 1fr 1fr; }
+  .nankai-evidence-row { grid-template-columns: 1fr 1fr; }
+  .nankai-export { grid-column: 1 / -1; }
   .regional-top-actions .simulation-pill { display: none; }
   .regional-metrics { grid-template-columns: repeat(3, 1fr); }
   .regional-workspace { grid-template-columns: 1fr; }
@@ -2298,6 +2473,12 @@ button:focus-visible {
 }
 
 @media (max-width: 840px) {
+  .nankai-lab-heading { flex-direction: column; }
+  .nankai-authority-badge { align-self: stretch; justify-content: center; }
+  .nankai-official-basis { align-items: stretch; flex-direction: column; }
+  .nankai-official-basis > span { margin-right: 0; }
+  .nankai-evidence-row { grid-template-columns: 1fr; }
+  .nankai-export { grid-column: auto; }
   .regional-hero { grid-template-columns: 1fr; gap: 19px; }
   .regional-hero-action { max-width: none; }
   .regional-ai-mode { justify-self: start; }
@@ -2342,6 +2523,23 @@ button:focus-visible {
 }
 
 @media (max-width: 620px) {
+  .nankai-lab-panel { padding: 11px; border-radius: 13px; }
+  .nankai-lab-heading h2 { font-size: 19px; }
+  .nankai-phase-bar > div { grid-template-columns: 1fr; }
+  .nankai-phase-bar > article { grid-template-columns: 1fr; }
+  .nankai-phase-bar article > button,
+  .nankai-phase-bar article > em { grid-column: 1; grid-row: auto; justify-self: stretch; margin: 8px 0 0; text-align: center; }
+  .nankai-metric-strip { grid-template-columns: 1fr 1fr; }
+  .nankai-metric-strip > span { border-right: 1px solid #2d473e; border-bottom: 1px solid #2d473e; }
+  .nankai-metric-strip > span:nth-child(2n) { border-right: 0; }
+  .nankai-metric-strip > span:nth-last-child(-n+2) { border-bottom: 0; }
+  .nankai-map-card > header,
+  .nankai-clearance-rail > header { align-items: flex-start; flex-direction: column; }
+  .nankai-map-frame { min-height: 560px; }
+  .nankai-map-disclosure { left: 10px; right: 10px; max-width: none; }
+  .nankai-map-reset { top: 72px; }
+  .nankai-node > span { display: none; }
+  .nankai-mission-grid { grid-template-columns: 1fr; }
   .regional-shell { padding-inline: 13px; }
   .regional-top-actions { max-width: 58%; }
   .product-switch { width: 100%; }

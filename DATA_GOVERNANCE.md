@@ -18,6 +18,8 @@ The `POST /api/data-trust` validation surface does not persist submitted bundles
 
 The Pilot Data Sandbox reads a selected GeoJSON file in the active browser tab. Its implementation does not post or persist the file; the downloaded evidence contains metadata, findings, counters, and digests rather than source geometry. OpenStreetMap basemap tiles are separate network requests and may expose the viewed area and ordinary request metadata to the tile provider. Local-only analysis is a minimization control, not authorization to process real data. Use only fictional or formally approved, de-identified, licensed, segmentized road exports under a written tabletop protocol.
 
+The Nankai Trough 72H Response Lab currently loads only bundled fictional facilities, patient cases, inventories, vehicles, road states, and search zones. It does not provide an input path for live patient or hospital data and does not persist the selected phase or intervention. Its evidence download contains the fictional decision state and digest. This architecture is not approval to add real clinical, aircraft, restricted-infrastructure, inventory, or incident-command data; such adapters remain prohibited until the governance, privacy, clinical, aviation, security, and retention controls in `NANKAI_RESPONSE_LAB.md` are approved.
+
 ## Current access control
 
 - list access is limited to the creating email or the explicitly assigned reviewer email;
@@ -40,6 +42,7 @@ Each event contains its predecessor hash and a digest of the relevant payload. V
 - credentials, API keys, payment data, or incident secrets;
 - information whose owner has not approved processing in this prototype; and
 - unrestricted geometry that would reveal protected facilities, residents, critical infrastructure, or non-public restrictions.
+- real patient/casualty records, hospital acceptance or capacity, aircraft/drone tasking, emergency inventory, or restricted incident-command information.
 
 ## Required before a real pilot
 

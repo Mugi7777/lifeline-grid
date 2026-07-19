@@ -26,6 +26,8 @@ The **Production Trust Plane** adds a versioned signed road-authority envelope. 
 
 The same plane exposes `/api/assurance` and `/api/health`. It reports software evidence separately from independent gates and always declares this release **not certified / field blocked**. See [`ASSURANCE_CASE.md`](./ASSURANCE_CASE.md), [`CERTIFICATION_ROADMAP.md`](./CERTIFICATION_ROADMAP.md), and [`SECURITY.md`](./SECURITY.md).
 
+The new **Nankai Trough 72H Response Lab** joins scarce supply allocation, mobile-power staging, deadline-bounded hospital-transfer planning, drone-search prioritization, and road-clearance counterfactuals on one synthetic Kochi coastal state. It uses fail-closed road routing, min-cost flow, exhaustive lexicographic assignment, and reproducible SHA-256 evidence. In the fictional 0–6 hour baseline, the top single-corridor intervention raises weighted supply coverage from 50.2% to 69.0% and removes one critical power gap. It never triages, dispatches, launches, opens a road, or asserts hospital acceptance; every consequential action remains behind human authority. See [`NANKAI_RESPONSE_LAB.md`](./NANKAI_RESPONSE_LAB.md).
+
 The baseline exact plan covers all 418 modeled households and 152 modeled vulnerable residents on time. Removing North Forest Road makes one community miss its service threshold—64 households and 32 vulnerable residents—while both critical deliveries remain protected. These values are deterministic fictional results.
 
 The new **Regional Scale Proof** makes computational headroom visible instead of asserting it. It deterministically builds a 2,048-zone, 5,481-link sparse network, screens every link, and exactly replays the 64 highest-flow closure candidates with 65 multi-source Dijkstra runs and 711,034 graph relaxations. The UI measures the full calculation on the current runtime, overlays the impact on the real basemap, supports a 512/2,048-zone switch, and exports a replay-oriented JSON evidence file. See [`SCALE_EVALS.md`](./SCALE_EVALS.md) for the algorithm, benchmark command, reproduced p50/p95/p99 results, and non-claims.
@@ -252,6 +254,7 @@ Tests verify:
 - verified, stale, conflicting, tampered, and missing-feed data-trust modes; strict bundle rejection; and deterministic SHA-256 evidence binding;
 - bounded local GeoJSON acceptance, per-feature isolation, duplicate and malformed topology rejection, exact bridge/articulation results for chains, cycles, and parallel roads, deterministic evidence binding, and a non-recursive 10,000-segment worst-case chain;
 - portable-twin round trips, closure and repair-budget restoration, stale-state disclosure, model mismatch, future timestamps, outer-digest tamper, and deterministic plan-evidence rejection;
+- deterministic Nankai 0–6 hour, 24 hour and 72 hour response states; min-cost supply flow; exact power, medical and drone assignments; fail-closed routes; road-clearance counterfactual benefit; invalid-state rejection; and replay digest stability;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -272,6 +275,7 @@ Tests verify:
 - `app/api/data-trust/route.ts` — strict operational-feed ingestion and provenance evidence
 - `app/api/assurance/route.ts` and `app/api/health/route.ts` — assurance claims, external gates, liveness, and dependency readiness
 - `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
+- `app/nankai-response-lab.tsx` and `app/nankai-response-map.tsx` — synthetic Nankai Trough multi-modal response lab and real-basemap decision overlay
 - `app/pilot-data-sandbox.tsx` and `app/pilot-network-map.tsx` — local-file pilot workflow, quality gates, evidence export, and real-basemap topology rendering
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
 - `lib/regional.ts` — exact pooled VRPTW, bounded deterministic multi-start solver, road-graph N-1 analysis, stress suite, and exact repair portfolio
@@ -283,6 +287,7 @@ Tests verify:
 - `lib/pilot-data-sandbox.ts` — bounded GeoJSON normalization, iterative bridge/articulation analysis, deterministic ranking, and evidence generation
 - `lib/continuity-capsule.ts` — bounded portable state, SHA-256 evidence, deterministic restore verification, and stale-state disclosure
 - `lib/assurance.ts` — code evidence, runtime states, prohibited claims, and independent blocking gates
+- `lib/nankai-response.ts` — fail-closed routing, min-cost supply flow, exact power/medical/drone assignments, road-clearance replay, and evidence export
 - `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
@@ -304,10 +309,11 @@ Tests verify:
 - `DATA_TRUST_GATEWAY.md` — operational feed contract, failure modes, evidence and pilot boundary
 - `PILOT_DATA_SANDBOX.md` — local GeoJSON contract, algorithm, privacy boundary, tabletop protocol, and unmet pilot gates
 - `RECOVERY.md` — GitHub/ZIP source backup, restore verification, portable twin state, and remaining recovery gaps
+- `NANKAI_RESPONSE_LAB.md` — public-source basis, algorithms, reproduced results, safety authority boundary, and shadow-pilot gaps
 
 ## Honest prototype boundary
 
-Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The local GeoJSON sandbox identifies endpoint-graph single points but does not infer crossings, grade separation, passability, structural condition, demand, travel time, or route legality. The Sol council is not a structural diagnosis, calibrated probability model, signed authority feed, or autonomous agent. Its hypotheses may still be semantically wrong; runtime validation and deterministic re-planning bound the consequences but do not make the source facts true. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. D1 now provides durable identity-scoped records and a replayable hash chain, but not enterprise tenancy, a KMS signature, trusted timestamps, write-once retention, or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, signed authority adapters, append-only audit storage, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
+Exact enumeration is appropriate for the deliberately small, inspectable demo. The regional engine certifies the modeled six-stop optimum. Larger bounded inputs can use the implemented deterministic heuristic, which reports a feasible result and explicitly leaves the optimality gap unknown; this still does not claim Google-scale routing throughput. The Nankai supply result is an allocation envelope, not a shared-capacity vehicle schedule; its medical and drone results are planning proposals without triage, acceptance, weather, airspace, operator, or dispatch authority. The local GeoJSON sandbox identifies endpoint-graph single points but does not infer crossings, grade separation, passability, structural condition, demand, travel time, or route legality. The Sol council is not a structural diagnosis, calibrated probability model, signed authority feed, or autonomous agent. Its hypotheses may still be semantically wrong; runtime validation and deterministic re-planning bound the consequences but do not make the source facts true. The emergency contingencies and regional deterioration probabilities are synthetic, not a complete hazard analysis. D1 now provides durable identity-scoped records and a replayable hash chain, but not enterprise tenancy, a KMS signature, trusted timestamps, write-once retention, or non-repudiation. A larger deployment would use validated MILP/CP-SAT or decomposition services and require enterprise identity, signed authority adapters, append-only audit storage, certified telemetry, geographic routing, cybersecurity controls, governance review, field trials, and independent validation.
 
 Every facility, vehicle, report, route, timestamp, and metric in this repository is fictional. Do not input personal data, confidential documents, or real emergency information.
 

@@ -50,15 +50,15 @@ Enter a fictional reviewer email and click **Record plan**, then open the saved 
 
 > “A calculation is not yet an organizational decision. The server recomputes and stores this synthetic plan, shows exactly what changed from its predecessor, and assigns review to a different identity. The creator cannot self-approve, and every lifecycle event is replay-verified. This is a hosted prototype—not legal non-repudiation.”
 
-## 2:42–2:50 — Same twin, emergency mode
+## 2:42–2:52 — Nankai 72H response lab
 
-Switch briefly to **Emergency grid**.
+Scroll to **Nankai Trough 72H Response Lab** and click **Run top clearance simulation**.
 
-> “The same product becomes a verified emergency-power coordinator when disruption escalates. Daily operation creates the data and relationships emergency-only software never has.”
+> “When disaster escalates, the same network allocates scarce supplies, stages mobile power, builds deadline-bounded hospital-transfer plans, prioritizes drone search, and asks which one blocked corridor restores the most life-support access. In this fictional 0–6 hour replay, one intervention raises supply coverage from 50.2% to 69.0% and closes a critical power gap.”
 
-## 2:50–2:55 — Boundary
+## 2:52–2:55 — Boundary
 
-> “Built with Codex and GPT-5.6 Sol. All results are synthetic; Lifeline advises while authorized people stay in command.”
+> “All results are synthetic. Lifeline calculates; authorized people command.”
 
 ---
 

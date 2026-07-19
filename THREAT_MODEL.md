@@ -26,8 +26,9 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 7. Browser → exported evidence file
 8. Browser storage or imported JSON → Portable Twin Capsule verifier
 9. Local GeoJSON file → in-tab bounded parser and topology analyzer; separate browser → OpenStreetMap tile provider request
-10. Future external telemetry/routing systems → Lifeline adapters
-11. Future Lifeline service → vehicles, facilities, and incident-management systems
+10. Synthetic Nankai multi-modal state → supply/power/medical/drone optimizers → human-only action boundary
+11. Future external telemetry/routing systems → Lifeline adapters
+12. Future Lifeline service → vehicles, facilities, and incident-management systems
 
 ## Threats and controls
 
@@ -47,6 +48,10 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 | Portable-state tampering or rollback | Edited or obsolete local state silently restores a misleading plan | bounded schema and size, SHA-256 payload/model/plan digests, deterministic plan reproduction, future-time rejection, and visible stale status | authenticated organizational backup, signed snapshots, anti-rollback registry, observed restore exercise |
 | Malicious or misleading GeoJSON | Oversized, malformed, mislabeled, topologically incomplete, or HTML-bearing features distort results or attack the UI | local-only 10 MB/10,000-feature/200,000-coordinate bounds; finite-coordinate and stable-ID validation; per-feature isolation; bounded text; HTML escaping; source remains unverified; field gate hard-blocked | authenticated GIS adapter, content scanning, authoritative schema, topology conformance suite, data-owner signature, expert reference comparison |
 | False intersection inference | Crossing lines, bridges, tunnels, or unsplit junctions create a false graph | only snapped line endpoints connect; UI and evidence explicitly disclose that intersections and grade separation are not inferred | data-owner segmentization, grade-separation attributes, topology QA, versioned network build pipeline |
+| False hazard or access state | A fictional, stale, or spoofed road state creates a plausible but unsafe Nankai response plan | current lab accepts only its visibly synthetic fixture; unknown and blocked roads fail closed; no external actuation; field gate hard-blocked | signed authoritative hazard/road adapters, freshness/conflict policy, outage drills, independent reference comparison |
+| Medical-automation overreach | A deadline score is mistaken for triage, hospital acceptance, or permission to transfer a patient | fictional cases only; output is planning or air-coordination request; explicit human-authority gate; no dispatch adapter | clinical governance, privacy impact assessment, receiving-facility confirmation, qualified medical direction, human-factors validation |
+| Unsafe drone or air tasking | A search ranking is treated as launch or airspace authorization | no autonomous launch; synthetic zones; UI discloses that weather, airspace and operator approval are unmodeled | licensed operator, aviation authority process, weather/communications minima, geofencing, remote ID, tasking and abort procedures |
+| Resource double counting | Independent commodity flows imply vehicles or handling capacity that do not exist | UI and documentation call supply output an allocation envelope, not a vehicle schedule; field use blocked | integrated vehicle/loading/refueling/shift/cold-chain scheduling, depot throughput, cross-commodity capacity tests |
 | Basemap privacy or availability | Tile requests reveal viewed coordinates or fail during an exercise | source GeoJSON is not uploaded; tile traffic is separately disclosed; computed overlay remains visible on tile failure | approved tile contract or self-hosted tiles, privacy review, caching/offline map, availability test |
 | Secret exposure | API or integration credentials leak | API key remains a hosted secret and is not exported | secret rotation, least privilege, KMS/HSM, scanning, incident procedure |
 | Denial of service | Oversized input exhausts planning compute or evidence generation is unavailable | strict 1 MB/model cardinality limits, finite-number checks, exact-search budgets, bounded scalable fallback | authenticated quotas, distributed rate limits, queues, multi-region capacity tests, offline runbook, recovery objectives |
@@ -73,6 +78,7 @@ Scope: the current synthetic simulation and the proposed future advisory pilot. 
 - A portable capsule cannot restore UI state until the current engine reproduces its model and plan evidence; stale age remains visible.
 - A local GeoJSON file can never become authoritative merely because it parses or produces a digest.
 - A graph bridge or articulation point can never be displayed as a structural diagnosis, closure instruction, or dispatch authority.
+- A Nankai optimization result can never become patient triage, hospital acceptance, road opening, vehicle dispatch, electrical switching, drone launch, or aircraft tasking authority.
 
 ## Security verification backlog
 

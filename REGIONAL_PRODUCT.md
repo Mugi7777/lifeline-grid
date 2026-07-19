@@ -28,6 +28,7 @@ The current synthetic Mizunoki District demonstration includes:
 - a visible 512/2,048-zone Regional Scale Proof using sparse multi-source Dijkstra, flow-based failure screening, 64 exact closure replays, runtime-specific latency measurement, real-basemap impact rendering, and exportable JSON evidence;
 - a fail-closed Operational Data Trust Gateway covering map, road-authority, weather, and fleet feeds with strict schema validation, integrity, freshness, scope, coverage, conflict and missing-source gates;
 - a local Pilot Data Sandbox that bounds and normalizes partner-selected GeoJSON, evaluates every accepted endpoint-graph segment with non-recursive bridge/articulation analysis, renders findings on a real basemap, and exports digest-bound evidence while keeping field use blocked;
+- a synthetic Nankai Trough 72H lab that combines fail-closed routing, commodity min-cost flow, exact power/medical/drone assignment, and single-corridor road-clearance counterfactuals in one evidence-bound response state;
 - a Portable Twin Capsule that stores a synthetic plan locally and as JSON, binds it to the model and route evidence, and restores only after deterministic reproduction;
 - GPT-5.6 Structured Output for converting a fictional inspection note into supported road state;
 - a GPT-5.6 Sol Reasoning Council that generates exactly three competing interpretations of conflicting reports, preserves counterevidence, and asks for decision-changing authority evidence;
@@ -88,6 +89,8 @@ Road criticality is computed by removing one segment, solving the complete poole
 5. **Production advisory service** — tenant identity, signed audit, service operations, independent security review, disaster recovery, and contracted accountability.
 
 No phase grants Lifeline Grid authority to diagnose a structure, close a road, direct a driver, prioritize a person, or control a vehicle.
+
+The Nankai module extends this prohibition to patient triage, receiving-hospital acceptance, electrical switching, drone launch, and aircraft tasking. Its exact searches certify only the best result inside a small fictional bounded model; they do not validate the input state or confer authority.
 
 The Reasoning Council does not weaken this boundary. It is intended to reduce premature narrative closure: the model proposes falsifiable worlds, deterministic software measures each consequence, and the responsible organization authenticates the source and chooses the operating state.
 

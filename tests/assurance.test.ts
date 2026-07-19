@@ -24,5 +24,6 @@ test("runtime dependency gaps remain visible and do not inflate control evidence
   assert.equal(snapshot.runtime.authorityRegistryConfigured, false);
   assert.equal(snapshot.controls.find((control) => control.id === "AUTH-01")?.runtime, "configuration_required");
   assert.equal(snapshot.controls.find((control) => control.id === "AUTH-02")?.runtime, "migration_or_binding_required");
-  assert.equal(snapshot.summary.implementedControls, 8);
+  assert.equal(snapshot.summary.implementedControls, 9);
+  assert.equal(snapshot.controls.find((control) => control.id === "OPS-02")?.runtime, "synthetic_tabletop_only");
 });

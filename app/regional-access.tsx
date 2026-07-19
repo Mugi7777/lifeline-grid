@@ -10,6 +10,7 @@ import RealRegionalMap from "./real-regional-map";
 import RegionalScaleLab from "./regional-scale-lab";
 import DataTrustGateway from "./data-trust-gateway";
 import PilotDataSandbox from "./pilot-data-sandbox";
+import NankaiResponseLab from "./nankai-response-lab";
 import ContinuityCapsule from "./continuity-capsule";
 
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
@@ -322,6 +323,8 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
           <span className={`regional-ai-mode ${aiMode}`}>{aiMode === "gpt-5.6" ? "GPT-5.6 LIVE" : aiMode === "demo-fallback" ? "TRANSPARENT FALLBACK" : "NOTE READY"}</span>
         </div>
       </section>
+
+      <NankaiResponseLab />
 
       <RegionalScaleLab />
 

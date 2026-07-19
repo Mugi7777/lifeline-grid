@@ -48,6 +48,8 @@ An Incident Lead approves the simulated scope, but that is still insufficient. A
 
 When a fictional free-text update reports that East Bridge has closed, GPT-5.6 converts it into structured route state. Lifeline Grid rebuilds the complete remaining allocation: E-21 changes missions and E-44 takes the water station through Ridge Bypass while preserving full stress-suite success.
 
+The Nankai Trough 72H Response Lab then uses one synthetic Kochi coastal road state to coordinate four coupled missions: scarce supplies through min-cost flow, mobile power through exact lexicographic assignment, deadline-bounded hospital-transfer proposals, and drone-search prioritization. It replays every blocked or unknown corridor as a single clearance counterfactual. In the fictional first-six-hour scenario, its top intervention raises weighted supply coverage from 50.2% to 69.0% and removes one critical-power gap. Unknown roads fail closed, while patient triage, hospital acceptance, road opening, dispatch, switching, drone launch and aircraft tasking remain human-only.
+
 ## How we built it
 
 - GPT-5.6 Responses API with strict Structured Outputs for inspection notes, incidents, and disruptions
@@ -57,6 +59,7 @@ When a fictional free-text update reports that East Bridge has closed, GPT-5.6 c
 - Exact pooled heterogeneous VRPTW for the inspectable regional scenario
 - Service-weighted road-graph N-1 analysis
 - Exact budget-constrained repair portfolio selection
+- Fail-closed Nankai routing, commodity min-cost flow, exact power/medical/drone matching, and single-corridor counterfactual replay
 - Deterministic regional demand and travel stress testing
 - Authenticated D1 decision ledger with predecessor diffs and assigned review
 - Server-side audit-chain replay and self-approval prevention
