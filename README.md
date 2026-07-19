@@ -20,6 +20,10 @@ The synthetic Mizunoki District model connects eight locations with twelve roads
 
 Authenticated users can explicitly record a plan in a durable D1 decision ledger. The server recomputes the plan, links it to the prior version, stores the operational diff, assigns an optional independent reviewer, and appends SHA-256-linked audit events. The creator cannot approve their own run.
 
+The **Production Trust Plane** adds a versioned signed road-authority envelope. It verifies an ECDSA P-256/SHA-256 signature against a pinned issuer, key ID and road scope; bounds issue, expiry and effective time; and atomically rejects duplicate IDs and stale issuer sequences in D1. A valid event is stored only as `pending` with `human_review_required` and `planningEffect: not_applied`. Cryptographic integrity never becomes road diagnosis or permission to act.
+
+The same plane exposes `/api/assurance` and `/api/health`. It reports software evidence separately from independent gates and always declares this release **not certified / field blocked**. See [`ASSURANCE_CASE.md`](./ASSURANCE_CASE.md), [`CERTIFICATION_ROADMAP.md`](./CERTIFICATION_ROADMAP.md), and [`SECURITY.md`](./SECURITY.md).
+
 The baseline exact plan covers all 418 modeled households and 152 modeled vulnerable residents on time. Removing North Forest Road makes one community miss its service threshold—64 households and 32 vulnerable residents—while both critical deliveries remain protected. These values are deterministic fictional results.
 
 GPT-5.6 converts a narrative inspection note into a supported road event. The new **Sol Reasoning Council** uses `gpt-5.6-sol` at high reasoning effort to turn conflicting, untrusted reports into exactly three testable road-state hypotheses, preserve counterevidence, and ask for the smallest decision-changing fact. Deterministic code then re-plans every hypothesis, runs 192 stress scenarios and 36 N-1 road cases, and withholds the model recommendation behind a human-authority gate. The model cannot diagnose a road, calculate the consequence, authorize a closure, or authorize dispatch.
@@ -169,6 +173,8 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 - `/api/regional-plan` accepts a versioned regional model, enforces bounded runtime validation, chooses the exact or scalable solver, and returns a deterministic SHA-256 request identity plus route-level constraint evidence.
 - `/api/regional-runs` persists authenticated, identity-scoped planning records and version differences.
 - `/api/regional-runs/:id/review` and `/audit` enforce assigned independent review and replay the stored hash chain.
+- `/api/authority-events/verify` authenticates the receiving operator, verifies a pinned public-key event, atomically rejects replay/stale sequences, and queues only a pending human review.
+- `/api/assurance` exposes machine-readable control evidence and independent blocking gates; `/api/health` separates process liveness from operational readiness.
 - The reasoning route uses the Responses API with strict Structured Outputs, `store: false`, and high reasoning effort. Reports are explicitly treated as untrusted data rather than instructions.
 - The model never performs energy arithmetic, supplies impact metrics, chooses the winning allocation, diagnoses infrastructure, or authorizes dispatch.
 - Model confidence is never treated as authority. Hidden chain-of-thought is not displayed or used as evidence; the product shows schema-bound claims, counterevidence, and independently reproduced metrics.
@@ -199,6 +205,7 @@ The entire deterministic mission loop remains available without a secret through
 
 ```bash
 npm run test:planner
+npm run typecheck
 npm test
 npm run benchmark:reasoning -- 25
 ```
@@ -222,6 +229,8 @@ Tests verify:
 - deterministic regional stress and replay;
 - strict three-hypothesis reasoning contracts, prompt-injection containment, unsupported-road rejection, human-authority gating, and deterministic counterfactual replay;
 - regional plan-diff, audit-chain replay, tamper detection, and unauthenticated-ledger rejection;
+- signed authority-event success, post-signature tamper, untrusted issuer, road-scope, expiry, future-time, inconsistent-window, and private-key-material rejection;
+- an invariant that fully configured software controls still cannot self-assert certification or field readiness;
 - minimum-intervention reserve selection;
 - honest certificate failure when no equivalent high-power backup exists;
 - independent dual-control authorization;
@@ -238,12 +247,16 @@ Tests verify:
 - `app/api/regional-reasoning/route.ts` — GPT-5.6 Sol hypothesis generation and bounded reasoning contract
 - `app/api/regional-plan/route.ts` — versioned external planning contract and deterministic audit response
 - `app/api/regional-runs/` — identity-scoped durable run history, review workflow, and audit verification
+- `app/api/authority-events/verify/route.ts` — signed source verification and atomic replay/stale-sequence rejection
+- `app/api/assurance/route.ts` and `app/api/health/route.ts` — assurance claims, external gates, liveness, and dependency readiness
 - `app/regional-access.tsx` — rural delivery, road-aging, and repair-budget command center
 - `lib/planner.ts` — safety kernel, exact optimizer, stress suite, value-of-information ranking, and N-1 preparedness search
 - `lib/regional.ts` — exact pooled VRPTW, bounded deterministic multi-start solver, road-graph N-1 analysis, stress suite, and exact repair portfolio
 - `lib/regional-reasoning.ts` — strict hypothesis validation, deterministic counterfactual adjudication, and evidence-value ranking
 - `lib/regional-contract.ts` — strict versioned request boundary and canonical plan evidence
 - `lib/regional-ledger.ts` — plan diff and replayable hash-chain events
+- `lib/authority-event.ts` — public-key trust registry, bounded signed event contract, and fail-closed verifier
+- `lib/assurance.ts` — code evidence, runtime states, prohibited claims, and independent blocking gates
 - `db/schema.ts` and `drizzle/` — D1 run, review, and audit-event schema and migration
 - `lib/operations.ts` — readiness gates, dual control, canonical evidence, SHA-256 integrity, and audit-chain verification
 - `tests/` — planner, API, build, and rendering checks
@@ -258,6 +271,9 @@ Tests verify:
 - `SCALE_ARCHITECTURE.md` — scale architecture, solver tiers, SLO targets, security, and evaluation gates
 - `BENCHMARKS.md` — reproducible 100/250-stop synthetic performance fixture and result boundaries
 - `REASONING_COUNCIL.md` — Sol reasoning boundary, adjudication algorithm, tests, benchmark, and safety limitations
+- `ASSURANCE_CASE.md` — safety claims, evidence, defeaters, and independent gates
+- `CERTIFICATION_ROADMAP.md` — ISO, NIST, OWASP, METI, and ISMAP scope and staged evidence plan
+- `SECURITY.md` — vulnerability reporting, key boundaries, and current dependency posture
 - `DATA_GOVERNANCE.md` — stored data, access, integrity, and prohibited-data boundary
 
 ## Honest prototype boundary
