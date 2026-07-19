@@ -6,6 +6,7 @@ import {
   analyzeRegionalAccess,
   type RoadCriticality,
 } from "@/lib/regional";
+import type { AssuranceSnapshot } from "@/lib/assurance";
 
 type AiMode = "ready" | "gpt-5.6" | "demo-fallback";
 
@@ -130,6 +131,8 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
   const [councilResult, setCouncilResult] = useState<CouncilResult | null>(null);
   const [councilWorking, setCouncilWorking] = useState(false);
   const [councilMessage, setCouncilMessage] = useState("Three competing worlds are ready to be generated and tested.");
+  const [assurance, setAssurance] = useState<AssuranceSnapshot | null>(null);
+  const [assuranceMessage, setAssuranceMessage] = useState("Verifying runtime controls without assuming readiness…");
   const analysis = useMemo(() => analyzeRegionalAccess(closedSegmentId, budgetM), [budgetM, closedSegmentId]);
   const criticalityById = useMemo(
     () => new Map(analysis.roadCriticality.map((item) => [item.road.id, item])),
@@ -161,6 +164,21 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
   useEffect(() => {
     const timer = window.setTimeout(() => void loadLedger(), 0);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/assurance", { headers: { Accept: "application/json" }, signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Assurance evidence unavailable");
+        const payload = await response.json() as AssuranceSnapshot;
+        setAssurance(payload);
+        setAssuranceMessage(`${payload.summary.implementedControls} software controls evidenced · ${payload.summary.blockingGatesOpen} independent gates remain open.`);
+      })
+      .catch((error) => {
+        if ((error as Error).name !== "AbortError") setAssuranceMessage("Runtime assurance could not be proven; operational use remains blocked.");
+      });
+    return () => controller.abort();
   }, []);
 
   async function interpretInspection() {
@@ -366,6 +384,56 @@ export default function RegionalAccess({ onSwitchToEmergency }: RegionalAccessPr
             <span><i>1</i><b>Generate rivals</b><small>Three mutually distinct road states</small></span><span><i>2</i><b>Attack assumptions</b><small>Evidence for, against and missing</small></span><span><i>3</i><b>Re-plan every world</b><small>Hard constraints and stress scenarios</small></span><span><i>4</i><b>Ask one fact</b><small>Largest decision-changing evidence</small></span>
           </div>
         )}
+      </section>
+
+      <section className="panel trust-plane-panel" aria-labelledby="trust-plane-title">
+        <div className="trust-plane-heading">
+          <div>
+            <p className="panel-kicker">PRODUCTION TRUST PLANE × ASSURANCE CASE</p>
+            <h2 id="trust-plane-title">Prove each safety claim—and block what is not proven.</h2>
+            <p>Cryptographic source integrity, replay protection and human decision authority are machine-enforced. Certification and field validation can only come from independent evidence.</p>
+          </div>
+          <span className="certification-blocked">NOT CERTIFIED · FIELD BLOCKED</span>
+        </div>
+        <div className="trust-runtime-grid" aria-live="polite">
+          <article className={assurance?.runtime.authorityRegistryConfigured ? "ready" : "blocked"}>
+            <small>Authority PKI</small><b>{assurance?.runtime.authorityRegistryConfigured ? "PINNED" : "KEYS REQUIRED"}</b><span>ECDSA P-256 · issuer + key ID + road scope</span>
+          </article>
+          <article className={assurance?.runtime.replayStoreReady ? "ready" : "blocked"}>
+            <small>Replay protection</small><b>{assurance?.runtime.replayStoreReady ? "DURABLE" : "UNPROVEN"}</b><span>Atomic event ID and monotonic sequence rejection</span>
+          </article>
+          <article className="ready">
+            <small>Decision authority</small><b>HUMAN GATE</b><span>Verified events remain pending until authorized review</span>
+          </article>
+          <article className="blocked">
+            <small>Safety claim</small><b>NO SELF-CERTIFY</b><span>Code evidence never becomes an audit certificate</span>
+          </article>
+        </div>
+        <div className="trust-evidence-grid">
+          <article>
+            <header><div><span>SOFTWARE EVIDENCE</span><b>Controls implemented in this release</b></div><em>{assurance?.summary.implementedControls ?? "—"}/{assurance?.summary.totalControls ?? "—"}</em></header>
+            <ul>
+              {(assurance?.controls ?? []).slice(0, 5).map((control) => (
+                <li key={control.id}><i>{control.status === "implemented" ? "✓" : "!"}</i><div><b>{control.id} · {control.title}</b><small>{control.runtime.replaceAll("_", " ")} · {control.frameworkRefs.join(" · ")}</small></div></li>
+              ))}
+              {!assurance ? <li><i>…</i><div><b>Loading signed assurance snapshot</b><small>No runtime dependency is presumed healthy while loading.</small></div></li> : null}
+            </ul>
+          </article>
+          <article className="trust-gates">
+            <header><div><span>INDEPENDENT BLOCKING GATES</span><b>Required before operational claims</b></div><em>{assurance?.summary.blockingGatesOpen ?? 6} OPEN</em></header>
+            <ul>
+              {(assurance?.blockingGates ?? [
+                { id: "authority-pki", title: "Road authority key ceremony", satisfied: false, owner: "Road authority + security" },
+                { id: "penetration-test", title: "Independent penetration test", satisfied: false, owner: "Security assessor" },
+                { id: "dr-exercise", title: "Observed recovery exercise", satisfied: false, owner: "Operations + auditor" },
+                { id: "shadow-pilot", title: "Supervised regional shadow pilot", satisfied: false, owner: "Municipality + operators" },
+              ]).map((gate) => (
+                <li key={gate.id}><i>×</i><div><b>{gate.title}</b><small>Owner: {gate.owner}</small></div></li>
+              ))}
+            </ul>
+          </article>
+        </div>
+        <p className="trust-plane-message">{assuranceMessage} Signed data proves origin and integrity—not that a road is physically safe. No event is automatically applied.</p>
       </section>
 
       <section className="regional-workspace">

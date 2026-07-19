@@ -58,7 +58,7 @@ test("regional audit chain verifies and detects a changed event", async () => {
 
 test("regional audit verification binds the event chain to the stored decision", async () => {
   const planRequest = {
-    schemaVersion: REGIONAL_PLAN_SCHEMA_VERSION,
+    schemaVersion: REGIONAL_PLAN_SCHEMA_VERSION as typeof REGIONAL_PLAN_SCHEMA_VERSION,
     model: REGIONAL_MODEL,
     closedRoadIds: [] as string[],
   };

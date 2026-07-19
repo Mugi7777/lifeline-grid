@@ -194,3 +194,54 @@ test("durable regional ledger rejects unauthenticated reads before database acce
   const payload = await response.json();
   assert.equal(payload.error, "authentication_required");
 });
+
+test("assurance endpoint exposes honest certification and field-operation gates", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `assurance-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/assurance"),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.claim.certification, "not_certified");
+  assert.equal(payload.claim.fieldOperation, "blocked");
+  assert.equal(payload.blockingGates.every((gate) => gate.satisfied === false), true);
+});
+
+test("health endpoint separates process liveness from operational readiness", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `health-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/health"),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.status, "ok");
+  assert.equal(payload.liveness, "ready");
+  assert.equal(payload.operationalReadiness, "prototype_only");
+  assert.equal(payload.safety.certification, "not_certified");
+});
+
+test("signed authority ingestion requires an authenticated operator before trust evaluation", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `authority-auth-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/authority-events/verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 401);
+  const payload = await response.json();
+  assert.equal(payload.error, "authentication_required");
+});
