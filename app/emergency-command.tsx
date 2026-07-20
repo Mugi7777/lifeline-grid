@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_NEEDS,
   buildResilienceAnalysis,
@@ -15,6 +15,13 @@ import {
   type EmergencyReasoningProposal,
   type EmergencyWorldEvaluation,
 } from "@/lib/emergency-reasoning";
+import {
+  buildEmergencyTwinEvidence,
+  buildEmergencyTwinSnapshot,
+  type TwinLayer,
+  type TwinScenario,
+} from "@/lib/emergency-twin";
+import EmergencyDigitalTwin from "./emergency-digital-twin";
 import EmergencyPowerMap from "./emergency-power-map";
 
 interface EmergencyCommandProps {
@@ -76,6 +83,10 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
   const [resilienceWorking, setResilienceWorking] = useState(false);
   const [leadApproval, setLeadApproval] = useState<string | null>(null);
   const [safetyApproval, setSafetyApproval] = useState<string | null>(null);
+  const [twinMinute, setTwinMinute] = useState(0);
+  const [twinScenario, setTwinScenario] = useState<TwinScenario>("nominal");
+  const [twinLayer, setTwinLayer] = useState<TwinLayer>("estimated");
+  const [twinPlaying, setTwinPlaying] = useState(false);
 
   const inspectedWorld = council?.adjudication.evaluations.find((world) => world.hypothesisId === inspectedWorldId) ?? null;
   const inspectedHypothesis = council?.proposal.hypotheses.find((world) => world.id === inspectedWorldId) ?? null;
@@ -88,6 +99,24 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
     stressScenarios: baselinePlan.optimization?.scenarioCount ?? 0,
     planScenarioEvaluations: baselinePlan.optimization?.scenarioEvaluations ?? 0,
   };
+  const twinSnapshot = useMemo(
+    () => buildEmergencyTwinSnapshot(activePlan, twinMinute, twinScenario),
+    [activePlan, twinMinute, twinScenario],
+  );
+
+  useEffect(() => {
+    if (!twinPlaying) return;
+    const timer = window.setInterval(() => {
+      setTwinMinute((current) => {
+        if (current >= 90) {
+          setTwinPlaying(false);
+          return 90;
+        }
+        return current + 5;
+      });
+    }, 850);
+    return () => window.clearInterval(timer);
+  }, [twinPlaying]);
 
   async function runCouncil() {
     setWorking(true);
@@ -139,6 +168,22 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
     });
   }
 
+  async function exportTwinEvidence() {
+    const evidence = await buildEmergencyTwinEvidence(twinSnapshot, activePlan);
+    downloadJson(`lifeline-grid-twin-${twinScenario}-t${String(twinMinute).padStart(2, "0")}.json`, evidence);
+  }
+
+  function changeTwinScenario(scenario: TwinScenario) {
+    setTwinPlaying(false);
+    setTwinScenario(scenario);
+    setTwinMinute(scenario === "nominal" ? 0 : scenario === "telemetry_loss" ? 50 : scenario === "pump_drift" ? 45 : 35);
+  }
+
+  function askSolAboutTwinConflict() {
+    setReport(DEFAULT_REPORT);
+    document.getElementById("sol-council")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <main className="emergency2-shell">
       <header className="emergency2-topbar">
@@ -155,9 +200,9 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
 
       <section className="emergency2-hero" id="top">
         <div>
-          <p className="emergency2-eyebrow">GPT-5.6 SOL × VERIFIED OPTIMIZATION</p>
-          <h1>Resolve the fact that changes the plan—<em>before moving the fleet.</em></h1>
-          <p>Sol turns conflicting reports into three falsifiable worlds. An exact optimizer proves the energy, route, connector, deadline and reserve consequences in every world. Humans retain authority.</p>
+          <p className="emergency2-eyebrow">GPT-5.6 SOL × OPERATIONAL DIGITAL TWIN</p>
+          <h1>See the emergency grid as it is—<em>and six hours before it fails.</em></h1>
+          <p>Lifeline synchronizes synthetic telemetry, estimates hidden state and forecasts plan divergence. Sol branches ambiguity into falsifiable worlds; exact optimization proves every physical consequence. Humans retain authority.</p>
         </div>
         <div className="emergency2-hero-action">
           <button type="button" onClick={() => void runCouncil()} disabled={working}>
@@ -169,12 +214,25 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
       </section>
 
       <section className="emergency2-how" aria-label="How Lifeline Grid works">
-        <article><span>01</span><div><b>Sol separates uncertainty</b><small>Counter-hypotheses, counterevidence and testable facts—not a confident single story.</small></div></article>
+        <article><span>01</span><div><b>Synchronize the operational twin</b><small>Event-sourced telemetry, Kalman state estimation and explicit freshness—never a static dashboard.</small></div></article>
         <i>→</i>
-        <article><span>02</span><div><b>Exact kernel proves consequences</b><small>Lexicographic allocation, physical constraints and Halton stress testing for each world.</small></div></article>
+        <article><span>02</span><div><b>Forecast + challenge the plan</b><small>A deterministic 6h forecast meets exact allocation, physical constraints and stress testing.</small></div></article>
         <i>→</i>
-        <article><span>03</span><div><b>Authorized humans decide</b><small>Highest-value evidence first, dual control and a cryptographic audit package.</small></div></article>
+        <article><span>03</span><div><b>Sol branches uncertainty; humans decide</b><small>Highest-value evidence first, dual control and a cryptographic replay package.</small></div></article>
       </section>
+
+      <EmergencyDigitalTwin
+        snapshot={twinSnapshot}
+        layer={twinLayer}
+        minute={twinMinute}
+        playing={twinPlaying}
+        onLayerChange={setTwinLayer}
+        onMinuteChange={(minute) => { setTwinPlaying(false); setTwinMinute(minute); }}
+        onPlayingChange={setTwinPlaying}
+        onScenarioChange={changeTwinScenario}
+        onExportEvidence={() => void exportTwinEvidence()}
+        onAskSol={askSolAboutTwinConflict}
+      />
 
       <section className="emergency2-dashboard">
         <div className="emergency2-map-card">
@@ -184,6 +242,8 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
             blockedRouteIds={inspectedHypothesis?.blockedRouteIds ?? []}
             unavailableVehicleIds={inspectedHypothesis?.unavailableVehicleIds ?? []}
             inspectedWorldLabel={inspectedWorld?.title ?? null}
+            twinSnapshot={twinSnapshot}
+            twinLayer={twinLayer}
           />
         </div>
 
@@ -207,7 +267,7 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
         </aside>
       </section>
 
-      <section className="emergency2-council">
+      <section className="emergency2-council" id="sol-council">
         <header><div><span>SOL UNCERTAINTY COUNCIL</span><h2>One narrative is unsafe. Test competing worlds.</h2><p>The report is treated as untrusted data. Sol may frame hypotheses; it cannot calculate consequences or authorize action.</p></div>{council ? <em className={council.mode === "gpt-5.6-sol" ? "live" : "fallback"}>{council.mode === "gpt-5.6-sol" ? "GPT-5.6 SOL LIVE" : "DETERMINISTIC FALLBACK"}</em> : null}</header>
         <div className="emergency2-input">
           <label><span>CONFLICTING FIELD REPORT · SYNTHETIC</span><textarea value={report} onChange={(event) => setReport(event.target.value)} maxLength={6000} /></label>

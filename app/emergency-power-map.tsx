@@ -3,29 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import { DEFAULT_NEEDS, VEHICLES, type DispatchPlan } from "@/lib/planner";
+import {
+  EMERGENCY_FACILITY_COORDINATES,
+  EMERGENCY_VEHICLE_COORDINATES,
+  type Coordinate,
+  type EmergencyTwinSnapshot,
+  type TwinLayer,
+} from "@/lib/emergency-twin";
 
 interface EmergencyPowerMapProps {
   plan: DispatchPlan;
   blockedRouteIds: string[];
   unavailableVehicleIds: string[];
   inspectedWorldLabel: string | null;
+  twinSnapshot: EmergencyTwinSnapshot;
+  twinLayer: TwinLayer;
 }
-
-type Coordinate = [number, number];
-
-const FACILITY_COORDINATES: Record<string, Coordinate> = {
-  clinic: [33.5655, 133.5322],
-  shelter: [33.5788, 133.5214],
-  water: [33.5527, 133.5687],
-};
-
-const VEHICLE_COORDINATES: Record<string, Coordinate> = {
-  "E-07": [33.5579, 133.5211],
-  "E-12": [33.5681, 133.5452],
-  "E-21": [33.5572, 133.5502],
-  "E-32": [33.5803, 133.5541],
-  "E-44": [33.5467, 133.5445],
-};
 
 const BLOCKED_ROUTE_GEOMETRY: Record<string, Coordinate[]> = {
   "river-road": [[33.5579, 133.5211], [33.5614, 133.5265], [33.5655, 133.5322]],
@@ -60,6 +53,8 @@ export default function EmergencyPowerMap({
   blockedRouteIds,
   unavailableVehicleIds,
   inspectedWorldLabel,
+  twinSnapshot,
+  twinLayer,
 }: EmergencyPowerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -110,6 +105,19 @@ export default function EmergencyPowerMap({
     if (!ready || !L || !overlay) return;
     overlay.clearLayers();
 
+    const bridgeState = twinSnapshot.roads.find((road) => road.routeId === "east-bridge");
+    if (bridgeState?.state === "conflicting" && !blockedRouteIds.includes("east-bridge")) {
+      const line = L.polyline(BLOCKED_ROUTE_GEOMETRY["east-bridge"], {
+        color: "#ffe07b",
+        weight: 8,
+        opacity: 0.92,
+        dashArray: "3 9",
+        lineCap: "round",
+        className: "emergency2-conflicting-route",
+      }).addTo(overlay);
+      line.bindTooltip("east-bridge · CONFLICTING EVIDENCE · NOT APPLIED", { sticky: true });
+    }
+
     for (const routeId of blockedRouteIds) {
       const geometry = BLOCKED_ROUTE_GEOMETRY[routeId];
       if (!geometry) continue;
@@ -125,8 +133,8 @@ export default function EmergencyPowerMap({
     }
 
     for (const assignment of plan.assignments) {
-      const origin = VEHICLE_COORDINATES[assignment.vehicle.id];
-      const destination = FACILITY_COORDINATES[assignment.need.id];
+      const origin = EMERGENCY_VEHICLE_COORDINATES[assignment.vehicle.id];
+      const destination = EMERGENCY_FACILITY_COORDINATES[assignment.need.id];
       if (!origin || !destination) continue;
       const midpoint: Coordinate = [
         (origin[0] + destination[0]) / 2 + (assignment.need.id === "shelter" ? 0.004 : -0.002),
@@ -152,12 +160,19 @@ export default function EmergencyPowerMap({
 
     for (const need of DEFAULT_NEEDS) {
       const assignment = plan.assignments.find((item) => item.need.id === need.id);
+      const twinFacility = twinSnapshot.facilities.find((item) => item.id === need.id)!;
       const safe = assignment?.safe === true;
-      const coordinate = FACILITY_COORDINATES[need.id];
+      const coordinate = EMERGENCY_FACILITY_COORDINATES[need.id];
+      const load = twinLayer === "observed"
+        ? twinFacility.observedLoadKw ?? twinFacility.lastObservedLoadKw
+        : twinLayer === "forecast"
+          ? twinFacility.forecastLoadKw
+          : twinFacility.estimatedLoadKw;
+      const stale = twinLayer === "observed" && twinFacility.observedLoadKw === null;
       const marker = L.marker(coordinate, {
         icon: L.divIcon({
           className: "emergency2-node-wrapper",
-          html: `<div class="emergency2-facility ${need.priority} ${safe ? "served" : "gap"}"><i>${need.id === "clinic" ? "+" : need.id === "water" ? "W" : "S"}</i><span><b>${escapeHtml(need.facility)}</b><small>${safe ? `${escapeHtml(assignment!.vehicle.id)} · ${assignment!.coverageHours}h verified` : "SERVICE GAP"}</small></span></div>`,
+          html: `<div class="emergency2-facility ${need.priority} ${safe ? "served" : "gap"} ${stale ? "stale" : ""}"><i>${need.id === "clinic" ? "+" : need.id === "water" ? "W" : "S"}</i><span><b>${escapeHtml(need.facility)}</b><small>${safe ? `${load.toFixed(2)} kW · ${escapeHtml(twinLayer.toUpperCase())}${stale ? " STALE" : ""}` : "SERVICE GAP"}</small></span></div>`,
           iconSize: [180, 42],
           iconAnchor: [18, 21],
         }),
@@ -168,17 +183,29 @@ export default function EmergencyPowerMap({
     for (const vehicle of VEHICLES) {
       const unavailable = unavailableVehicleIds.includes(vehicle.id);
       const assigned = plan.assignments.find((item) => item.vehicle.id === vehicle.id);
-      const marker = L.marker(VEHICLE_COORDINATES[vehicle.id], {
+      const twinAsset = twinSnapshot.assets.find((item) => item.id === vehicle.id)!;
+      const coordinate = twinLayer === "observed"
+        ? twinAsset.observedCoordinate
+        : twinLayer === "forecast"
+          ? twinAsset.forecastCoordinate
+          : twinAsset.estimatedCoordinate;
+      const soc = twinLayer === "observed"
+        ? twinAsset.observedSoc ?? twinAsset.lastObservedSoc
+        : twinLayer === "forecast"
+          ? twinAsset.forecastSoc
+          : twinAsset.estimatedSoc;
+      const stale = twinLayer === "observed" && twinAsset.observedSoc === null;
+      const marker = L.marker(coordinate, {
         icon: L.divIcon({
           className: "emergency2-vehicle-wrapper",
-          html: `<div class="emergency2-vehicle ${unavailable ? "unavailable" : assigned ? "assigned" : "idle"}"><i>${unavailable ? "×" : "⚡"}</i><span><b>${escapeHtml(vehicle.id)}</b><small>${unavailable ? "UNAVAILABLE" : assigned ? `${escapeHtml(assigned.need.id)} · ${vehicle.soc}% SoC` : `reserve · ${vehicle.soc}% SoC`}</small></span></div>`,
+          html: `<div class="emergency2-vehicle ${unavailable ? "unavailable" : assigned ? "assigned" : "idle"} ${stale ? "stale" : ""}"><i>${unavailable ? "×" : "⚡"}</i><span><b>${escapeHtml(vehicle.id)}</b><small>${unavailable ? "UNAVAILABLE" : assigned ? `${escapeHtml(assigned.need.id)} · ${soc.toFixed(1)}%${stale ? " STALE" : ""}` : `reserve · ${soc.toFixed(1)}%`}</small></span></div>`,
           iconSize: [120, 35],
           iconAnchor: [14, 17],
         }),
       }).addTo(overlay);
       marker.bindTooltip(`${vehicle.id} · ${vehicle.capacityKwh} kWh · ${vehicle.maxPowerKw} kW max`);
     }
-  }, [blockedRouteIds, plan, ready, unavailableVehicleIds]);
+  }, [blockedRouteIds, plan, ready, twinLayer, twinSnapshot, unavailableVehicleIds]);
 
   return (
     <div className={`emergency2-map-frame tile-${tileState}`}>
@@ -190,10 +217,10 @@ export default function EmergencyPowerMap({
       <button type="button" className="emergency2-map-reset" onClick={() => mapRef.current?.fitBounds(MAP_BOUNDS, { padding: [12, 12] })}>Fit response area</button>
       <div className="emergency2-map-state">
         <small>MAP STATE</small>
-        <b>{inspectedWorldLabel ?? "Verified nominal reference"}</b>
-        <span>{inspectedWorldLabel ? "Inspection only · no dispatch authority" : "No Sol world applied automatically"}</span>
+        <b>T+{String(twinSnapshot.simulationMinute).padStart(2, "0")} · {twinLayer.toUpperCase()} · {inspectedWorldLabel ?? twinSnapshot.scenarioLabel}</b>
+        <span>{inspectedWorldLabel ? "Inspection only · no dispatch authority" : twinSnapshot.roads[0].state === "conflicting" ? "Road conflict flagged · active plan unchanged" : "No Sol world applied automatically"}</span>
       </div>
-      <div className="emergency2-map-legend"><span><i className="critical" /> critical</span><span><i className="mission" /> assignment</span><span><i className="blocked" /> blocked</span><span><i className="gap" /> gap</span></div>
+      <div className="emergency2-map-legend"><span><i className="critical" /> critical</span><span><i className="mission" /> assignment</span><span><i className="conflict" /> conflicting</span><span><i className="blocked" /> blocked</span><span><i className="gap" /> gap</span></div>
       {tileState === "degraded" ? <p className="emergency2-map-degraded">Basemap tiles unavailable. The synthetic planning overlay remains visible.</p> : null}
     </div>
   );

@@ -1,73 +1,73 @@
 # Lifeline Grid — 2:55 Build Week Demo Script
 
-Record at desktop width with `OPENAI_API_KEY` configured. Use only the built-in synthetic report. Start only when the API is funded and the result can show **GPT-5.6 SOL LIVE**. Keep the OpenStreetMap attribution and **FIELD OPERATION BLOCKED** label visible when they are on screen.
+Record at desktop width with `OPENAI_API_KEY` configured. Use only the built-in synthetic data. Start only when the API is funded and the council can show **GPT-5.6 SOL LIVE**. Keep OpenStreetMap attribution and **FIELD OPERATION BLOCKED** visible whenever they are on screen.
 
-## 0:00–0:15 — The problem is conflicting truth
+## 0:00–0:15 — A living system, not a static answer
 
-Open on the Emergency Power hero and real map.
+Open on the Emergency Power hero, then scroll directly to **Operational Digital Twin**.
 
-> “During a blackout, mobile batteries can protect clinics and water systems. But the hardest problem is not finding a nearby vehicle. It is acting when the road, the asset and the electrical peak are all disputed.”
+> “During a blackout, a plan starts becoming wrong the moment the world changes. Lifeline Grid is an emergency-power digital twin: it synchronizes asset and facility state, predicts failure, and makes uncertainty visible before anyone moves the fleet.”
 
-## 0:15–0:37 — Sol creates falsifiable worlds
+## 0:15–0:37 — Replay observed, estimated and forecast state
 
-Click **Run Sol Power Council**. Hold on **GPT-5.6 SOL LIVE**, then scroll to the three cards.
+Click **Play twin**. While the clock advances, switch **Observed → Estimated → Forecast** and show the vehicles moving on the real map.
 
-> “GPT-5.6 Sol treats the report as untrusted data. With strict Structured Outputs, it must create exactly three materially different, testable worlds using only known routes, vehicles and load states. It preserves evidence, counterevidence and assumptions. It cannot calculate an impact or authorize action.”
+> “A shared event timeline moves five synthetic assets and updates load, state of charge, source freshness and road evidence. Scalar Kalman filters estimate hidden state with visible uncertainty. The forecast tests six hours of load, output power, energy, return travel and protected reserve.”
 
-## 0:37–1:03 — Deterministic software challenges the model
+## 0:37–0:59 — Inject a failure
 
-Point across H1, H2 and H3, then the yellow evidence card.
+Click **Pump drift**. Hold on the changed water load, plan-divergence score and red projected critical gap. Then click **Telemetry loss** and show 75% source coverage plus stale observed values.
 
-> “Lifeline independently optimizes and stress-tests every world: 144 exact assignment candidates, 768 bounded stress worlds, and 36,864 plan-scenario tests. Critical coverage changes from twelve hours to eight, and the adverse world exposes a 16.8 kilowatt-hour gap. Sol supplied none of those numbers.”
+> “Failure is interactive. Pump drift raises the water load from 4.2 toward 6.5 kilowatts and exposes a critical gap. Telemetry loss freezes two observations instead of inventing current data; the estimator carries state forward with expanding uncertainty.”
 
-Point to the evidence swing values and **MODEL RECOMMENDATION WITHHELD**.
+## 0:59–1:18 — Conflicting truth becomes testable worlds
 
-> “The system proves that one authenticated pump start-up reading matters most. It separates four critical site-hours and a one-hundred-point mission-success swing. So the model recommendation is withheld until people verify the fact.”
+Click **Bridge conflict**, show the amber East Bridge route, then click **Ask Sol to branch this conflict** and **Generate + prove 3 worlds**.
 
-## 1:03–1:30 — Inspect disagreement on a real map
+> “When evidence conflicts, the route is flagged but never auto-closed. GPT-5.6 Sol treats the report as untrusted data and creates exactly three falsifiable worlds using only registered roads, assets and load states. It cannot calculate an impact or authorize action.”
 
-Click **Inspect world** on H2, scroll to the map, then return and inspect H3.
+## 1:18–1:41 — Deterministic software challenges the model
 
-> “The same real basemap now shows the bridge restriction, the high-output asset and the complete assignment. H2 can reroute safely. H3 loses E-44 and exposes a peak-power failure. Clicking a world is inspection only: no route, vehicle or electrical state is applied automatically.”
+Show H1, H2, H3 and the yellow highest-value evidence card.
 
-## 1:30–1:50 — Show the machine proof
+> “Lifeline independently optimizes and stress-tests every world: 144 exact candidates, 768 bounded stress worlds and 36,864 plan-scenario tests. Critical coverage changes from twelve hours to eight, with a 16.8 kilowatt-hour gap. Sol supplied none of those numbers.”
 
-Scroll to the assignment cards. Hold on the six checks and SoC bar of the unsafe water assignment.
+Point to **MODEL RECOMMENDATION WITHHELD**.
 
-> “Every mission carries its proof: route, connector, momentary output, deadline, continuous duration and protected mobility reserve. Average energy and start-up power are separate constraints. A persuasive plan cannot hide a failed check.”
+> “One authenticated pump reading has the highest decision value, so the model recommendation remains withheld until a person verifies it.”
 
-Briefly point to the greedy-versus-exact comparison.
+## 1:41–2:03 — Inspect physical proof on the map
 
-> “The exact result is also compared with a deterministic nearest-first baseline on the same state.”
+Inspect H2, then H3. Scroll to the map and assignment cards; hold on one failed peak-power check and the SoC proof.
 
-## 1:50–2:14 — Eliminate single points of failure
+> “Each world is inspection only. Every mission exposes route, connector, momentary output, deadline, duration and mobility reserve. H2 can reroute; H3 loses the high-output asset and fails the pump peak. A persuasive narrative cannot hide a failed physical check.”
 
-Return to the nominal reference if needed, scroll to N-1 resilience and click **Run N-1 hardening**.
+## 2:03–2:22 — Prove resilience
 
-> “Continuous uncertainty is not enough. Lifeline removes each of five vehicles and seven routes, compares three preparedness actions, and runs 414,720 more plan-scenario tests. It finds the minimum modeled action that raises critical protection from ten of twelve to twelve of twelve single failures.”
+Click **Run N-1 hardening** and show 10/12 → 12/12.
 
-## 2:14–2:38 — Humans retain authority
+> “Lifeline then removes each modeled vehicle and route, compares preparedness actions, and runs 414,720 more tests. It selects the minimum modeled intervention that protects all twelve single-failure cases.”
 
-Scroll to the Human Authority Gate. Click **Confirm exercise scope**, then **Record independent co-sign**, then **Download audit package**.
+## 2:22–2:44 — Evidence and human authority
 
-> “A calculation is still not authority. Two separate exercise roles are required before Lifeline exports the complete council, all three outcomes, boundaries and a SHA-256 digest. Even then, real field operation remains blocked.”
+Return to the twin and click **Export twin state + SHA-256**, then scroll to the Human Authority Gate and show the two roles without implying field permission.
 
-## 2:38–2:52 — Why it can become a company
+> “Every twin state is replayable and cryptographically bound. A separate Incident Lead and Safety Officer can co-sign only the synthetic exercise. Even after both signatures, field operation, dispatch and infrastructure actuation remain blocked.”
 
-Show the three-step strip or return to the hero.
+## 2:44–2:55 — Close
 
-> “This is not chat wrapped in a dashboard. Sol separates ambiguity, deterministic algorithms prove consequences, and people stay in command. The same evidence-first architecture extends to daily rural delivery and aging-road investment.”
+Return to the hero.
 
-## 2:52–2:55 — Close
-
-> “Lifeline asks what matters before lives depend on the answer.”
+> “This is not chat wrapped in a dashboard. The twin sees change, Sol separates ambiguity, exact algorithms prove consequences, and people remain in command. Lifeline asks what matters before lives depend on the answer.”
 
 ## Recording checklist
 
-- Keep the video public on YouTube and no longer than three minutes.
-- Verify the result reads **GPT-5.6 SOL LIVE**. If it falls back, do not imply a live model call.
-- Say the scenario and metrics are synthetic, reproducible fixture results—not field claims.
+- Keep the video public on YouTube and below three minutes.
+- Verify the council reads **GPT-5.6 SOL LIVE**. If it falls back, do not imply a live call.
+- Say every telemetry value, facility, asset, route and performance result is synthetic.
 - Keep the real-basemap/synthetic-overlay disclosure visible.
-- Show all three worlds, the 16.8 kWh gap, the 100-point swing, one failed physical check, 10/12 → 12/12, dual control and field blocking.
-- Mention both Codex and GPT-5.6 Sol in the voiceover or submission text.
-- Do not imply real dispatch, road diagnosis, electrical certification or autonomous control.
+- Show time playback, moving markers and all three state layers.
+- Show pump drift, a non-zero six-hour critical gap, 75% feed coverage, a stale observation and the amber conflict route.
+- Show all three Sol worlds, the 16.8 kWh swing, one failed physical check and 10/12 → 12/12.
+- Mention Codex, GPT-5.6 Sol, deterministic algorithms, human authority and field blocking.
+- Do not imply live telemetry, navigation, road diagnosis, electrical certification, autonomous dispatch or safety certification.

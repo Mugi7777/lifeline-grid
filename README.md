@@ -1,12 +1,16 @@
 # Lifeline Grid
 
-**Resolve the fact that changes the emergency-power plan—before moving the fleet.**
+**See the emergency grid as it is—and six hours before it fails.**
 
-Lifeline Grid is an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. Its primary product, **Emergency Power**, combines GPT-5.6 Sol uncertainty reasoning with exact, physics-aware optimization to coordinate mobile batteries across conflicting incident reports. The second product, **Regional Access**, applies the same human-authority and evidence principles to rural delivery, road-aging impact and emergency continuity.
+Lifeline Grid is an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. Its primary product, **Emergency Power**, is an event-sourced operational digital twin for coordinating mobile batteries: it replays synthetic telemetry, estimates hidden state, forecasts six-hour failure, uses GPT-5.6 Sol to branch ambiguous reports, and verifies every plan with exact physics-aware optimization. The second product, **Regional Access**, applies the same human-authority and evidence principles to rural delivery, road-aging impact and emergency continuity.
 
 > Synthetic simulation only. Lifeline Grid does not control real vehicles, facilities, or emergency operations. Demo metrics are scenario results, not real-world performance claims.
 
-## Emergency Power 2.0
+## Emergency Power 3.0 · operational digital twin
+
+The first product is now time-dependent rather than a static optimization screen. A shared 0–90 minute event timeline moves assigned vehicles across the real OpenStreetMap basemap and updates facility load, vehicle SoC, feed freshness and road evidence. Operators can switch between **Observed**, **Estimated** and **Forecast +6h** layers. A scalar Kalman filter produces inspectable state estimates; when telemetry disappears, the last observation becomes visibly stale while dead-reckoned uncertainty grows.
+
+Four deterministic replays make failure behavior visible. Pump drift raises the East Water load from its 4.2 kW contract toward 6.5 kW and exposes a projected critical-power gap. A bridge conflict draws the disputed route in amber without changing the active plan. Telemetry loss reduces fresh-source coverage from 100% to 75% without fabricating a current observation. Every snapshot can be exported with a canonical SHA-256 digest and explicit no-actuation gates. See [`DIGITAL_TWIN.md`](./DIGITAL_TWIN.md) for the state contract, estimator, forecast, failure injections and production boundary.
 
 The first viewport is now a real OpenStreetMap basemap with an explicitly synthetic Kochi tabletop. One conflicting report is sent to `gpt-5.6-sol` at high reasoning effort. Sol must return exactly three materially different, falsifiable worlds using only allowlisted routes, vehicles and load states. It preserves evidence, counterevidence and assumptions, but it cannot calculate safety consequences or authorize action.
 
@@ -58,6 +62,12 @@ See [`SCALE_ARCHITECTURE.md`](./SCALE_ARCHITECTURE.md) for the production contro
 A chatbot can summarize one report or recommend a plausible vehicle. Emergency Power owns persistent machine state, hard physical constraints, counterfactual worlds, optimization, stress testing, human authority and replay evidence:
 
 ```text
+Versioned plan + time-ordered telemetry
+      ↓
+Observed → Kalman-estimated → six-hour forecast
+      ↓
+Plan divergence, stale feeds and physical gaps
+      ↓
 Conflicting untrusted reports
       ↓
 GPT-5.6 Sol: three competing, falsifiable worlds
@@ -83,14 +93,14 @@ Sol reasons about ambiguity. Deterministic code performs every safety calculatio
 
 ## The three-minute mission loop
 
-1. Show the real basemap, three power needs and the nominal verified assignment.
-2. Run **Sol Power Council** on the conflicting bridge, vehicle and pump report.
-3. Show `SOL LIVE`, the three materially different worlds and their 12 h / 12 h / 8 h critical coverage.
-4. Point to the highest-value evidence card: one authenticated peak reading separates a 16.8 kWh gap and 100-point mission swing.
-5. Inspect H2, then H3. The map, assignments, failed peak check and SoC change; neither click grants authority.
-6. Compare the greedy baseline with the exact stress-tested result.
+1. Play the event timeline and switch Observed → Estimated → Forecast while vehicles move on the real basemap.
+2. Inject pump drift and telemetry loss; show the six-hour critical gap, 75% fresh-source coverage and stale observations.
+3. Inject the bridge conflict. The route turns amber while the active plan remains unchanged.
+4. Run **Sol Power Council** and show `SOL LIVE`, three materially different worlds and 12 h / 12 h / 8 h critical coverage.
+5. Point to the highest-value evidence card: one authenticated peak reading separates a 16.8 kWh gap and 100-point mission swing.
+6. Inspect H2 and H3, then expose one failed physical check and the exact-versus-greedy comparison.
 7. Run N-1 hardening and show 10/12 → 12/12 with the selected reserve action.
-8. Record two synthetic exercise roles and download the SHA-256 evidence package while **FIELD OPERATION BLOCKED** remains visible.
+8. Export SHA-256 twin evidence, then show the two-role exercise gate while **FIELD OPERATION BLOCKED** remains visible.
 
 ## Optimization and safety kernel
 

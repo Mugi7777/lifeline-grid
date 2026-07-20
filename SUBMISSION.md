@@ -6,7 +6,7 @@ Lifeline Grid
 
 ## Tagline
 
-Resolve the fact that changes the emergency-power plan—before moving the fleet.
+See the emergency grid as it is—and six hours before it fails.
 
 ## Track
 
@@ -14,7 +14,7 @@ Work & Productivity
 
 ## Short description
 
-Lifeline Grid combines GPT-5.6 Sol uncertainty reasoning with exact, physics-aware optimization for emergency mobile power. Sol turns one conflicting incident report into exactly three falsifiable worlds. Deterministic code independently re-plans and stress-tests every world, ranks the one authenticated fact with the largest consequence, and keeps the model recommendation behind human authority. A second Regional Access product extends the architecture to rural delivery and aging-road investment.
+Lifeline Grid is an event-sourced emergency-power digital twin. It replays synthetic telemetry, estimates hidden state with a scalar Kalman filter, predicts six-hour critical gaps, and shows vehicles moving on a real basemap. GPT-5.6 Sol turns conflicting evidence into three falsifiable worlds; exact deterministic code re-plans and stress-tests every world while human authority remains mandatory. A second Regional Access product extends the architecture to rural delivery and aging-road investment.
 
 ## Inspiration
 
@@ -24,7 +24,11 @@ A chatbot can choose a persuasive story. Emergency workers need a system that sh
 
 ## What it does
 
-Emergency Power opens on a real OpenStreetMap basemap with an explicitly fictional Kochi exercise: five mobile batteries and three power needs at a clinic, shelter and water station. The report contains three conflicts: whether East Bridge is restricted, whether the only 7.2 kW asset is available, and whether the water-pump start-up peak is capped at 4.2 kW or reaches 6.5 kW.
+Emergency Power opens as an operational digital twin over a real OpenStreetMap basemap with an explicitly fictional Kochi exercise: five mobile batteries and three power needs at a clinic, shelter and water station. A 0–90 minute replay moves assets and updates vehicle SoC, facility load, feed freshness and road evidence. Operators can inspect Observed, Kalman-estimated and Forecast +6h layers.
+
+Four deterministic failure injections prove that the twin changes state rather than merely drawing a dashboard. Pump drift raises the water load from its 4.2 kW contract toward 6.5 kW and exposes a six-hour critical gap. A bridge conflict marks the disputed route in amber but leaves the active plan untouched. Telemetry loss freezes two observed feeds, lowers coverage to 75% and expands estimator uncertainty. Every state exports with a canonical SHA-256 digest and explicit no-actuation gates.
+
+The report contains three conflicts: whether East Bridge is restricted, whether the only 7.2 kW asset is available, and whether the water-pump start-up peak is capped at 4.2 kW or reaches 6.5 kW.
 
 Clicking **Run Sol Power Council** sends that untrusted report to `gpt-5.6-sol` at high reasoning effort. A strict Structured Outputs contract requires exactly three materially distinct worlds, evidence for and against each, explicit assumptions, and one to three field-evidence requests. The model may use only registered route IDs, vehicle IDs and the two modeled peak states. Runtime validation rejects invented state, duplicate worlds and malformed output.
 
@@ -60,6 +64,12 @@ The second product, **Regional Access**, applies the same evidence-first archite
 ## Why it is not a chatbot
 
 ```text
+versioned plan + event-sourced telemetry
+        ↓
+observed → Kalman-estimated → six-hour forecast
+        ↓
+failure injection + plan divergence
+        ↓
 conflicting untrusted report
         ↓
 GPT-5.6 Sol: exactly three falsifiable worlds
@@ -94,6 +104,11 @@ The model reasons about ambiguity. Deterministic software owns every displayed c
 - exact N-1 vehicle/route contingency search and minimum-intervention selection
 - greedy baseline comparison and visible solver evidence
 - real OpenStreetMap basemap with clearly disclosed synthetic operational overlay
+- event-sourced 0–90 minute twin replay with moving assets
+- scalar Kalman filters, stale-feed handling and visible uncertainty
+- deterministic six-hour load, energy, output and reserve forecast
+- pump-drift, road-conflict and telemetry-loss failure injections
+- canonical SHA-256 twin-state evidence
 - canonical SHA-256 council evidence and two-role exercise gate
 - React, TypeScript, Vinext and Cloudflare-hosted ChatGPT Sites
 - automated unit, API, production-render and build verification

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lifeline Grid · Emergency Power",
+  title: "Lifeline Grid · Emergency Digital Twin",
   description:
-    "GPT-5.6 Sol uncertainty reasoning and verified mobile-power optimization with human authority.",
+    "An event-sourced emergency-power digital twin with Kalman state estimation, deterministic forecasting, GPT-5.6 Sol uncertainty reasoning and human authority.",
   other: {
     "codex-preview": "development",
   },
