@@ -20,6 +20,8 @@ The Pilot Data Sandbox reads a selected GeoJSON file in the active browser tab. 
 
 The Nankai Trough 72H Response Lab currently loads only bundled fictional facilities, patient cases, inventories, vehicles, road states, search zones and situation reports. A report submitted to the Sol Council is sent to the OpenAI API when live mode is available with `store: false`; otherwise the labeled deterministic fallback is used. The application does not persist the report, selected phase, selected world, or intervention. Its evidence download contains the fictional decision state and digest. This architecture is not approval to add real clinical, aircraft, restricted-infrastructure, inventory, or incident-command data; such adapters remain prohibited until the governance, privacy, clinical, aviation, security, and retention controls in `NANKAI_RESPONSE_LAB.md` are approved.
 
+Emergency Power uses the same no-store reasoning boundary. Text entered into **Sol Power Council** is sent to the OpenAI API when live mode is available with `store: false`; otherwise the labeled deterministic fixture is used. The application does not persist the report, selected world, exercise confirmations, or evidence package. A downloaded package is created in the user's browser and includes the report-derived hypotheses and deterministic results. Only the built-in fictional report is approved for this release; do not enter real incidents, facility details, road restrictions, fleet telemetry, personal data or confidential information.
+
 ## Current access control
 
 - list access is limited to the creating email or the explicitly assigned reviewer email;
