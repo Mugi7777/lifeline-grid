@@ -31,6 +31,7 @@ test("renders development preview metadata", async () => {
   );
   const html = await response.text();
   assert.match(html, developmentPreviewMeta);
+  assert.match(html, /<title>Lifeline Grid · Emergency Power<\/title>/);
   assert.match(html, /LIFELINE GRID/);
   assert.match(html, /Emergency Power/);
   assert.match(html, /GPT-5.6 SOL × VERIFIED OPTIMIZATION/);
@@ -43,6 +44,7 @@ test("renders development preview metadata", async () => {
   assert.match(html, /One narrative is unsafe\. Test competing worlds\./);
   assert.match(html, /Generate \+ prove 3 worlds/);
   assert.match(html, /Every assignment carries its proof\./);
+  assert.match(html, /49(?:<!-- -->)? violation worlds/);
   assert.match(html, /Run N-1 hardening/);
   assert.match(html, /HUMAN AUTHORITY GATE/);
   assert.match(html, /FIELD OPERATION BLOCKED/);

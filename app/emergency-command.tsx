@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   DEFAULT_NEEDS,
-  buildGreedyBaseline,
   buildResilienceAnalysis,
   buildVerifiedPlan,
   type DispatchPlan,
@@ -68,7 +67,6 @@ function countFailures(plan: DispatchPlan) {
 
 export default function EmergencyCommand({ onSwitchToRegional }: EmergencyCommandProps) {
   const baselinePlan = useMemo(() => buildVerifiedPlan([], DEFAULT_NEEDS), []);
-  const baselineGreedy = useMemo(() => buildGreedyBaseline([], DEFAULT_NEEDS), []);
   const [report, setReport] = useState(DEFAULT_REPORT);
   const [council, setCouncil] = useState<EmergencyCouncilResult | null>(null);
   const [working, setWorking] = useState(false);
@@ -82,9 +80,8 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
   const inspectedWorld = council?.adjudication.evaluations.find((world) => world.hypothesisId === inspectedWorldId) ?? null;
   const inspectedHypothesis = council?.proposal.hypotheses.find((world) => world.id === inspectedWorldId) ?? null;
   const activePlan = inspectedWorld?.plan ?? baselinePlan;
-  const activeGreedy = inspectedWorld?.greedyPlan ?? baselineGreedy;
   const optimizedStress = activePlan.optimization?.optimized;
-  const baselineStress = activeGreedy.optimization?.optimized;
+  const baselineStress = activePlan.optimization?.baseline;
   const proof = council?.adjudication.computationalEvidence ?? {
     worldsReplanned: 1,
     exactAssignmentCandidates: baselinePlan.optimization?.candidatePlans ?? 0,
@@ -200,7 +197,7 @@ export default function EmergencyCommand({ onSwitchToRegional }: EmergencyComman
           </div>
           <div className="emergency2-comparison">
             <header><span>WHY NOT NEAREST-FIRST?</span><small>Same modeled state</small></header>
-            <div><span><small>Greedy / nearest</small><b>{formatPercent(baselineStress?.successRate ?? 0)}</b><em>{activeGreedy.optimization?.baseline.violationScenarios ?? 0} violation worlds</em></span><i>→</i><span className="winner"><small>Lifeline exact</small><b>{formatPercent(optimizedStress?.successRate ?? 0)}</b><em>{activePlan.optimization?.optimized.violationScenarios ?? 0} violation worlds</em></span></div>
+            <div><span><small>Greedy / nearest</small><b>{formatPercent(baselineStress?.successRate ?? 0)}</b><em>{baselineStress?.violationScenarios ?? 0} violation worlds</em></span><i>→</i><span className="winner"><small>Lifeline exact</small><b>{formatPercent(optimizedStress?.successRate ?? 0)}</b><em>{activePlan.optimization?.optimized.violationScenarios ?? 0} violation worlds</em></span></div>
           </div>
           <div className="emergency2-proof-mini">
             <span><b>{proof.exactAssignmentCandidates.toLocaleString()}</b><small>exact candidates</small></span>

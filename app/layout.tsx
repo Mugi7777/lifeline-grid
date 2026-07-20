@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lifeline Grid · Regional Access OS",
+  title: "Lifeline Grid · Emergency Power",
   description:
-    "A synthetic regional access twin for resilient roads, shared logistics and evidence-gated human decisions.",
+    "GPT-5.6 Sol uncertainty reasoning and verified mobile-power optimization with human authority.",
   other: {
     "codex-preview": "development",
   },
