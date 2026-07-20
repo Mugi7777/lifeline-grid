@@ -1,12 +1,22 @@
 # Lifeline Grid
 
-**Keep every resident connected to essentials—even when roads age or disasters strike.**
+**Resolve the fact that changes the emergency-power plan—before moving the fleet.**
 
-Lifeline Grid is a Japan-first **Regional Access OS** and an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. Its new default mode joins rural shared delivery, road-aging impact, repair-budget allocation, and emergency continuity in one inspectable regional twin. The original emergency mobile-power command center remains available as a second mode.
+Lifeline Grid is an OpenAI Build Week 2026 prototype for the **Work & Productivity** track. Its primary product, **Emergency Power**, combines GPT-5.6 Sol uncertainty reasoning with exact, physics-aware optimization to coordinate mobile batteries across conflicting incident reports. The second product, **Regional Access**, applies the same human-authority and evidence principles to rural delivery, road-aging impact and emergency continuity.
 
 > Synthetic simulation only. Lifeline Grid does not control real vehicles, facilities, or emergency operations. Demo metrics are scenario results, not real-world performance claims.
 
-## Regional Access OS
+## Emergency Power 2.0
+
+The first viewport is now a real OpenStreetMap basemap with an explicitly synthetic Kochi tabletop. One conflicting report is sent to `gpt-5.6-sol` at high reasoning effort. Sol must return exactly three materially different, falsifiable worlds using only allowlisted routes, vehicles and load states. It preserves evidence, counterevidence and assumptions, but it cannot calculate safety consequences or authorize action.
+
+Deterministic code independently re-plans each world. In the fixture it evaluates **144 exact assignment candidates**, **768 bounded stress worlds** and **36,864 candidate-plan/scenario pairs**. The three outcomes span 12 to 8 critical site-hours, 0 to 16.8 kWh of unserved critical energy, and 100% to 0% full-mission stress success. Counterfactual value-of-information ranks an authenticated pump start-up reading first because it separates that full consequence. Sol supplies none of these numbers.
+
+The map lets a human inspect H1, H2 or H3 without applying any world. Every vehicle assignment exposes route, connector, peak power, deadline, service duration and protected-reserve checks plus its before/after SoC. The UI compares the exact plan with a greedy baseline on the same state. A separate exact N-1 search runs **414,720** more plan/scenario evaluations and selects the minimum modeled intervention that improves critical protection from 10/12 to 12/12 single failures.
+
+The model recommendation is always withheld pending evidence. A synthetic exercise requires Incident Lead confirmation and an independent Safety Officer co-sign before a canonical SHA-256 council package can be downloaded. Field operation remains blocked. See [`EMERGENCY_POWER_2.md`](./EMERGENCY_POWER_2.md) for the contract, algorithms, benchmark and honest scale boundary.
+
+## Regional Access OS · second product
 
 The synthetic Mizunoki District model connects eight locations with twelve roads and coordinates six delivery zones across a postal EV, a refrigerated co-op van, and a municipal mixed-use bus. It evaluates:
 
@@ -18,7 +28,7 @@ The synthetic Mizunoki District model connects eight locations with twelve roads
 - a deterministic 64-scenario demand and travel stress suite; and
 - every eligible repair portfolio under an adjustable public budget.
 
-The default first viewport now uses an interactive OpenStreetMap basemap over real geography in the Gujo mountain area of Gifu. The modeled facilities, demand, condition grades, probabilities, closures, and fleet remain fictional and are visibly labeled as such. Stored route shapes are road-aligned demonstration geometry derived from OpenStreetMap data through OSRM; they are not live traffic, navigation, or road-authority records. Map attribution remains visible at all times. Clicking a modeled road immediately runs the corresponding N-1 scenario and updates the route overlay, access metrics, and capital portfolio.
+The Regional Access tab uses an interactive OpenStreetMap basemap over real geography in the Gujo mountain area of Gifu. The modeled facilities, demand, condition grades, probabilities, closures, and fleet remain fictional and are visibly labeled as such. Stored route shapes are road-aligned demonstration geometry derived from OpenStreetMap data through OSRM; they are not live traffic, navigation, or road-authority records. Map attribution remains visible at all times. Clicking a modeled road immediately runs the corresponding N-1 scenario and updates the route overlay, access metrics, and capital portfolio.
 
 Authenticated users can explicitly record a plan in a durable D1 decision ledger. The server recomputes the plan, links it to the prior version, stores the operational diff, assigns an optional independent reviewer, and appends SHA-256-linked audit events. The creator cannot approve their own run.
 
@@ -45,95 +55,42 @@ See [`SCALE_ARCHITECTURE.md`](./SCALE_ARCHITECTURE.md) for the production contro
 
 ## Why this is not a chatbot
 
-A chatbot can summarize a power request. Emergency coordination also requires state, constraints, optimization, authorization, evaluation, and recovery.
-
-In Regional Access mode the system goes further than a single model answer:
+A chatbot can summarize one report or recommend a plausible vehicle. Emergency Power owns persistent machine state, hard physical constraints, counterfactual worlds, optimization, stress testing, human authority and replay evidence:
 
 ```text
 Conflicting untrusted reports
       ↓
-GPT-5.6 Sol: three competing, falsifiable road states
+GPT-5.6 Sol: three competing, falsifiable worlds
       ↓
-Strict schema + supported-road validation
+Strict allowlist + runtime validation
       ↓
-Deterministic re-plan of every world
+Exact re-plan and physical checks in every world
       ↓
-192 stress scenarios + 36 N-1 road cases
+768 bounded stress worlds · 36,864 plan/world tests
       ↓
-Rank the evidence with the largest access consequence
+Rank the one authenticated fact with the largest consequence
       ↓
-Human road authority required; model recommendation withheld
+Human inspection only · model recommendation withheld
+      ↓
+Exact N-1 search · 414,720 additional tests
+      ↓
+Incident Lead confirmation → independent Safety Officer co-sign
+      ↓
+SHA-256 council evidence · field operation remains blocked
 ```
 
-For the built-in synthetic conflict, the authority-status question separates a world with no access loss from one exposing 64 households and 32 vulnerable residents. That consequence is reproduced by the regional kernel; it is not a number supplied by the model.
-
-The Nankai mode closes the same loop across four coupled emergency missions:
-
-```text
-Conflicting hospital, road and drone reports
-      ↓
-GPT-5.6 Sol: exactly three bounded network worlds
-      ↓
-Strict schema, supported road IDs, counterevidence retained
-      ↓
-Supply flow + power + medical + drone re-plan in every world
-      ↓
-50.2% ↔ 81.0% supply · 1 ↔ 0 power gaps · 0 ↔ 2 ground plans
-      ↓
-Rank one authenticated fact by deterministic mission swing
-      ↓
-Human authority required; no world or action applied automatically
-```
-
-Lifeline Grid closes that loop:
-
-```text
-Fictional reports
-      ↓
-GPT-5.6: source-linked power contracts
-      ↓
-Unsafe candidate → visibly rejected
-      ↓
-Decision-Critical Planner
-      ↓
-One highest-value operator question
-      ↓
-Exact multi-objective allocation search
-      ↓
-256-scenario uncertainty stress test
-      ↓
-Exact N-1 contingency search
-      ↓
-Minimum-intervention reserve action
-      ↓
-Incident Lead approval → independent Safety Officer co-sign
-      ↓
-Hash-chained evidence package → simulation authorization
-      ↑                                      ↓
-      └──────── GPT-5.6 event → global re-plan ┘
-```
-
-GPT-5.6 interprets language. Deterministic code performs safety arithmetic and optimization. Two distinct human roles are required to authorize the simulation. Field deployment remains fail-closed until external qualification evidence exists.
+Sol reasons about ambiguity. Deterministic code performs every safety calculation and displays disagreements rather than hiding them. The interface changes inspection state, not real infrastructure state.
 
 ## The three-minute mission loop
 
-1. Three fictional facilities report power needs in natural language.
-2. **GPT-5.6 Structured Outputs** extracts source-linked power, duration, deadline, priority, connector, confidence, and assumptions.
-3. A plausible nearest-looking assignment sends E-12 to the clinic.
-4. The safety kernel rejects it because duration and the protected 35% mobility reserve fail.
-5. The Decision-Critical Planner tests three unresolved assumptions and both possible answers to each.
-6. For every answer world, it compares keeping the provisional allocation with re-optimizing all 60 allocations across all 256 stress scenarios—**93,696 exact counterfactual plan-scenario evaluations**.
-7. It ranks the pump start-up surge question first because guessing wrong creates 226 avoidable violation scenarios and changes two vehicle missions.
-8. An operator confirms whether the station caps the surge locally. A guessed fact can never authorize dispatch.
-9. The optimizer evaluates every one of the **60 distinct vehicle allocations** against the confirmed machine state.
-10. Each allocation is tested across a deterministic **256-point Halton uncertainty suite** covering demand, state-of-charge, and travel-time variation.
-11. The selected plan succeeds in all 256 demo scenarios. The nearest-feasible baseline succeeds in 207/256.
-12. The N-1 engine evaluates three preparedness actions against five vehicle losses and seven corridor closures—**414,720 additional plan-scenario evaluations**.
-13. The unhardened plan protects critical service in 10/12 single-failure cases. Exact minimum-intervention selection stages idle E-32 at West Relay and raises that result to 12/12.
-14. The Incident Lead approves the simulated scope.
-15. A distinct Safety Officer independently co-signs; the same actor cannot satisfy both roles.
-16. Lifeline can export a canonical JSON safety-case package with a SHA-256 package hash and hash-chained audit events.
-17. GPT-5.6 converts a narrative East Bridge closure into a machine-readable route event. The optimizer rebuilds the whole remaining mission plan and retains 100% scenario success.
+1. Show the real basemap, three power needs and the nominal verified assignment.
+2. Run **Sol Power Council** on the conflicting bridge, vehicle and pump report.
+3. Show `SOL LIVE`, the three materially different worlds and their 12 h / 12 h / 8 h critical coverage.
+4. Point to the highest-value evidence card: one authenticated peak reading separates a 16.8 kWh gap and 100-point mission swing.
+5. Inspect H2, then H3. The map, assignments, failed peak check and SoC change; neither click grants authority.
+6. Compare the greedy baseline with the exact stress-tested result.
+7. Run N-1 hardening and show 10/12 → 12/12 with the selected reserve action.
+8. Record two synthetic exercise roles and download the SHA-256 evidence package while **FIELD OPERATION BLOCKED** remains visible.
 
 ## Optimization and safety kernel
 
@@ -196,6 +153,7 @@ Five separate field-qualification gates remain blocked in this prototype: valida
 
 ### GPT-5.6
 
+- `/api/emergency-reasoning` asks `gpt-5.6-sol` at high reasoning effort for exactly three bounded mobile-power worlds and one to three evidence requests. Strict validation rejects invented routes/assets, malformed IDs and duplicate states; deterministic code then re-plans and stress-tests every world and withholds the model recommendation.
 - `/api/analyze` converts narrative reports into strict, source-linked power contracts.
 - `/api/event` converts a narrative disruption into structured mission state.
 - `/api/regional-event` converts a fictional inspection note into a supported road restriction.
